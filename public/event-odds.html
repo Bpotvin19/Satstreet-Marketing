@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Satstreet · Event Odds</title>
+<meta name="description" content="Third-party market-implied probabilities across crypto, macro and policy." />
+<link rel="stylesheet" href="./assets/terminal.css" />
+<link rel="stylesheet" href="./assets/event-odds.css" />
+</head>
+<body>
+<div id="shell-header"></div>
+<main class="wrap odds-page">
+  <header class="odds-head">
+    <div>
+      <p class="eyebrow">Market-implied probability</p>
+      <h1>Event Odds</h1>
+      <p>What a liquid prediction market currently prices for rate decisions, Bitcoin levels and the macro backdrop. Reported, not interpreted.</p>
+    </div>
+    <div class="feedstate"><i class="pip" id="pip"></i><span id="feed-status">Loading current markets&hellip;</span></div>
+  </header>
+
+  <section class="odds-toolbar" aria-label="Market controls">
+    <label class="market-search"><span class="sr">Search markets</span><input id="market-search" type="search" placeholder="Search markets..." autocomplete="off" /></label>
+    <nav class="category-tabs" id="category-tabs" aria-label="Market categories"></nav>
+    <div class="control-row">
+      <dl class="market-stats">
+        <div><dt>Active markets</dt><dd id="active-count">—</dd></div>
+        <div><dt>Reported volume</dt><dd id="total-volume">—</dd></div>
+        <div><dt>Last updated</dt><dd id="updated-at">&mdash;</dd></div>
+        <div><dt>Source</dt><dd id="source-name">&mdash;</dd></div>
+      </dl>
+      <div class="sort-control"><label for="market-sort">Sort</label><select id="market-sort"><option value="volume">Reported volume</option><option value="probability">Highest probability</option><option value="closing">Closing soon</option></select></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="all-heading"><div class="section-title"><h2 id="all-heading">ALL MARKETS</h2><span id="result-count" aria-live="polite"></span></div><div class="market-grid" id="market-grid" aria-live="polite"><div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div></div></section>
+
+  <p class="srcnote data-note" style="margin-top:22px">A price of 62% means participants are collectively pricing that outcome at roughly a 62% chance. It is the crowd&rsquo;s current opinion with money behind it, not a measurement, and it moves. Each card states whether its lines are alternatives to one another or separate questions.</p>
+
+  <footer class="odds-disclosure"><strong>Not a Satstreet view.</strong> These figures are prices quoted on an independent prediction market, reproduced here for reference. Satstreet does not operate that market, take positions in it, verify its outcomes, or provide access to it. Nothing on this page is a Satstreet forecast, a recommendation, an offer, or an executable price.</footer>
+</main>
+<script src="./assets/terminal.js"></script>
+<script src="./assets/event-odds.js"></script>
+</body>
+</html>

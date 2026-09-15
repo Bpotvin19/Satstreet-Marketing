@@ -3,9 +3,15 @@ export default async function terminalRefresh(_request: Request, context: any) {
   const type = response.headers.get('content-type') || '';
   if (!type.includes('text/html')) return response;
 
+  /* This function exists for one reason on this branch: the layout CSS below,
+     which the pages are not carrying themselves yet.
+
+     The desk build also uses it to rewrite the greeting, strip the staff
+     avatar and patch the nav — inserting a Resources link and reordering two
+     tabs. None of that happens here. The client pages ship de-personalised and
+     in the right order already, and a nav rewrite that reinstated Resources
+     would put back the page this branch exists to remove. */
   let html = await response.text();
-  html = html.replace(/, Ben\./g, '.');
-  html = html.replace(/<span class="avatar"[^>]*>[^<]*<\/span>/g, '');
 
   const css = `<style data-terminal-refresh>
   .avatar{display:none!important}.mainnav{gap:1px}.mainnav a{padding-left:8px;padding-right:8px}
@@ -16,7 +22,7 @@ export default async function terminalRefresh(_request: Request, context: any) {
   @media(max-width:900px){.navtoggle{display:block!important}.mainnav{display:none!important;position:absolute;top:58px;left:0;right:0;z-index:40;flex-direction:column;gap:0;margin:0;padding:6px 0 10px;background:var(--navy)}.mainnav.open{display:flex!important}.mainnav a{height:auto;padding:12px 20px}.pagehead{min-height:0;padding-top:6px;gap:18px}.pagehead h1{font-size:32px}}
   </style>`;
 
-  const js = `<script data-terminal-refresh>(function(){function run(){var nav=document.getElementById('mainnav')||document.querySelector('.mainnav');if(nav){var links=[].slice.call(nav.querySelectorAll('a'));var chart=links.find(a=>/chart\\.html$/.test(a.getAttribute('href')||''));var structure=links.find(a=>/structure\\.html$/.test(a.getAttribute('href')||''));if(chart&&structure)nav.insertBefore(chart,structure);var r=nav.querySelector('a[href$="resources.html"]');if(!r){r=document.createElement('a');r.href='./resources.html';r.textContent='Resources';var p=links.find(a=>/portfolio\\.html$/.test(a.getAttribute('href')||''));nav.insertBefore(r,p||null)}if(/resources\\.html$/.test(location.pathname)){nav.querySelectorAll('a').forEach(a=>a.removeAttribute('aria-current'));r.setAttribute('aria-current','page')}}document.querySelectorAll('.avatar').forEach(x=>x.remove());var g=document.getElementById('greeting');if(g){var h=new Date().getHours();g.textContent='Good '+(h<12?'morning':h<17?'afternoon':'evening')+'.'}}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run()})();</script>`;
+  const js = `<script data-terminal-refresh>(function(){function run(){var g=document.getElementById('greeting');if(g){var h=new Date().getHours();g.textContent='Good '+(h<12?'morning':h<17?'afternoon':'evening')+'.'}}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run()})();</script>`;
 
   html = html.replace('</head>', css + '</head>').replace('</body>', js + '</body>');
 
