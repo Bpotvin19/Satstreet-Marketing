@@ -4,91 +4,35 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Satstreet · Event Odds</title>
-<meta name="description" content="Market-implied probabilities for rate, Bitcoin and macro outcomes, read from a public prediction market." />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<meta name="description" content="Third-party market-implied probabilities across crypto, macro and policy." />
 <link rel="stylesheet" href="./assets/terminal.css" />
-<style>
-  .source-row { display:flex; align-items:center; justify-content:space-between; gap:14px; margin:-5px 0 18px; color:var(--muted); font-size:12.5px; flex-wrap:wrap; }
-  .live { display:inline-flex; align-items:center; gap:7px; }
-  .live i { width:7px; height:7px; border-radius:50%; background:var(--faint); box-shadow:0 0 0 3px var(--border-2); }
-  .live i.on { background:var(--up); box-shadow:0 0 0 3px var(--up-soft); }
-  .live i.off { background:var(--down); box-shadow:0 0 0 3px var(--down-soft); }
-  /* Attribution is text, never a link. Polymarket is an exchange; a client
-     reading this page is one click from an order book if this becomes an <a>. */
-  .attrib { font-variant-numeric:tabular-nums; }
-  .attrib b { color:var(--ink-2); font-weight:600; }
-
-  .cat { margin:0 0 26px; }
-  .cat-h { display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin:0 0 11px; }
-  .cat-h h2 { font-size:16px; margin:0; }
-  .cat-h span { color:var(--faint); font-size:11px; letter-spacing:.55px; text-transform:uppercase; }
-  .events { display:grid; grid-template-columns:repeat(auto-fit,minmax(330px,1fr)); gap:14px; }
-
-  .ev { padding:0; overflow:hidden; display:flex; flex-direction:column; }
-  .ev-h { padding:15px 17px 12px; border-bottom:1px solid var(--border); }
-  .ev-h h3 { font-family:var(--font-display); font-size:16.5px; line-height:1.25; margin:0 0 7px; font-weight:600; }
-  .ev-meta { display:flex; gap:14px; flex-wrap:wrap; color:var(--muted); font-size:11.5px; font-variant-numeric:tabular-nums; }
-  .ev-meta b { color:var(--ink-2); font-weight:600; }
-  .rows { padding:5px 17px 14px; }
-  .basis { margin:9px 0 0; padding-top:9px; border-top:1px dashed var(--border); color:var(--faint); font-size:11.5px; line-height:1.4; }
-
-  .row { display:grid; grid-template-columns:1fr auto; gap:3px 12px; align-items:baseline; padding:9px 0 10px; border-bottom:1px solid var(--border-2); }
-  .row:last-child { border-bottom:0; }
-  .row .lab { font-size:13.5px; color:var(--ink-2); min-width:0; overflow-wrap:anywhere; }
-  .row .pct { font-family:var(--font-data); font-size:15px; font-weight:500; font-variant-numeric:tabular-nums; text-align:right; }
-  .row .bar { grid-column:1 / -1; height:5px; border-radius:3px; background:var(--border-2); overflow:hidden; margin-top:3px; }
-  .row .bar i { display:block; height:100%; border-radius:3px; background:var(--blue); }
-  .row.lead .lab { color:var(--ink); font-weight:600; }
-  .row.lead .bar i { background:var(--navy-2); }
-  .row .chg { grid-column:2; font-family:var(--font-data); font-size:11px; font-variant-numeric:tabular-nums; text-align:right; }
-  .chg.up { color:var(--up); } .chg.down { color:var(--down); } .chg.flat { color:var(--faint); }
-
-  .empty { padding:22px 18px; color:var(--muted); font-size:13.5px; }
-  .empty b { display:block; color:var(--ink); font-size:14.5px; margin-bottom:4px; }
-  .skeleton { height:112px; border-radius:var(--radius); background:linear-gradient(100deg,var(--border-2),#f7f9fc 40%,var(--border-2)); }
-  @media (max-width:520px) { .events { grid-template-columns:1fr; } }
-</style>
+<link rel="stylesheet" href="./assets/event-odds.css" />
 </head>
 <body>
-
 <div id="shell-header"></div>
+<main class="wrap odds-page">
+  <header class="odds-head">
+    <div><p class="eyebrow">Third-party prediction-market data</p><h1>EVENT ODDS</h1><p>Market-implied probabilities across crypto, macro and policy.</p></div>
+    <div class="feedstate"><i class="pip" id="pip"></i><span id="feed-status">Loading current markets…</span></div>
+  </header>
 
-<main class="wrap">
-
-  <div class="pagehead">
-    <div>
-      <p class="eyebrow">Market-implied probability</p>
-      <div class="page-title-row">
-        <span class="page-emblem" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 17l5-5 4 3 6-7"/><path d="M14 8h5v5"/></svg></span>
-        <h1>Event Odds</h1>
-      </div>
-      <p>What a liquid prediction market currently prices for rate decisions, Bitcoin levels and the macro backdrop.</p>
+  <section class="odds-toolbar" aria-label="Market controls">
+    <label class="market-search"><span class="sr">Search markets</span><input id="market-search" type="search" placeholder="Search markets..." autocomplete="off" /></label>
+    <nav class="category-tabs" id="category-tabs" aria-label="Market categories"></nav>
+    <div class="control-row">
+      <dl class="market-stats">
+        <div><dt>Active markets</dt><dd id="active-count">—</dd></div>
+        <div><dt>Reported volume</dt><dd id="total-volume">—</dd></div>
+        <div><dt>Last updated</dt><dd id="updated-at">—</dd></div>
+      </dl>
+      <div class="sort-control"><label for="market-sort">Sort</label><select id="market-sort"><option value="volume">Reported volume</option><option value="probability">Highest probability</option><option value="closing">Closing soon</option></select></div>
     </div>
-  </div>
+  </section>
 
-  <div class="source-row">
-    <span class="live"><i id="pip"></i><span id="status">Loading current odds…</span></span>
-    <span class="attrib">Source: <b>Polymarket</b> · public market data</span>
-  </div>
+  <section aria-labelledby="all-heading"><div class="section-title"><h2 id="all-heading">ALL MARKETS</h2><span id="result-count" aria-live="polite"></span></div><div class="market-grid" id="market-grid" aria-live="polite"><div class="odds-state">Loading current markets…</div></div></section>
 
-  <div id="board" aria-live="polite">
-    <div class="cat"><div class="events"><div class="skeleton"></div><div class="skeleton"></div></div></div>
-    <div class="cat"><div class="events"><div class="skeleton"></div><div class="skeleton"></div></div></div>
-  </div>
-
-  <div class="srcnote data-note">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
-    <span>A market price of 62% means participants are collectively pricing that outcome at roughly a 62% chance. It is the crowd&rsquo;s current opinion with money behind it, not a measurement, and it moves. Each card states whether its lines are alternatives to one another or separate questions.</span>
-  </div>
-
-  <div class="disclosure">
-    <p><strong>Not a Satstreet view.</strong> These figures are prices quoted on Polymarket, an independent prediction market, reproduced here for reference. Satstreet does not operate that market, does not take positions in it, and does not provide access to it. Nothing on this page is a Satstreet forecast, a recommendation, an offer, or an executable price.</p>
-  </div>
-
+  <footer class="odds-disclosure"><strong>Third-party data.</strong> Prediction-market probabilities are third-party market data and do not represent Satstreet views, forecasts or investment recommendations. Satstreet does not operate the prediction market, verify outcomes, or offer betting or prediction-market execution.</footer>
 </main>
-
 <script src="./assets/terminal.js"></script>
 <script src="./assets/event-odds.js"></script>
 </body>

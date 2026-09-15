@@ -1,152 +1,19 @@
-/* ──────────────────────────────────────────────────────────────────────────
-   Event Odds.
-
-   Renders whatever /api/forecasts returns and nothing else. The endpoint has
-   already stripped every Polymarket identifier, so there is no slug, no
-   condition id and no token id in scope here — this file could not build a
-   link to a venue if it tried, which is the point.
-
-   The page states probabilities and declines to interpret them. No "this
-   implies", no "the desk reads this as". A number with a source and a
-   timestamp is reporting; the sentence after it would be advice.
-   ────────────────────────────────────────────────────────────────────────── */
-(function () {
-  'use strict';
-
-  var S = window.SATSTREET;
-  var $ = function (id) { return document.getElementById(id); };
-  var esc = S.esc;
-  S.mountHeader('Event Odds');
-
-  var REFRESH_MS = 120000;
-
-  function pct(p) {
-    if (p === null || p === undefined || !isFinite(p)) return '—';
-    var v = p * 100;
-    // Sub-1% outcomes are real and worth showing as "<1%" rather than "0%",
-    // which reads as impossible when the market is merely saying unlikely.
-    if (v > 0 && v < 1) return '<1%';
-    if (v > 99 && v < 100) return '>99%';
-    return Math.round(v) + '%';
-  }
-
-  function money(v) {
-    if (v === null || v === undefined || !isFinite(v)) return '—';
-    if (v >= 1e9) return '$' + (v / 1e9).toFixed(1) + 'B';
-    if (v >= 1e6) return '$' + Math.round(v / 1e6) + 'M';
-    if (v >= 1e3) return '$' + Math.round(v / 1e3) + 'K';
-    return '$' + Math.round(v);
-  }
-
-  function closes(iso) {
-    if (!iso) return '';
-    var d = new Date(iso);
-    if (isNaN(d)) return '';
-    var days = Math.ceil((d - new Date()) / 86400000);
-    var when = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    if (days < 0) return 'Closed ' + when;
-    if (days === 0) return 'Resolves today';
-    if (days === 1) return 'Resolves tomorrow';
-    if (days <= 45) return 'Resolves in ' + days + ' days';
-    return 'Resolves ' + when;
-  }
-
-  /* A week of drift, shown only when the feed actually carried it. Polymarket
-     leaves oneWeekPriceChange null on young markets, and an absent change is
-     not a flat one. */
-  function change(c) {
-    if (c === null || c === undefined || !isFinite(c)) return '';
-    var pts = c * 100;
-    if (Math.abs(pts) < 0.5) return '<span class="chg flat">flat on the week</span>';
-    var cls = pts > 0 ? 'up' : 'down';
-    return '<span class="chg ' + cls + '">' + (pts > 0 ? '+' : '') + pts.toFixed(0) + ' pts on the week</span>';
-  }
-
-  function rowHtml(o, isLead) {
-    var width = Math.max(0, Math.min(100, (o.probability || 0) * 100));
-    return '<div class="row' + (isLead ? ' lead' : '') + '">' +
-      '<span class="lab">' + esc(o.label) + '</span>' +
-      '<span class="pct">' + pct(o.probability) + '</span>' +
-      '<span class="bar"><i style="width:' + width.toFixed(1) + '%"></i></span>' +
-      change(o.changeWeek) +
-      '</div>';
-  }
-
-  /* Two kinds of card, and the reader has to be told which one they are
-     looking at. An exclusive group is a single question with one answer, and
-     its rows sum to about 100. A non-exclusive group is several independent
-     questions sharing a heading — "will Bitcoin touch 75k", "touch 85k" — and
-     its rows sum to whatever they sum to, often far past 100. Unlabelled,
-     the second kind reads as a broken page. */
-  function basisHtml(ev) {
-    if (ev.outcomes.length < 2) return '';
-    return ev.exclusive
-      ? '<p class="basis">One of these resolves Yes. Prices sum to about 100%.</p>'
-      : '<p class="basis">Each line is priced as its own question. They are not alternatives and do not sum to 100%.</p>';
-  }
-
-  function eventHtml(ev) {
-    var rows = ev.outcomes.map(function (o, i) { return rowHtml(o, i === 0 && ev.exclusive); }).join('');
-    var meta = [];
-    var c = closes(ev.endDate);
-    if (c) meta.push('<span>' + esc(c) + '</span>');
-    if (ev.volume) meta.push('<span><b>' + money(ev.volume) + '</b> traded</span>');
-    return '<section class="card ev visual-card">' +
-      '<div class="ev-h"><h3>' + esc(ev.question) + '</h3>' +
-      '<div class="ev-meta">' + meta.join('') + '</div>' +
-      basisHtml(ev) + '</div>' +
-      '<div class="rows">' + rows + '</div>' +
-      '</section>';
-  }
-
-  function categoryHtml(cat) {
-    var body;
-    if (!cat.available) {
-      body = '<div class="card empty"><b>Odds unavailable</b>' +
-        'The market data source could not be reached. Nothing is shown rather than ' +
-        'showing a stale or partial book.</div>';
-    } else if (!cat.events.length) {
-      body = '<div class="card empty"><b>No open markets</b>' +
-        'Nothing in this category is currently trading.</div>';
-    } else {
-      body = cat.events.map(eventHtml).join('');
-    }
-    return '<div class="cat">' +
-      '<div class="cat-h"><h2>' + esc(cat.label) + '</h2>' +
-      '<span>' + (cat.available ? cat.events.length + (cat.events.length === 1 ? ' market' : ' markets') : 'unavailable') + '</span></div>' +
-      '<div class="events">' + body + '</div></div>';
-  }
-
-  function setStatus(text, state) {
-    $('status').textContent = text;
-    $('pip').className = state || '';
-  }
-
-  function fail(message) {
-    setStatus(message, 'off');
-    $('board').innerHTML =
-      '<div class="card empty"><b>Odds unavailable</b>' +
-      'Event odds are temporarily unavailable. ' +
-      '<a href="#" id="retry">Try again</a></div>';
-    var r = $('retry');
-    if (r) r.addEventListener('click', function (e) { e.preventDefault(); load(); });
-  }
-
-  function load() {
-    fetch('/api/forecasts', { headers: { accept: 'application/json' } })
-      .then(function (r) {
-        if (!r.ok) throw new Error('http ' + r.status);
-        return r.json();
-      })
-      .then(function (d) {
-        if (!d || !d.available) { fail('Odds unavailable'); return; }
-        $('board').innerHTML = d.categories.map(categoryHtml).join('');
-        var t = new Date(d.asOf);
-        setStatus('Odds as of ' + t.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }), 'on');
-      })
-      .catch(function () { fail('Odds unavailable'); });
-  }
-
-  load();
-  setInterval(load, REFRESH_MS);
+(function(){'use strict';var S=window.SATSTREET,$=function(id){return document.getElementById(id)},esc=S.esc;S.mountHeader('Event Odds');
+  var nav=document.getElementById('mainnav');if(nav&&!nav.querySelector('a[href="./event-odds.html"]')){var a=document.createElement('a');a.href='./event-odds.html';a.textContent='Event Odds';a.setAttribute('aria-current','page');nav.insertBefore(a,nav.lastElementChild)}
+  var CATEGORIES=['All','Bitcoin','Crypto','Fed','Rates','Inflation','AI','Politics','Geopolitics','Oil','Commodities'];var markets=[],category='All',query='',sort='volume',source='Third-party market';
+  function pct(p){if(p===null||p===undefined||!isFinite(p))return'—';var v=p*100;if(v>0&&v<1)return'<1%';if(v>99&&v<100)return'>99%';return Math.round(v)+'%'}
+  function money(v){if(v===null||v===undefined||!isFinite(v))return'—';if(v>=1e9)return'$'+(v/1e9).toFixed(1)+'B';if(v>=1e6)return'$'+(v/1e6).toFixed(v<1e7?1:0)+'M';if(v>=1e3)return'$'+Math.round(v/1e3)+'K';return'$'+Math.round(v)}
+  function dateLabel(iso){if(!iso)return'Unavailable';var d=new Date(iso);if(isNaN(d))return'Unavailable';return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:d.getFullYear()!==new Date().getFullYear()?'numeric':undefined})}
+  function classify(group,ev){var t=(group+' '+ev.question+' '+ev.outcomes.map(function(o){return o.label}).join(' ')).toLowerCase();if(/bitcoin|\bbtc\b/.test(t))return'Bitcoin';if(/ethereum|crypto|solana|stablecoin|token/.test(t))return'Crypto';if(/federal reserve|\bfed\b/.test(t))return'Fed';if(/rate|bps|yield/.test(t))return'Rates';if(/inflation|cpi|pce/.test(t))return'Inflation';if(/artificial intelligence|\bai\b|openai|anthropic/.test(t))return'AI';if(/election|president|senate|congress|politic/.test(t))return'Politics';if(/war|ceasefire|geopolit|nato|sanction/.test(t))return'Geopolitics';if(/\boil\b|brent|wti|opec/.test(t))return'Oil';if(/gold|silver|copper|commodity|commodities/.test(t))return'Commodities';return group}
+  function flatten(d){var out=[];(d.categories||[]).forEach(function(g){if(g.available===false)return;(g.events||[]).forEach(function(ev,i){var outcomes=(ev.outcomes||[]).filter(function(o){return o.probability!==null&&o.probability!==undefined}).slice().sort(function(a,b){return b.probability-a.probability});if(!outcomes.length)return;out.push({id:g.label+'-'+i,group:g.label,category:classify(g.label,ev),question:ev.question,endDate:ev.endDate||null,volume:isFinite(ev.volume)?ev.volume:null,exclusive:!!ev.exclusive,outcomes:outcomes,lead:outcomes[0]})})});return out}
+  function tabs(){var present={};markets.forEach(function(m){present[m.category]=true});$('category-tabs').innerHTML=CATEGORIES.map(function(c){var disabled=c!=='All'&&!present[c];return'<button type="button" data-category="'+c+'" aria-pressed="'+(c===category)+'"'+(disabled?' disabled':'')+'>'+c+'</button>'}).join('');$('category-tabs').querySelectorAll('button:not([disabled])').forEach(function(b){b.onclick=function(){category=b.dataset.category;tabs();render()}})}
+  function move(c){if(c===null||c===undefined||!isFinite(c))return'';var n=c*100;if(Math.abs(n)<.5)return'<span class="move">Flat 7d</span>';return'<span class="move '+(n>0?'up':'down')+'">'+(n>0?'+':'')+Math.round(n)+' pts 7d</span>'}
+  function outcome(o){var w=Math.max(0,Math.min(100,o.probability*100));return'<div class="outcome"><span class="outcome-label">'+esc(o.label)+'</span><span class="outcome-pct">'+pct(o.probability)+'</span><span class="prob-bar"><i style="width:'+w.toFixed(1)+'%"></i></span></div>'}
+  function card(m){var shown=m.outcomes.slice(0,4),extra=m.outcomes.slice(4);return'<article class="market-card" data-market-id="'+esc(m.id)+'"><div class="market-card-head"><span class="market-icon" aria-hidden="true">'+esc((m.category||m.group).slice(0,2).toUpperCase())+'</span><span class="market-category">'+esc(m.category)+'</span></div><h3>'+esc(m.question)+'</h3><div class="probability-lead"><span class="lead-outcome">'+esc(m.lead.label)+'</span><span class="lead-number">'+pct(m.lead.probability)+'<small>LEADING</small></span></div><div class="outcome-list">'+shown.map(outcome).join('')+(extra.length?'<details><summary class="link">Show '+extra.length+' more outcomes</summary>'+extra.map(outcome).join('')+'</details>':'')+'</div><div class="market-card-foot"><div class="meta-line"><span><strong>'+money(m.volume)+'</strong> volume</span><span>'+dateLabel(m.endDate)+'</span>'+move(m.lead.changeWeek)+'</div><p class="basis-note">'+(m.exclusive?'Mutually exclusive outcomes':'Independent outcome questions')+'</p><div class="source-line">Source: '+esc(source)+' · Last updated '+esc($('updated-at').textContent)+'</div></div></article>'}
+  function filtered(){var q=query.toLowerCase();var list=markets.filter(function(m){var hay=[m.question,m.category,m.group].concat(m.outcomes.map(function(o){return o.label})).join(' ').toLowerCase();return(category==='All'||m.category===category)&&(!q||hay.indexOf(q)>-1)});return list.sort(function(a,b){if(sort==='probability')return b.lead.probability-a.lead.probability;if(sort==='closing')return(a.endDate?new Date(a.endDate).getTime():Infinity)-(b.endDate?new Date(b.endDate).getTime():Infinity);return(b.volume||-1)-(a.volume||-1)})}
+  function render(){var list=filtered();$('result-count').textContent=list.length+' market'+(list.length===1?'':'s');if(!list.length){$('market-grid').innerHTML='<div class="odds-state"><strong>'+(query?'No markets match your search.':'No active markets in this category.')+'</strong>Try another search or category.</div>';return}$('market-grid').innerHTML=list.map(card).join('')}
+  function status(text,on){$('feed-status').textContent=text;$('pip').className='pip '+(on?'ok':'bad')}
+  function fail(){$('active-count').textContent='—';$('total-volume').textContent='—';$('updated-at').textContent='Unavailable';status('Data temporarily unavailable',false);$('market-grid').innerHTML='<div class="odds-state"><strong>Prediction-market data is temporarily unavailable.</strong>No stale or fabricated values are shown.<br><button class="btn small" id="retry" type="button">Try again</button></div>';$('result-count').textContent='';$('retry').onclick=load}
+  function load(){status('Loading current markets…',false);fetch('/api/forecasts',{headers:{accept:'application/json'}}).then(function(r){if(!r.ok)throw new Error('unavailable');return r.json()}).then(function(d){if(!d||!d.available)throw new Error('unavailable');markets=flatten(d);source=d.source||'Third-party market';var volume=markets.reduce(function(n,m){return n+(m.volume||0)},0),time=new Date(d.asOf);$('active-count').textContent=markets.length;$('total-volume').textContent=volume?money(volume):'Unavailable';$('updated-at').textContent=isNaN(time)?'Unavailable':time.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});status('Live third-party feed',true);tabs();render()}).catch(fail)}
+  $('market-search').addEventListener('input',function(e){query=e.target.value.trim();render()});$('market-sort').addEventListener('change',function(e){sort=e.target.value;render()});$('category-tabs').innerHTML=CATEGORIES.map(function(c){return'<button type="button" disabled>'+c+'</button>'}).join('');load();setInterval(load,120000)
 })();
