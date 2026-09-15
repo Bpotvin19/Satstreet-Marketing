@@ -52,6 +52,8 @@
 }
 .market-stats dt { color: var(--faint); font-size: 10.5px; letter-spacing: .6px; text-transform: uppercase; margin-bottom: 5px; }
 .market-stats dd { margin: 0; font-family: var(--font-data); font-size: 17px; font-variant-numeric: tabular-nums; color: var(--ink); }
+/* The source is a name, not a measurement. It takes the body face. */
+.market-stats dd#source-name { font-family: var(--font); font-size: 16px; }
 
 .odds-controls { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin: 0 0 26px; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -144,7 +146,9 @@
 .market-card-foot { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--border-2); display: flex; flex-direction: column; gap: 6px; }
 .meta-line { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; color: var(--muted); font-size: 12px; }
 .meta-line strong { color: var(--ink-2); font-weight: 600; font-family: var(--font-data); font-variant-numeric: tabular-nums; }
-.move { font-family: var(--font-data); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+/* A sentence with a number in it. Body face, with lining figures so the
+   number still sits straight against the volume beside it. */
+.move { font-size: 12px; font-variant-numeric: tabular-nums; }
 .move.up { color: var(--up); } .move.down { color: var(--down); } .move.flat { color: var(--faint); }
 .basis-note { margin: 0; color: var(--faint); font-size: 11.5px; line-height: 1.45; }
 .source-line { color: var(--faint); font-size: 11px; }
