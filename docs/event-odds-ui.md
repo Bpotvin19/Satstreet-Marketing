@@ -1,31 +1,61 @@
 # Event Odds UI
 
-## Design intent
+## The one idea
 
-The page combines prediction-market information density with Satstreet's restrained institutional terminal language. Probability is the dominant signal; the interface contains no trading actions, wallets, balances or venue branding.
+A market's shape is drawn the way the market is actually built.
 
-## Page structure
+An **exclusive** market — the Fed decision, where exactly one outcome resolves
+Yes — is a single distribution, so it gets **one segmented bar** with a legend.
+You see 88% of the mass sitting on one outcome without reading a number.
 
-Compact title and feed state; search; scrollable category filters; active-market, reported-volume and update statistics; supported sort control; responsive market grid; third-party disclosure.
+An **independent** group — "will Bitcoin touch 75k", "touch 85k" — is several
+separate questions that happen to share a heading. Those get **separate
+tracks**. Drawing them as one bar would assert a relationship that is not
+there, and would sum past 100% while doing it.
 
-## Market-card anatomy
+The endpoint already tells us which is which (`exclusive`, from upstream's
+`negRisk`). This turns that flag from a footnote into the page's main visual
+language, and each card still states its basis in words underneath.
 
-Category and compact text icon, event question, leading outcome and probability, all remaining outcomes with proportional bars, reported volume, resolution date, optional seven-day probability move, source and update time. Exclusive and independent-outcome groups are explicitly distinguished.
+## Featured market
 
-## Filters and sorting
+One market spans the grid, chosen by **what is about to happen** rather than by
+size: the soonest to resolve, subject to a volume floor of 10% of the largest
+market on the page so a thin near-dated curiosity cannot take the slot. If
+nothing resolves within 45 days, nothing is featured and the grid is uniform.
 
-Search matches question, normalized category, source group and outcome labels. Categories include All, Bitcoin, Crypto, Fed, Rates, Inflation, AI, Politics, Geopolitics, Oil and Commodities. Categories absent from the current feed are disabled. Supported sorting is reported volume, highest leading probability and closing soon.
+A market settling tomorrow is what a client opened the page for, and it should
+not look like one settling in fourteen months. Resolution proximity is also a
+chip on every card, warm-toned inside two weeks.
 
-Trending, biggest move, recently added and 24-hour volume are not offered because the current feed does not provide reliable fields for them.
+## Categories
 
-## Data and source behavior
+Derived from the feed, never a fixed list. A hardcoded list produced six
+permanently disabled chips — AI, Politics, Geopolitics, Oil, Commodities,
+Rates — advertising sections `/api/forecasts` never returns. A disabled filter
+is a promise the page cannot keep.
 
-The page preserves the existing same-origin `/api/forecasts` integration. No static market records are bundled. Missing values display as unavailable, and a failed request replaces the grid with a retryable professional error state. Current upstream attribution is displayed on every card.
+## What is deliberately absent
 
-## Disclaimer
+No anchors of any kind. The endpoint strips every venue identifier, so the page
+has nothing to build a link from, and the tests assert the renderer emits no
+`<a>` and contains no venue host. Attribution is plain text in the toolbar —
+stated once, rather than repeated on all fourteen cards.
 
-Prediction-market probabilities are third-party market data. They do not represent Satstreet views, forecasts or investment recommendations. Satstreet does not operate the venue, verify outcomes, or provide prediction-market execution.
+No interpretation. No "this implies", no desk reading. A number with a source
+and a timestamp is reporting; the sentence after it would be advice.
 
-## Known limitations and future improvements
+## Known repetition
 
-The current endpoint exposes reported total volume rather than 24-hour volume and provides no stable trending or recently-added signal. Future API additions could support those controls, richer resolution rules and an expandable detail panel without introducing execution functionality.
+The leading outcome appears twice on each card: once as the headline figure,
+once in the legend or track list below. This is summary-then-detail and is
+intentional — the legend must label every segment of the bar, including the
+largest, or the bar has an unlabelled region. It is not the same as the earlier
+layout, which printed two visually identical adjacent rows plus a redundant
+`LEADING` badge.
+
+## Data behaviour
+
+Same-origin `/api/forecasts`, refreshed every two minutes. No bundled fixtures.
+A failed or empty response replaces the grid with a retryable state that shows
+nothing stale or estimated in place of real numbers.
