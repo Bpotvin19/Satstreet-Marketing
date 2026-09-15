@@ -1,24 +1,48 @@
-# Netlify build settings for the public site.
+# Netlify build settings for the client-facing site.
+#
+# This branch is the client cut of the terminal. It carries the same market
+# pages as the desk build, minus the two that were never client material: the
+# Macro Desk news page and the Resource Centre. Both are gone from the tree
+# here rather than hidden behind a nav that a curious visitor could walk past,
+# and so are the endpoints that fed them.
 
 [build]
   publish = "public"
-  # Pre-render the Notion-backed Resource Centre into static JSON before each
-  # deploy. This keeps Notion as the editorial source of truth while making the
-  # client experience load from Netlify's CDN instead of waiting on Notion.
-  command = "node scripts/build-resource-cache.mjs"
+  # Nothing is compiled. The desk build pre-renders the Notion-backed Resource
+  # Centre here; this branch has no Resource Centre, so there is nothing to
+  # pre-render. Left to guess, Netlify would go looking for a build, and the
+  # scripts in package.json start a long-running Telegram bot rather than
+  # producing static output.
+  command = "echo 'client site — nothing to build'"
 
 [functions]
   directory = "netlify/functions"
 
+# Overview is the front page.
+#
+# The desk build answers "/" with news.html. That page does not exist on this
+# branch, so the client site opens on Overview instead — the cross-asset
+# monitor, which is the page a client has a reason to land on.
+#
+# status = 200 makes this a rewrite rather than a redirect: the visitor stays
+# on "/" and the address bar does not change.
 [[redirects]]
   from = "/"
-  to = "/news.html"
+  to = "/overview.html"
   status = 200
 
-[[headers]]
-  for = "/data/resources/*"
-  [headers.values]
-    Cache-Control = "public, max-age=300, stale-while-revalidate=3600"
+# The desk build's own pages are not merely unlinked here, they are absent.
+# Anyone arriving on a bookmarked or indexed URL gets the front page rather
+# than a 404, which says less about what else exists.
+[[redirects]]
+  from = "/news.html"
+  to = "/overview.html"
+  status = 302
+
+[[redirects]]
+  from = "/resources.html"
+  to = "/overview.html"
+  status = 302
 
 [[headers]]
   for = "/*"

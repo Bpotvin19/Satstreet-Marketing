@@ -1,0 +1,478 @@
+<title>Satstreet Implementation Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+:root{
+  --navy:#0D1B2E; --ink:#152539; --paper:#F5F7F9; --surface:#FFFFFF; --sunk:#EDF0F4;
+  --rule:#DDE3EA; --rule-soft:#E9EDF2; --muted:#59697A; --faint:#8695A6;
+  --client:#1A5FD0; --client-bg:#E8F0FD;
+  --desk:#8A5D0F; --desk-bg:#FAF1DE;
+  --done:#2B6E52; --done-bg:#E6F2EC;
+  --open:#A8481B; --open-bg:#FBEDE5;
+  --measure:68ch;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --navy:#070E18; --ink:#E4EBF3; --paper:#0B141F; --surface:#131F2C; --sunk:#0F1926;
+    --rule:#26333F; --rule-soft:#1D2835; --muted:#93A4B6; --faint:#6E8095;
+    --client:#7FADF7; --client-bg:#16273D;
+    --desk:#DCA84B; --desk-bg:#2E2515;
+    --done:#63C295; --done-bg:#14291F;
+    --open:#EB8F63; --open-bg:#2E1C12;
+  }
+}
+:root[data-theme="dark"]{
+  --navy:#070E18; --ink:#E4EBF3; --paper:#0B141F; --surface:#131F2C; --sunk:#0F1926;
+  --rule:#26333F; --rule-soft:#1D2835; --muted:#93A4B6; --faint:#6E8095;
+  --client:#7FADF7; --client-bg:#16273D;
+  --desk:#DCA84B; --desk-bg:#2E2515;
+  --done:#63C295; --done-bg:#14291F;
+  --open:#EB8F63; --open-bg:#2E1C12;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:16px; line-height:1.62; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:860px; margin:0 auto; padding-inline:22px; padding-block:0 72px}
+
+/* masthead */
+.mast{background:var(--navy); color:#E9EFF6; margin-bottom:44px}
+.mast-in{max-width:860px; margin:0 auto; padding-inline:22px; padding-block:38px 34px}
+.kicker{font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.14em;
+  text-transform:uppercase; color:#8FA6BE; margin:0 0 14px}
+.mast h1{font-family:"IBM Plex Serif",Georgia,serif; font-weight:600; font-size:clamp(30px,5.2vw,44px);
+  line-height:1.1; letter-spacing:-.015em; margin:0 0 14px; text-wrap:balance; color:#fff}
+.dek{font-size:17px; line-height:1.55; color:#B9C9DA; margin:0; max-width:56ch}
+.meta{display:flex; flex-wrap:wrap; gap:8px 26px; margin-top:26px; padding-top:20px;
+  border-top:1px solid rgba(255,255,255,.14); font-family:"IBM Plex Mono",monospace;
+  font-size:12px; color:#8FA6BE}
+.meta b{color:#D6E2EE; font-weight:500}
+
+/* sections */
+section{margin-bottom:46px; scroll-margin-top:16px}
+h2{font-family:"IBM Plex Serif",Georgia,serif; font-weight:600; font-size:25px; line-height:1.22;
+  letter-spacing:-.01em; margin:0 0 4px; text-wrap:balance;
+  display:flex; gap:14px; align-items:baseline}
+h2 .n{font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:500; color:var(--faint);
+  letter-spacing:.06em; flex:none; padding-top:2px}
+.sub{color:var(--muted); font-size:14.5px; margin:0 0 20px 34px; max-width:var(--measure)}
+h3{font-family:"IBM Plex Sans",sans-serif; font-weight:600; font-size:15px; letter-spacing:.005em;
+  margin:26px 0 8px; color:var(--ink)}
+p{margin:0 0 14px; max-width:var(--measure)}
+ul{margin:0 0 14px; padding-left:19px; max-width:var(--measure)}
+li{margin-bottom:7px}
+a{color:var(--client); text-decoration-thickness:1px; text-underline-offset:2px}
+a:focus-visible{outline:2px solid var(--client); outline-offset:3px; border-radius:2px}
+code{font-family:"IBM Plex Mono",monospace; font-size:.875em; background:var(--sunk);
+  padding:1px 5px; border-radius:3px; color:var(--ink)}
+strong{font-weight:600}
+hr{border:0; border-top:1px solid var(--rule); margin:0 0 44px}
+
+/* pull statement */
+.claim{border-left:3px solid var(--desk); background:var(--desk-bg); padding:15px 18px;
+  margin:0 0 18px; max-width:var(--measure); border-radius:0 4px 4px 0}
+.claim p{margin:0; font-size:15.5px}
+.claim p+p{margin-top:9px}
+
+/* two-column split */
+.split{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:0 0 18px}
+@media(max-width:620px){.split{grid-template-columns:1fr}}
+.pane{border:1px solid var(--rule); border-radius:5px; background:var(--surface); padding:17px 18px}
+.pane-h{display:flex; align-items:center; gap:9px; margin:0 0 12px}
+.dot{width:9px; height:9px; border-radius:50%; flex:none}
+.pane-h b{font-size:13px; letter-spacing:.03em; text-transform:uppercase;
+  font-family:"IBM Plex Mono",monospace; font-weight:500}
+.pane ul{margin:0; padding-left:17px; font-size:14.5px; max-width:none}
+.pane li{margin-bottom:6px}
+.pane.client .dot{background:var(--client)} .pane.client .pane-h b{color:var(--client)}
+.pane.desk .dot{background:var(--desk)} .pane.desk .pane-h b{color:var(--desk)}
+
+/* tables */
+.tw{overflow-x:auto; margin:0 0 18px; border:1px solid var(--rule); border-radius:5px; background:var(--surface)}
+table{border-collapse:collapse; width:100%; font-size:14px; min-width:520px}
+th{text-align:left; font-family:"IBM Plex Mono",monospace; font-weight:500; font-size:11px;
+  letter-spacing:.08em; text-transform:uppercase; color:var(--muted);
+  padding:11px 14px; border-bottom:1px solid var(--rule); background:var(--sunk); white-space:nowrap}
+td{padding:11px 14px; border-bottom:1px solid var(--rule-soft); vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.mono,th.num{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums}
+.tag{display:inline-block; font-family:"IBM Plex Mono",monospace; font-size:10.5px; font-weight:500;
+  letter-spacing:.05em; text-transform:uppercase; padding:2.5px 7px; border-radius:3px; white-space:nowrap}
+.t-done{background:var(--done-bg); color:var(--done)}
+.t-open{background:var(--open-bg); color:var(--open)}
+.t-john{background:var(--client-bg); color:var(--client)}
+
+/* diagram */
+figure{margin:0 0 18px}
+.dia{border:1px solid var(--rule); border-radius:5px; background:var(--surface); padding:6px; overflow-x:auto}
+.dia svg{display:block; width:100%; min-width:540px; height:auto; max-width:100%}
+figcaption{font-size:13px; color:var(--muted); margin-top:9px; max-width:var(--measure)}
+
+/* command grid */
+.cmds{display:flex; flex-wrap:wrap; gap:6px; margin:0 0 16px; max-width:var(--measure)}
+.cmds span{font-family:"IBM Plex Mono",monospace; font-size:12.5px; padding:3px 8px;
+  border:1px solid var(--rule); border-radius:3px; background:var(--surface); color:var(--muted)}
+
+/* ask list */
+.ask{border:1px solid var(--rule); border-left:3px solid var(--client); border-radius:0 5px 5px 0;
+  background:var(--surface); padding:16px 18px; margin:0 0 12px; max-width:var(--measure)}
+.ask h3{margin:0 0 6px; font-size:15px}
+.ask p{margin:0; font-size:14.5px; color:var(--muted)}
+.ask .why{margin-top:8px; font-size:13.5px; color:var(--muted)}
+.ask .why b{color:var(--ink); font-weight:600}
+
+/* timeline */
+.tl{border-left:2px solid var(--rule); margin:0 0 18px; padding-left:0; list-style:none; max-width:var(--measure)}
+.tl li{position:relative; padding:0 0 22px 22px; margin:0}
+.tl li::before{content:""; position:absolute; left:-6px; top:7px; width:10px; height:10px;
+  border-radius:50%; background:var(--surface); border:2px solid var(--client)}
+.tl li:last-child{padding-bottom:0}
+.tl .when{font-family:"IBM Plex Mono",monospace; font-size:11.5px; letter-spacing:.05em;
+  text-transform:uppercase; color:var(--client); display:block; margin-bottom:3px}
+.tl b{display:block; font-size:15px; margin-bottom:3px}
+.tl p{margin:0; font-size:14.5px; color:var(--muted)}
+
+/* gate note */
+.note{font-size:14px; color:var(--muted); border-top:1px solid var(--rule); padding-top:14px;
+  margin-top:22px; max-width:var(--measure)}
+.foot{border-top:1px solid var(--rule); padding-top:22px; margin-top:8px;
+  font-size:13.5px; color:var(--muted); max-width:var(--measure)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+</style>
+
+<header class="mast">
+  <div class="mast-in">
+    <p class="kicker">Implementation Review · Internal</p>
+    <h1>Two products, one boundary, and what it takes to run them</h1>
+    <p class="dek">Where the client terminal and the internal AI system stand today, what separates them, and the five things engineering needs to own before either runs unattended.</p>
+    <div class="meta">
+      <span><b>Prepared by</b> Ben Potvin</span>
+      <span><b>For</b> Mike, Jon</span>
+      <span><b>Date</b> 15 September 2026</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+<section>
+  <h2><span class="n">01</span> The client product</h2>
+  <p class="sub">A public market terminal. No login, no client data, nothing to breach.</p>
+  <p>The client-facing product is a browser terminal at a Satstreet URL that any prospect or client can open. It carries seven tabs:</p>
+  <div class="tw"><table>
+    <thead><tr><th>Tab</th><th>What it shows</th><th class="num">Data source</th></tr></thead>
+    <tbody>
+      <tr><td><b>Overview</b></td><td>Cross-asset monitor — BTC, ETH, gold, oil, USD/CAD, 10Y, Nasdaq, S&amp;P — plus the morning desk note</td><td class="mono">/api/market · /api/desknote</td></tr>
+      <tr><td><b>Markets</b></td><td>Ranked board of the top 50 assets, stablecoins excluded</td><td class="mono">CoinGecko</td></tr>
+      <tr><td><b>Chart</b></td><td>Price history for any listed asset</td><td class="mono">/api/history</td></tr>
+      <tr><td><b>Structure</b></td><td>Market structure and mempool conditions</td><td class="mono">/api/structure</td></tr>
+      <tr><td><b>Treasuries</b></td><td>Public companies holding BTC and ETH, with filings</td><td class="mono">/api/treasuries</td></tr>
+      <tr><td><b>Explorer</b></td><td>Native Bitcoin block, transaction and address lookup</td><td class="mono">/api/bitcoin/*</td></tr>
+      <tr><td><b>Portfolio</b></td><td>Watch-only address tracking with estimated P&amp;L</td><td class="mono">mempool.space</td></tr>
+    </tbody>
+  </table></div>
+  <div class="claim">
+    <p><b>The product is a reference tool, not a brochure.</b> A prospect evaluating a counterparty can look up a block, check a treasury filing, or watch the basis without talking to anyone. That it keeps working when nobody is selling to them is the point.</p>
+  </div>
+  <p>Portfolio is watch-only and reads public chain data from an address the visitor supplies. It is not a Satstreet account balance and does not claim to be tax cost basis — that disclaimer is in the page, not just in this memo.</p>
+</section>
+
+<hr>
+
+<section>
+  <h2><span class="n">02</span> The internal AI system</h2>
+  <p class="sub">Notion is the system of record. Everything else reads from it or writes to it.</p>
+  <p>Four components, all of which stop at a human:</p>
+
+  <h3>Notion — the source of truth</h3>
+  <p>Five surfaces the automation touches: the <b>Content Queue</b> (social drafts awaiting review), <b>Daily Intel</b> (the desk's written output, typed and status-tracked), the <b>marketing log</b> (what was approved, by whom, when), the <b>content calendar</b>, and a set of <b>reference pages</b> that get appended to the model's system prompt. Facts the desk relies on live in Notion or in git — reviewed, versioned — never in whatever a model produced the moment it was asked.</p>
+
+  <h3>Grok's Founder News Desk — harvesting</h3>
+  <p>Runs overnight, reads the news, and writes draft cards into the Notion Content Queue with a source URL, a suggested voice, a content pillar and a compliance-risk rating. It creates cards. It does not approve them and does not publish.</p>
+
+  <h3>The Telegram bot — rewriting and gating</h3>
+  <p>Reads the queue, rewrites cards in a founder's voice using Claude Opus 5, and presents them to the team. 26 commands:</p>
+  <div class="cmds">
+    <span>/today</span><span>/queue</span><span>/open</span><span>/why</span><span>/draft</span><span>/rewrite</span><span>/voice</span><span>/voices</span><span>/ready</span><span>/kill</span><span>/research</span><span>/matters</span><span>/brief</span><span>/tweets</span><span>/weekly</span><span>/calendar</span><span>/price</span><span>/chart</span><span>/ref</span><span>/refresh</span><span>/published</span><span>/ideas</span><span>/recall</span><span>/remind</span><span>/post</span><span>/whoami</span>
+  </div>
+
+  <h3>The private client brief — publishing to clients</h3>
+  <p>A weekday pipeline: 8:00 ET open, 16:30 ET close. It pulls prices, prior-session ETF flows, derivatives positioning, approved news and upcoming macro events; hands the <em>structured data</em> to Claude; gets back JSON validated against a schema; runs compliance over it; and only then renders it into Notion. The model never writes to a client page directly.</p>
+</section>
+
+<hr>
+
+<section>
+  <h2><span class="n">03</span> How the bots and research feed the terminal</h2>
+  <p class="sub">Two paths reach a client. Both cross a human first.</p>
+  <figure>
+    <div class="dia">
+      <svg viewBox="0 0 700 330" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Flow from Grok and market feeds through Notion and compliance gates to the public terminal and social channels">
+        <defs>
+          <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M0 0 L10 5 L0 10 z" fill="var(--faint)"/>
+          </marker>
+        </defs>
+        <rect x="0" y="0" width="700" height="330" fill="none"/>
+        <!-- lane labels -->
+        <text x="8" y="16" font-family="IBM Plex Mono, monospace" font-size="10" letter-spacing="1.2" fill="var(--desk)">INTERNAL</text>
+        <text x="692" y="16" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="10" letter-spacing="1.2" fill="var(--client)">PUBLIC</text>
+        <line x1="497" y1="26" x2="497" y2="316" stroke="var(--rule)" stroke-width="1" stroke-dasharray="4 4"/>
+        <text x="497" y="326" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9.5" letter-spacing="1" fill="var(--muted)">THE GATE — A PERSON</text>
+
+        <!-- row 1: content path -->
+        <rect x="10" y="38" width="118" height="46" rx="4" fill="var(--desk-bg)" stroke="var(--desk)" stroke-width="1"/>
+        <text x="69" y="58" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="12" font-weight="600" fill="var(--ink)">Grok</text>
+        <text x="69" y="73" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="var(--muted)">harvests overnight</text>
+
+        <line x1="130" y1="61" x2="172" y2="61" stroke="var(--faint)" stroke-width="1.3" marker-end="url(#ar)"/>
+
+        <rect x="174" y="38" width="118" height="46" rx="4" fill="var(--desk-bg)" stroke="var(--desk)" stroke-width="1"/>
+        <text x="233" y="58" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="12" font-weight="600" fill="var(--ink)">Content Queue</text>
+        <text x="233" y="73" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="var(--muted)">Notion</text>
+
+        <line x1="294" y1="61" x2="336" y2="61" stroke="var(--faint)" stroke-width="1.3" marker-end="url(#ar)"/>
+
+        <rect x="338" y="38" width="118" height="46" rx="4" fill="var(--desk-bg)" stroke="var(--desk)" stroke-width="1"/>
+        <text x="397" y="58" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="12" font-weight="600" fill="var(--ink)">Bot rewrites</text>
+        <text x="397" y="73" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="var(--muted)">+ compliance</text>
+
+        <line x1="458" y1="61" x2="534" y2="61" stroke="var(--faint)" stroke-width="1.3" marker-end="url(#ar)"/>
+
+        <rect x="536" y="38" width="154" height="46" rx="4" fill="var(--client-bg)" stroke="var(--client)" stroke-width="1"/>
+        <text x="613" y="58" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="12" font-weight="600" fill="var(--ink)">X · LinkedIn</text>
+        <text x="613" y="73" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="var(--muted)">a person posts</text>
+
+        <!-- row 2: brief path -->
+        <rect x="10" y="126" width="118" height="46" rx="4" fill="var(--desk-bg)" stroke="var(--desk)" stroke-width="1"/>
+        <text x="69" y="146" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="12" font-weight="600" fill="var(--ink)">Market feeds</text>
+        <text x="69" y="161" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="var(--muted)">prices · flows · macro</text>
+
+        <line x1="130" y1="149" x2="172" y2="149" stroke="var(--faint)" stroke-width="1.3" marker-end="url(#ar)"/>
+
+        <rect x="174" y="126" width="118" height="46" rx="4" fill="var(--desk-bg)" stroke="var(--desk)" stroke-width="1"/>
+        <text x="233" y="146" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="12" font-weight="600" fill="var(--ink)">Brief pipeline</text>
+        <text x="233" y="161" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="var(--muted)">JSON, schema-checked</text>
+
+        <line x1="294" y1="149" x2="336" y2="149" stroke="var(--faint)" stroke-width="1.3" marker-end="url(#ar)"/>
+
+        <rect x="338" y="126" width="118" height="46" rx="4" fill="var(--desk-bg)" stroke="var(--desk)" stroke-width="1"/>
+        <text x="397" y="146" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="12" font-weight="600" fill="var(--ink)">Daily Intel</text>
+        <text x="397" y="161" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="var(--muted)">marked Reviewed</text>
+
+        <line x1="458" y1="149" x2="534" y2="149" stroke="var(--faint)" stroke-width="1.3" marker-end="url(#ar)"/>
+
+        <rect x="536" y="126" width="154" height="46" rx="4" fill="var(--client-bg)" stroke="var(--client)" stroke-width="1"/>
+        <text x="613" y="146" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="12" font-weight="600" fill="var(--ink)">Terminal · Overview</text>
+        <text x="613" y="161" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="var(--muted)">the desk note</text>
+
+        <!-- row 3: prospect path, stops internal -->
+        <rect x="10" y="214" width="118" height="46" rx="4" fill="var(--desk-bg)" stroke="var(--desk)" stroke-width="1"/>
+        <text x="69" y="234" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="12" font-weight="600" fill="var(--ink)">Public sources</text>
+        <text x="69" y="249" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="var(--muted)">filings · news · sites</text>
+
+        <line x1="130" y1="237" x2="172" y2="237" stroke="var(--faint)" stroke-width="1.3" marker-end="url(#ar)"/>
+
+        <rect x="174" y="214" width="118" height="46" rx="4" fill="var(--desk-bg)" stroke="var(--desk)" stroke-width="1"/>
+        <text x="233" y="234" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="12" font-weight="600" fill="var(--ink)">Prospect engine</text>
+        <text x="233" y="249" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="var(--muted)">scored, ranked</text>
+
+        <line x1="294" y1="237" x2="336" y2="237" stroke="var(--faint)" stroke-width="1.3" marker-end="url(#ar)"/>
+
+        <rect x="338" y="214" width="118" height="46" rx="4" fill="var(--desk-bg)" stroke="var(--desk)" stroke-width="1"/>
+        <text x="397" y="234" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="12" font-weight="600" fill="var(--ink)">Daily list</text>
+        <text x="397" y="249" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="10" fill="var(--muted)">Sales reads it</text>
+
+        <text x="470" y="234" font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--desk)">stops</text>
+        <text x="470" y="247" font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--desk)">here</text>
+      </svg>
+    </div>
+    <figcaption>Three pipelines. Two deliver something a client sees; both pass a person at the gate. The prospect list never leaves the desk — no outreach is sent automatically.</figcaption>
+  </figure>
+  <p>The terminal's market tabs are not fed by any bot. They read live public feeds directly through server-side endpoints, because the equity, rate, metal and dollar sources send no CORS header and a browser cannot reach them. The only model-written thing a client sees is the desk note, and it is gated twice.</p>
+</section>
+
+<hr>
+
+<section>
+  <h2><span class="n">04</span> Public versus internal</h2>
+  <p class="sub">The boundary is enforced by what exists on the server, not by what is linked in the nav.</p>
+  <div class="split">
+    <div class="pane client">
+      <div class="pane-h"><span class="dot"></span><b>Public</b></div>
+      <ul>
+        <li>The seven terminal tabs</li>
+        <li>Live public market data</li>
+        <li>Bitcoin chain data — blocks, transactions, addresses</li>
+        <li>Public company treasury filings</li>
+        <li>The desk note, and only when typed <code>Client Email</code> and marked <code>Reviewed</code></li>
+      </ul>
+    </div>
+    <div class="pane desk">
+      <div class="pane-h"><span class="dot"></span><b>Internal</b></div>
+      <ul>
+        <li>Macro Desk — sourcing notes, bias meters, rate-hike odds</li>
+        <li>The Resource Centre</li>
+        <li>The team workspace</li>
+        <li>Daily prospect lists</li>
+        <li>The Notion workspace and the Telegram group</li>
+        <li>Everything under <code>/api/system</code></li>
+      </ul>
+    </div>
+  </div>
+  <div class="claim">
+    <p><b>Internal pages are deleted from the client build, not hidden from its menu.</b> An unlinked page is still served, still indexable, and still readable by anyone who guesses the URL — and for a page named <code>news.html</code> that is not much of a guess.</p>
+    <p>Nine backend endpoints went with those pages. <code>/api/system</code> is the one that mattered: it served internal content that was deliberately kept out of the public directory so that View Source could not reach it. Removing the page but leaving the endpoint would have published exactly what it was written to protect.</p>
+  </div>
+  <p>Mechanically this is one branch — <code>client-site</code> — deploying to its own site. The desk build stays where it is. Shared pages are fixed once on <code>main</code> and cherry-picked across, so the two do not drift.</p>
+</section>
+
+<hr>
+
+<section>
+  <h2><span class="n">05</span> What V1 includes</h2>
+  <p class="sub">Deliberately small. Nothing that requires an account.</p>
+  <div class="tw"><table>
+    <thead><tr><th>In V1</th><th>Not in V1</th></tr></thead>
+    <tbody>
+      <tr><td>Seven public tabs, live data</td><td>Client login / accounts</td></tr>
+      <tr><td>Morning desk note on Overview</td><td>Per-client personalization</td></tr>
+      <tr><td>Watch-only portfolio by address</td><td>Real Satstreet balances</td></tr>
+      <tr><td>Mobile-responsive layout</td><td>Native app</td></tr>
+      <tr><td>Client brief via Notion guest pages</td><td>Hosted client dashboard</td></tr>
+      <tr><td>Internal content fully removed</td><td>Resource Centre for clients</td></tr>
+    </tbody>
+  </table></div>
+  <p>V1 has no authentication on purpose. Everything it shows is public information, so there is no account to compromise and no client data to leak. The hosted dashboard with a login is the next step, and it should be built only once clients are demonstrably reading the Notion version.</p>
+</section>
+
+<hr>
+
+<section>
+  <h2><span class="n">06</span> How it generates leads</h2>
+  <p class="sub">Four mechanisms, in the order a prospect meets them.</p>
+  <ul>
+    <li><b>Distribution.</b> Grok harvests the news overnight, the bot drafts it in a founder voice by morning, and a person posts it. The cost of consistent publishing drops to a review decision — which is the part that actually limits output.</li>
+    <li><b>Credibility.</b> The terminal is a working tool a prospect can use before speaking to anyone. A counterparty that publishes a Bitcoin explorer and a treasury tracker is making a claim about competence that a brochure cannot make.</li>
+    <li><b>Targeting.</b> The prospect engine scores public entities — miners, treasury companies, funds — on trigger events and produces a ranked daily list with a reason each one matters now and a suggested angle. Public data only; no CRM or client information is required.</li>
+    <li><b>Retention.</b> The weekday brief gives existing clients a reason to open something from Satstreet every morning instead of once a month. Retention and referral are cheaper than acquisition.</li>
+  </ul>
+  <div class="claim">
+    <p><b>No outreach is ever sent automatically.</b> The engine ranks and drafts; a salesperson decides and sends. That is a deliberate design constraint, not a missing feature.</p>
+  </div>
+</section>
+
+<hr>
+
+<section>
+  <h2><span class="n">07</span> What needs Jon and engineering</h2>
+  <p class="sub">Five items. The first two are what stand between this and running unattended.</p>
+
+  <div class="ask">
+    <h3>1 · An always-on host, with a scheduler</h3>
+    <p>The bot needs a process that stays up; the brief and the morning plan need cron at 08:00 and 16:30 ET.</p>
+    <p class="why"><b>Today:</b> both run on my laptop, by hand. Nothing is scheduled anywhere. This is the single biggest gap between "built" and "operating."</p>
+  </div>
+
+  <div class="ask">
+    <h3>2 · Secrets out of local .env files</h3>
+    <p>The Notion token, the Anthropic key and the Telegram bot token currently live in a <code>.env</code> on my machine.</p>
+    <p class="why"><b>Needed:</b> a secrets store the host reads from, and a rotation owner. The Notion token is workspace-scoped, so it deserves the same care as any other production credential.</p>
+  </div>
+
+  <div class="ask">
+    <h3>3 · A Netlify site for the client branch, and a subdomain</h3>
+    <p>The client build is committed and tested but not deployed. It needs a site pointed at the <code>client-site</code> branch and a DNS record.</p>
+    <p class="why"><b>Decision needed:</b> which hostname. <code>terminal.satstreet.com</code> reads as a tool; <code>client.satstreet.com</code> implies a login that V1 does not have.</p>
+  </div>
+
+  <div class="ask">
+    <h3>4 · Licensed data feeds</h3>
+    <p>ETF flows, derivatives positioning and news are unset. Each one reports as <em>unavailable</em> rather than producing zeros, so nothing is currently wrong — but three sections of the brief are running empty.</p>
+    <p class="why"><b>Needed:</b> a budget decision and a vendor. No free JSON API exists for ETF flows.</p>
+  </div>
+
+  <div class="ask">
+    <h3>5 · A security fix already written, not yet on main</h3>
+    <p>The image proxy's private-host guard never fired — a malformed pattern meant it only matched hostnames containing a space, which no URL produces. Cloud instance metadata at <code>169.254.169.254</code> was reachable through it.</p>
+    <p class="why"><b>Status:</b> fixed on <code>client-site</code>. <b>Still present on <code>main</code>, which is what is live today.</b> This should be ported before anything else ships.</p>
+  </div>
+</section>
+
+<hr>
+
+<section>
+  <h2><span class="n">08</span> Where things stand</h2>
+  <p class="sub">Built and verified, versus still open.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Component</th><th>State</th><th>Note</th></tr></thead>
+    <tbody>
+      <tr><td>Desk terminal, 9 tabs</td><td><span class="tag t-done">Live</span></td><td>Running today</td></tr>
+      <tr><td>Client terminal, 7 tabs</td><td><span class="tag t-done">Built</span></td><td>Branch <code>client-site</code>, tests green, awaiting a site</td></tr>
+      <tr><td>Public/internal separation</td><td><span class="tag t-done">Done</span></td><td>Pages and 9 endpoints removed, not hidden</td></tr>
+      <tr><td>Telegram bot, 26 commands</td><td><span class="tag t-done">Built</span></td><td>Used since 1 Sep; runs by hand</td></tr>
+      <tr><td>Compliance gate</td><td><span class="tag t-done">Done</span></td><td>8 rules on drafts, 7 on the brief; Approve never renders on a blocked draft</td></tr>
+      <tr><td>Grok → Notion → bot loop</td><td><span class="tag t-done">Done</span></td><td>Queue read, rewrite, kill/ready writes</td></tr>
+      <tr><td>Client brief pipeline</td><td><span class="tag t-done">Built</span></td><td>Schema-validated; client identity never reaches the model</td></tr>
+      <tr><td>Prospect engine</td><td><span class="tag t-done">Phase 1</span></td><td>Spec plus first lists — Canada and Florida, 31 Aug</td></tr>
+      <tr><td>Audit and backlog</td><td><span class="tag t-done">Done</span></td><td>Workflows scored; Daily Prospect List ranks highest at 40</td></tr>
+      <tr><td>Scheduled, unattended operation</td><td><span class="tag t-john">Needs Jon</span></td><td>No host, no cron</td></tr>
+      <tr><td>Secrets management</td><td><span class="tag t-john">Needs Jon</span></td><td>Local <code>.env</code> today</td></tr>
+      <tr><td>Client site deployment</td><td><span class="tag t-john">Needs Jon</span></td><td>Netlify site plus DNS</td></tr>
+      <tr><td>Licensed feeds</td><td><span class="tag t-john">Needs Jon</span></td><td>Budget and vendor</td></tr>
+      <tr><td>SSRF fix ported to main</td><td><span class="tag t-open">Open</span></td><td>Written; not yet on the live branch</td></tr>
+      <tr><td>Hosted client dashboard with login</td><td><span class="tag t-open">Open</span></td><td>Deliberately deferred until Notion usage is proven</td></tr>
+      <tr><td>Measurement layer</td><td><span class="tag t-open">Open</span></td><td>Phase 5 — nothing is instrumented yet</td></tr>
+      <tr><td>Prospect engine phases 2–5</td><td><span class="tag t-open">Open</span></td><td>Dedup, history, disposition, automation</td></tr>
+      <tr><td>Branch consolidation</td><td><span class="tag t-open">Open</span></td><td>22 open branches; several superseded</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">One caveat worth stating plainly: <b>"built" is not "operating."</b> Everything marked Built has been run and verified, but by me, on demand. The items marked Needs Jon are what convert that into a system that runs whether or not I am at my desk.</p>
+</section>
+
+<hr>
+
+<section>
+  <h2><span class="n">09</span> Proposed launch and pilot</h2>
+  <p class="sub">Five weeks, with a real decision point at the end rather than an automatic rollout.</p>
+  <ul class="tl">
+    <li>
+      <span class="when">Week of 15 Sep · Infrastructure</span>
+      <b>Jon provisions the host, the scheduler and the secrets store</b>
+      <p>In parallel: port the SSRF fix to <code>main</code>, stand up the client site on a staging URL, and settle the hostname. No clients involved.</p>
+    </li>
+    <li>
+      <span class="when">Week of 22 Sep · Dry run</span>
+      <b>Everything runs on schedule, for the desk only</b>
+      <p>Brief at 08:00 and 16:30, morning plan at 08:00, bot always up. The desk uses it daily and we find out what breaks when nobody is watching. Still no clients.</p>
+    </li>
+    <li>
+      <span class="when">29 Sep – 10 Oct · Pilot</span>
+      <b>Five to ten clients, invited to Notion guest pages</b>
+      <p>Client terminal goes public at its own hostname. Pilot clients get the brief as a guest page they bookmark. Sales runs the daily prospect list every morning and records disposition on every entry.</p>
+    </li>
+    <li>
+      <span class="when">Week of 13 Oct · Decision</span>
+      <b>Review, then choose</b>
+      <p>Three questions: are pilot clients opening the brief, did the prospect list produce conversations that would not otherwise have happened, and did the desk trust the compliance gate enough to use it? A no on the first is a reason not to build the hosted dashboard.</p>
+    </li>
+  </ul>
+  <p>The pilot is deliberately small. The expensive mistake here is building authentication and a hosted dashboard for a brief that clients are not reading — which is exactly what inviting ten clients to a Notion page tells us, at no engineering cost.</p>
+</section>
+
+<hr>
+
+<section>
+  <h2><span class="n">10</span> What to review</h2>
+  <p class="sub">Two things worth ten minutes before the meeting.</p>
+  <ul>
+    <li><b>The live desk terminal</b> — <a href="https://satstreet.netlify.app/">satstreet.netlify.app</a>. This is the internal build, with the Macro Desk and the Resource Centre still in it. It is what the client build was cut from.</li>
+    <li><b>The client branch</b> — the <code>client-site</code> branch in the Satstreet-Marketing repository, and <code>docs/client-site.md</code> in it, which documents every removal and the reason for it. Happy to put this on a staging URL for the meeting if that is more useful than reading a diff.</li>
+  </ul>
+  <p class="foot"><b>The decision I need from this meeting</b> is the hostname and an owner for the host and secrets. Everything in section 7 is blocked behind those two, and nothing in sections 1 through 6 changes depending on the answer.</p>
+</section>
+
+</div>

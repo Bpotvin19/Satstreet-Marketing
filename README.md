@@ -1,5 +1,15 @@
 # Satstreet Marketing 
 
+> **You are on `client-site`.** This branch is the client-facing cut of the
+> terminal and deploys to its own Netlify site. It is not `main`.
+>
+> What is different here, and why: [`docs/client-site.md`](docs/client-site.md).
+>
+> Shared pages — Overview, Markets, Chart, Structure, Treasuries, Explorer,
+> Portfolio — should be fixed on `main` and cherry-picked across, so the two
+> sites do not drift. Only the removals and the de-personalisation belong to
+> this branch alone.
+
 Internal operating repository for building Satstreet's AI-enabled growth and operations system.
 
 ## Objective
