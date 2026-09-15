@@ -9,8 +9,9 @@
 
   var DISCLOSURE = {
     derivatives:
-      '<p><strong>Source.</strong> Derivatives figures are drawn from a single third-party venue and describe positioning at that venue only. They are not a view on the wider market and not a recommendation.</p>' +
-      '<p><strong>Method.</strong> Funding is annualised from the venue\u2019s 8-hour rate. Basis is the perpetual mark against the venue\u2019s spot index. Open interest is USD notional as reported. Implied volatility is the venue\u2019s own 30-day index.</p>' +
+      '<p><strong>Source.</strong> The perpetual cards and all options figures describe Deribit. The cross-venue table adds Binance, Bybit and OKX. Each venue is read from its own public endpoint and describes positioning at that venue only \u2014 together they are still a subset of the market, not the whole of it. Nothing here is a view on the market or a recommendation.</p>' +
+      '<p><strong>Method.</strong> Funding is annualised from each venue\u2019s own funding period rather than an assumed eight hours, and the weighted figure is averaged across venues by open interest. Basis is the perpetual mark against the venue\u2019s spot index. Open interest is USD notional as reported; Deribit\u2019s BTC perpetual is the inverse contract, the other three are USDT-margined, and the aggregate states how many venues answered.</p>' +
+      '<p><strong>Options.</strong> The 25-delta risk reversal is the implied volatility of the 25-delta call less that of the 25-delta put, on the listed expiry nearest thirty days. Delta is not published per instrument, so it is computed under Black-76 against each expiry\u2019s own forward and interpolated between the two listed strikes either side of 25 delta. Term structure is at-the-money implied volatility by expiry. Both are model-derived and will differ from another desk\u2019s calculation.</p>' +
       '<p>Indicative reference data only \u2014 not a quote, not an offer, and not the price at which Satstreet will execute.</p>',
     network:
       '<p><strong>Source.</strong> Bitcoin network figures come from mempool.space and describe the public blockchain. Hashrate is an estimate derived from observed block times and is not directly measurable.</p>' +
@@ -107,8 +108,158 @@
       '<span>' + esc(points[points.length - 1].label) + '</span></div></div>';
   }
 
+  /* The volatility term structure. At-the-money implied vol plotted against
+     days to expiry. Upward sloping is the normal state — more time, more
+     that can happen. Inverted, with the front above the back, means the
+     market is paying up for the near date specifically, which is what a
+     surprise looks like before anyone can name it. */
+  function ivCurve(points) {
+    if (!points || points.length < 2) return '';
+    var w = 300, h = 96, padL = 6, padR = 6;
+    var vals = points.map(function (p) { return p.atmIv; });
+    var lo = Math.min.apply(null, vals);
+    var hi = Math.max.apply(null, vals);
+    if (hi - lo < 1) { hi += 0.5; lo -= 0.5; }
+    var span = hi - lo;
+    /* Expiries bunch up at the front, so the axis is log in days. Otherwise
+       the weeklies pile into the left edge and the curve reads as flat. */
+    var lx = function (d) { return Math.log(Math.max(1, d)); };
+    var x0 = lx(points[0].days), x1 = lx(points[points.length - 1].days);
+    var xs = x1 - x0 || 1;
+    var xOf = function (d) { return padL + ((lx(d) - x0) / xs) * (w - padL - padR); };
+    var yOf = function (v) { return h - ((v - lo) / span) * h; };
+
+    var line = points.map(function (p, i) {
+      return (i ? 'L' : 'M') + xOf(p.days).toFixed(1) + ' ' + yOf(p.atmIv).toFixed(1);
+    }).join(' ');
+    var area = line + ' L' + xOf(points[points.length - 1].days).toFixed(1) + ' ' + h +
+               ' L' + xOf(points[0].days).toFixed(1) + ' ' + h + ' Z';
+    var dots = points.map(function (p) {
+      return '<circle cx="' + xOf(p.days).toFixed(1) + '" cy="' + yOf(p.atmIv).toFixed(1) +
+        '" r="2.4" fill="#087fac"><title>' + esc(p.label) + ' · ' + p.atmIv.toFixed(1) +
+        ' vol · ' + p.days + 'd</title></circle>';
+    }).join('');
+
+    return '<div class="curvewrap"><svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none" role="img" aria-label="Implied volatility term structure">' +
+      '<defs><linearGradient id="ivg" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0%" stop-color="#087fac" stop-opacity=".22"/>' +
+      '<stop offset="100%" stop-color="#087fac" stop-opacity="0"/></linearGradient></defs>' +
+      '<path d="' + area + '" fill="url(#ivg)"/>' +
+      '<path d="' + line + '" fill="none" stroke="#087fac" stroke-width="2" stroke-linejoin="round"/>' + dots +
+      '</svg><div class="curvefoot"><span>' + esc(points[0].label) + '</span>' +
+      '<span>' + lo.toFixed(1) + ' to ' + hi.toFixed(1) + ' vol</span>' +
+      '<span>' + esc(points[points.length - 1].label) + '</span></div></div>';
+  }
+
+  /* Funding and open interest across the four venues that carry most of the
+     USD-denominated BTC perpetual market. One venue is a venue; four is
+     closer to a market, and where they disagree is the part worth reading. */
+  function renderVenues(venues, agg) {
+    var el = $('deriv-venues');
+    if (!el) return;
+    var live = (venues || []).filter(function (v) {
+      return v.fundingAnnualPct !== null || v.openInterestUsd !== null;
+    });
+    if (!live.length) { el.innerHTML = ''; return; }
+
+    var maxOi = live.reduce(function (m, v) { return Math.max(m, v.openInterestUsd || 0); }, 0);
+    var rows = live.map(function (v) {
+      var f = v.fundingAnnualPct;
+      var share = maxOi > 0 && v.openInterestUsd ? (v.openInterestUsd / maxOi) * 100 : 0;
+      return '<tr>' +
+        '<td style="font-weight:600">' + esc(v.venue) + '</td>' +
+        '<td class="' + fmt.dir(f) + '" style="font-weight:600">' + (f === null ? '—' : fmt.pct(f)) + '</td>' +
+        '<td style="color:var(--muted)">' + (v.intervalHours ? v.intervalHours + 'h' : '—') + '</td>' +
+        '<td style="position:relative">' + fmt.compact(v.openInterestUsd) +
+          '<span class="oibar" style="width:' + share.toFixed(0) + '%"></span></td>' +
+        '</tr>';
+    }).join('');
+
+    var head = agg && agg.openInterestUsd !== null
+      ? fmt.compact(agg.openInterestUsd) + ' open across ' + agg.venuesReporting + ' of ' + agg.venuesTotal + ' venues'
+      : 'cross-venue';
+
+    var wtd = agg && agg.fundingAnnualPct !== null
+      ? '<div class="dcell" style="margin-top:14px"><div class="k">' +
+        tip('Weighted funding', 'The average annualised funding across the venues above, weighted by each venue’s open interest so a thin book paying an extreme rate does not move the headline.') +
+        '</div><div class="v ' + fmt.dir(agg.fundingAnnualPct) + '">' + fmt.pct(agg.fundingAnnualPct) +
+        '</div><div class="s">open-interest weighted</div></div>'
+      : '';
+
+    el.innerHTML =
+      '<header><h2>Across venues</h2><span class="eyebrow">' + esc(head) + '</span></header>' +
+      '<table class="etf-table"><thead><tr>' +
+      '<th>Venue</th><th>' + tip('Funding', 'The periodic payment between longs and shorts, annualised from each venue’s own funding period. Positive means longs are paying shorts.') + '</th>' +
+      '<th>Period</th><th>' + tip('Open interest', 'USD notional open on that venue’s BTC perpetual. Deribit’s is the inverse contract; the other three are USDT-margined.') + '</th>' +
+      '</tr></thead><tbody>' + rows + '</tbody></table>' + wtd +
+      '<div class="venue"><span>Sources: ' + esc(live.map(function (v) { return v.venue; }).join(', ')) + '</span>' +
+      '<span>Public endpoints, BTC perpetual only</span></div>';
+  }
+
+  /* Skew and term structure, both out of Deribit's option book. The risk
+     reversal is the number to read first: it says which tail the options
+     market is paying for, which is a different question from how much it
+     expects price to move. */
+  function renderOptions(o) {
+    var el = $('deriv-options');
+    if (!el) return;
+    if (!o || (o.error && o.riskReversal25d === null && !(o.term || []).length)) { el.innerHTML = ''; return; }
+
+    var rr = o.riskReversal25d;
+    var cards = '';
+
+    if (rr !== null) {
+      var tone = rr < 0 ? 'down' : rr > 0 ? 'up' : '';
+      var reading = rr < -1 ? 'puts bid — paying for downside protection'
+                  : rr > 1 ? 'calls bid — paying for upside'
+                  : 'balanced — neither tail is bid';
+      cards +=
+        '<div class="card"><header><h2>Options skew</h2>' +
+        '<span class="eyebrow">' + esc(o.skewLabel ? o.skewLabel + ' · ' + o.skewDays + 'd' : '') + '</span></header>' +
+        '<div class="rrwrap"><span class="rrval ' + tone + '">' + (rr > 0 ? '+' : '') + rr.toFixed(2) +
+        '</span><span class="rrlabel">' + esc(reading) + '</span></div>' +
+        '<div class="dgrid" style="margin-top:14px">' +
+        '<div class="dcell"><div class="k">' +
+          tip('25d risk reversal', 'The implied volatility of the 25-delta call minus that of the 25-delta put, in volatility points. Negative means puts are more expensive than equidistant calls — the market is paying up for downside protection.') +
+          '</div><div class="v ' + tone + '">' + (rr > 0 ? '+' : '') + rr.toFixed(2) + '</div><div class="s">vol points</div></div>' +
+        '<div class="dcell"><div class="k">25d put</div><div class="v">' +
+          (o.put25dIv === null ? '—' : o.put25dIv.toFixed(1)) + '</div><div class="s">implied vol</div></div>' +
+        '<div class="dcell"><div class="k">25d call</div><div class="v">' +
+          (o.call25dIv === null ? '—' : o.call25dIv.toFixed(1)) + '</div><div class="s">implied vol</div></div>' +
+        '<div class="dcell"><div class="k">At the money</div><div class="v">' +
+          (o.atmIv === null ? '—' : o.atmIv.toFixed(1)) + '</div><div class="s">implied vol</div></div>' +
+        '</div><div class="venue"><span>Venue: Deribit</span><span>BTC options · delta from Black-76</span></div></div>';
+    }
+
+    var term = o.term || [];
+    if (term.length > 1) {
+      var front = term[0].atmIv, back = term[term.length - 1].atmIv;
+      var shape = back > front + 0.5 ? 'upward sloping'
+                : front > back + 0.5 ? 'inverted' : 'flat';
+      cards +=
+        '<div class="card"><header><h2>Volatility term structure</h2>' +
+        '<span class="eyebrow">' + esc(shape) + '</span></header>' + ivCurve(term) +
+        '<div class="dgrid" style="margin-top:14px">' +
+        '<div class="dcell"><div class="k">Front</div><div class="v">' + front.toFixed(1) +
+          '</div><div class="s">' + esc(term[0].label + ' · ' + term[0].days + 'd') + '</div></div>' +
+        '<div class="dcell"><div class="k">Back</div><div class="v">' + back.toFixed(1) +
+          '</div><div class="s">' + esc(term[term.length - 1].label + ' · ' + term[term.length - 1].days + 'd') + '</div></div>' +
+        '<div class="dcell"><div class="k">' +
+          tip('Spread', 'Back-month at-the-money implied volatility minus front-month. Positive is the normal shape; negative means the near date is bid, which is what an event the market can see coming looks like.') +
+          '</div><div class="v ' + fmt.dir(back - front) + '">' + (back - front > 0 ? '+' : '') +
+          (back - front).toFixed(1) + '</div><div class="s">back minus front</div></div>' +
+        '<div class="dcell"><div class="k">Expiries</div><div class="v">' + term.length +
+          '</div><div class="s">listed with depth</div></div>' +
+        '</div><div class="venue"><span>Venue: Deribit</span><span>At-the-money vol by expiry</span></div></div>';
+    }
+
+    el.innerHTML = cards;
+  }
+
   function loadDerivatives() {
     $('deriv').innerHTML = '<div class="card">' + S.skeleton(4, 18) + '</div><div class="card">' + S.skeleton(4, 18) + '</div>';
+    var vSk = $('deriv-venues'); if (vSk) vSk.innerHTML = S.skeleton(4, 16);
+    var oSk = $('deriv-options'); if (oSk) oSk.innerHTML = '<div class="card">' + S.skeleton(3, 16) + '</div><div class="card">' + S.skeleton(3, 16) + '</div>';
     fetch('/api/structure', { cache: 'no-store' })
       .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(function (d) {
@@ -134,11 +285,15 @@
             (spark(a.fundingHistory, 'up') ? '<div class="dcell"><div class="k">Seven days</div>' + spark(a.fundingHistory, 'up') + '<div class="s">funding, annualised</div></div>' : '') +
             '</div><div class="venue"><span>Venue: ' + esc(d.venue) + '</span><span>24h volume ' + fmt.compact(a.volume24hUsd) + '</span><span>Updated ' + fmt.time(d.asOf) + '</span></div></div>';
         }).join('');
+        renderVenues(d.venues, d.aggregate);
+        renderOptions(d.options);
         updated.derivatives = new Date(d.asOf).getTime();
         stamp('derivatives');
       })
       .catch(function (e) {
         $('deriv').innerHTML = '<div class="card">' + S.errorState('Derivatives data unavailable', e.message, 'retry-d') + '</div>';
+        var vE = $('deriv-venues'); if (vE) vE.innerHTML = '';
+        var oE = $('deriv-options'); if (oE) oE.innerHTML = '';
         updated.derivatives = 'error'; stamp('derivatives');
         var r = $('retry-d'); if (r) r.addEventListener('click', function () { loaded.derivatives = false; show('derivatives'); });
       });
