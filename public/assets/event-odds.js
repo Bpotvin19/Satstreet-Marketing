@@ -118,10 +118,83 @@
           exclusive: !!ev.exclusive,
           outcomes: outcomes,
           lead: outcomes[0],
+          rules: ev.rules || null,
+          history: Array.isArray(ev.history) ? ev.history : null,
         });
       });
     });
     return out;
+  }
+
+
+  /* ── the probability line ───────────────────────────────────────────────
+
+     One line: the leading outcome over the past week.
+
+     The vertical scale is the data's own range, padded, not a fixed 0-100.
+     A market that moved from 54% to 88% is the story on this page, and on a
+     full-height axis that move is a gentle slope in the middle of empty
+     space. The axis is labelled at both ends precisely because the scale is
+     not fixed — an unlabelled zoomed axis is how a chart misleads. */
+
+  function extent(points) {
+    var lo = 1, hi = 0;
+    points.forEach(function (pt) { if (pt.p < lo) lo = pt.p; if (pt.p > hi) hi = pt.p; });
+    // Never show a band narrower than 12 points, or noise looks like a trend.
+    var pad = Math.max((hi - lo) * 0.18, 0.06);
+    return { lo: Math.max(0, lo - pad), hi: Math.min(1, hi + pad) };
+  }
+
+  function linePath(points, w, h, lo, hi) {
+    var span = (hi - lo) || 1;
+    var t0 = points[0].t, t1 = points[points.length - 1].t;
+    var dt = (t1 - t0) || 1;
+    return points.map(function (pt, i) {
+      var x = ((pt.t - t0) / dt) * w;
+      var y = h - ((pt.p - lo) / span) * h;
+      return (i ? 'L' : 'M') + x.toFixed(2) + ' ' + y.toFixed(2);
+    }).join(' ');
+  }
+
+  function chartHtml(points, opts) {
+    if (!points || points.length < 4) return '';
+    var big = !!(opts && opts.big);
+    var w = 300, h = big ? 84 : 42;
+    var e = extent(points);
+    var d = linePath(points, w, h, e.lo, e.hi);
+    var last = points[points.length - 1];
+    var lastX = w, lastY = h - ((last.p - e.lo) / ((e.hi - e.lo) || 1)) * h;
+    var rising = last.p >= points[0].p;
+    var stroke = rising ? 'var(--up)' : 'var(--down)';
+
+    var axis = '';
+    if (big) {
+      axis = '<div class="chart-axis">' +
+        '<span>' + pct(e.hi) + '</span><span>' + pct(e.lo) + '</span></div>';
+    }
+
+    return '<div class="chart' + (big ? ' big' : '') + '">' + axis +
+      '<svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none" role="img" ' +
+      'aria-label="Leading outcome moved from ' + pct(points[0].p) + ' to ' + pct(last.p) +
+      ' over the past week">' +
+      '<path d="' + d + ' L' + w + ' ' + h + ' L0 ' + h + ' Z" fill="' + stroke + '" opacity=".07"/>' +
+      '<path d="' + d + '" fill="none" stroke="' + stroke + '" stroke-width="1.6" ' +
+      'stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>' +
+      '<circle cx="' + lastX.toFixed(1) + '" cy="' + lastY.toFixed(1) + '" r="2.6" fill="' + stroke + '" ' +
+      'vector-effect="non-scaling-stroke"/>' +
+      '</svg>' +
+      (big ? '<div class="chart-foot"><span>7 days ago</span><span>Now</span></div>' : '') +
+      '</div>';
+  }
+
+  /* How the market settles, in the venue's words. Collapsed, because it is
+     reference material rather than something to read on every card — but
+     present, because "Bitcoin above $100k" means nothing until you know which
+     price, from which source, at which moment. */
+  function rulesHtml(m) {
+    if (!m.rules) return '';
+    return '<details class="more rules"><summary>How this resolves</summary>' +
+      '<p>' + esc(m.rules) + '</p></details>';
   }
 
   /* ── drawing a market ───────────────────────────────────────────────────── */
@@ -149,7 +222,8 @@
     return '<div class="legend">' + outcomes.map(function (o, i) {
       return '<div class="legend-row' + (i === 0 ? ' top' : '') + '">' +
         '<span class="legend-key" style="background:' + segColor(i) + '"></span>' +
-        '<span class="legend-label">' + esc(o.label) + '</span>' +
+        '<span class="legend-label">' + esc(o.label) +
+        (o.volume ? '<i class="ovol">' + money(o.volume) + '</i>' : '') + '</span>' +
         '<span class="legend-pct">' + pct(o.probability) + '</span>' +
         '</div>';
     }).join('') + '</div>';
@@ -158,7 +232,8 @@
   function trackHtml(o, isTop) {
     var w = Math.max(0, Math.min(100, o.probability * 100));
     return '<div class="track-row' + (isTop ? ' top' : '') + '">' +
-      '<span class="track-label">' + esc(o.label) + '</span>' +
+      '<span class="track-label">' + esc(o.label) +
+      (o.volume ? '<i class="ovol">' + money(o.volume) + '</i>' : '') + '</span>' +
       '<span class="track-pct">' + pct(o.probability) + '</span>' +
       '<span class="track"><i style="width:' + w.toFixed(1) + '%"></i></span>' +
       '</div>';
@@ -231,16 +306,59 @@
     return '<article class="market-card" data-market-id="' + esc(m.id) + '">' +
       headHtml(m) +
       '<h3 class="market-q">' + esc(m.question) + '</h3>' +
-      leadHtml(m) + bodyHtml(m) + footHtml(m) +
+      leadHtml(m) + chartHtml(m.history) + bodyHtml(m) + footHtml(m) + rulesHtml(m) +
       '</article>';
   }
 
   function featuredHtml(m) {
     return '<article class="market-card featured" data-market-id="' + esc(m.id) + '">' +
       '<div class="feat-left">' + headHtml(m) +
-      '<h3 class="market-q">' + esc(m.question) + '</h3>' + leadHtml(m) + '</div>' +
-      '<div class="feat-right">' + bodyHtml(m) + footHtml(m) + '</div>' +
+      '<h3 class="market-q">' + esc(m.question) + '</h3>' + leadHtml(m) +
+      chartHtml(m.history, { big: true }) + '</div>' +
+      '<div class="feat-right">' + bodyHtml(m) + footHtml(m) + rulesHtml(m) + '</div>' +
       '</article>';
+  }
+
+
+  /* ── what moved ─────────────────────────────────────────────────────────
+
+     A board of fourteen probabilities answers "where do things stand". It
+     does not answer "what changed", which is the question a desk actually
+     opens with. This strip is the three largest weekly moves, and it is free:
+     the change is already on every leading outcome.
+
+     It is drawn from the full set, not the filtered one. A category filter
+     narrows the board below; the movers stay the movers. */
+  function moversHtml() {
+    var moved = markets
+      .filter(function (m) {
+        var c = m.lead.changeWeek;
+        return c !== null && c !== undefined && isFinite(c) && Math.abs(c) >= 0.03;
+      })
+      .sort(function (a, b) { return Math.abs(b.lead.changeWeek) - Math.abs(a.lead.changeWeek); })
+      .slice(0, 3);
+
+    if (!moved.length) return '';
+
+    var items = moved.map(function (m) {
+      var pts = m.lead.changeWeek * 100;
+      var dir = pts > 0 ? 'up' : 'down';
+      return '<div class="mover">' +
+        '<p class="mover-q">' + esc(m.question) + '</p>' +
+        '<div class="mover-row">' +
+        '<span class="mover-lab">' + esc(m.lead.label) + '</span>' +
+        '<span class="mover-pct">' + pct(m.lead.probability) + '</span>' +
+        '<span class="move ' + dir + '">' + (pts > 0 ? '\u25B2 +' : '\u25BC ') +
+        Math.round(pts) + '</span>' +
+        '</div>' +
+        chartHtml(m.history) +
+        '</div>';
+    }).join('');
+
+    return '<section class="movers" aria-labelledby="movers-h">' +
+      '<div class="section-title"><h2 id="movers-h">Biggest moves this week</h2>' +
+      '<span>Change in the leading outcome</span></div>' +
+      '<div class="movers-grid">' + items + '</div></section>';
   }
 
   /* ── filtering, sorting, featuring ──────────────────────────────────────── */
@@ -315,11 +433,17 @@
     $('result-count').textContent = list.length + ' market' + (list.length === 1 ? '' : 's');
 
     if (!list.length) {
+      $('movers').innerHTML = '';
       $('market-grid').innerHTML = '<div class="odds-state"><strong>' +
         (query ? 'No markets match that search.' : 'No active markets in this category.') +
         '</strong>Try another search or category.</div>';
       return;
     }
+
+    // The movers strip answers a different question from the board, so it is
+    // hidden once the reader has narrowed to a category or a search.
+    var unfiltered = category === 'All' && !query;
+    $('movers').innerHTML = unfiltered ? moversHtml() : '';
 
     var f = pickFeatured(list);
     $('market-grid').innerHTML = list.map(function (m, i) {
@@ -338,6 +462,7 @@
     $('total-volume').textContent = '—';
     $('source-name').textContent = '—';
     $('result-count').textContent = '';
+    $('movers').innerHTML = '';
     status('Data temporarily unavailable', false);
     $('market-grid').innerHTML =
       '<div class="odds-state"><strong>Market data is temporarily unavailable.</strong>' +
