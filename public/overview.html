@@ -283,15 +283,13 @@
     <nav class="mainnav" id="mainnav" aria-label="Primary">
       <a href="./overview.html" aria-current="page">Overview</a>
       <a href="./ticker.html">Markets</a>
-      <a href="./structure.html">Structure</a>
       <a href="./chart.html">Chart</a>
-      <a href="./news.html">News</a>
+      <a href="./structure.html">Structure</a>
       <a href="./treasuries.html">Treasuries</a>
+      <a href="./explorer.html">Explorer</a>
       <a href="./portfolio.html">Portfolio</a>
     </nav>
     <span class="spacer"></span>
-    <button class="top-icon" type="button" aria-label="Notifications"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg></button>
-    <span class="avatar" aria-label="Ben Potvin">BP</span>
   </div>
 </header>
 
@@ -299,7 +297,7 @@
 
   <section class="intro" aria-labelledby="greeting">
     <p class="datestamp" id="datestamp"></p>
-    <h1 id="greeting">Good morning, Ben.</h1>
+    <h1 id="greeting">Good morning.</h1>
     <p class="summary" id="summary"></p>
     <p class="feedstate"><span class="pip" id="pip"></span><span id="feedstate">Connecting to the price feed…</span></p>
   </section>
@@ -421,7 +419,7 @@
   var now = new Date();
   $('datestamp').textContent = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
   var hr = now.getHours();
-  $('greeting').textContent = 'Good ' + (hr < 12 ? 'morning' : hr < 17 ? 'afternoon' : 'evening') + ', Ben.';
+  $('greeting').textContent = 'Good ' + (hr < 12 ? 'morning' : hr < 17 ? 'afternoon' : 'evening') + '.';
 
   function fmtPrice(q, v) {
     if (v === null || v === undefined || !isFinite(v)) return '—';

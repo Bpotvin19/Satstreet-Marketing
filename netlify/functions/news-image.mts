@@ -1,10 +1,12 @@
-/* Tiny image proxy for Must-read thumbs.
+/* Tiny image proxy.
 
-   Publisher CDNs often refuse a hotlink from the terminal origin. The
-   terminal only asks for URLs that /api/news-thumbs already resolved.
-   This function does not require the desk key because an <img> cannot send
-   custom headers; it does refuse non-image bodies, private hosts, and
-   anything larger than 2 MB.
+   Publisher and filing CDNs often refuse a hotlink from the terminal origin.
+   On the desk build this serves the Must-read thumbs; on this branch its only
+   caller is the Treasuries page, fetching company logos.
+
+   It cannot require a key, because an <img> cannot send custom headers. That
+   makes it an open fetcher, so what it refuses is the whole of its security:
+   non-image bodies, anything over 2 MB, and hosts that are not public.
 */
 
 const UA =
@@ -23,7 +25,12 @@ function isPublicHttp(url: string): boolean {
     if (u.protocol !== 'http:' && u.protocol !== 'https:') return false
     const host = u.hostname.toLowerCase()
     if (host === 'localhost' || host.endsWith('.local')) return false
-    if (/^(127\. |10\. |192\.168\. |169\.254\. |0\.)/.test(host)) return false
+    if (host === '[::1]' || host === '::1') return false
+    if (host.startsWith('[fe80:') || host.startsWith('[fc') || host.startsWith('[fd')) return false
+    if (/^(0|10|127)\./.test(host)) return false
+    if (/^192\.168\./.test(host)) return false
+    if (/^169\.254\./.test(host)) return false
+    if (/^172\.(1[6-9]|2[0-9]|3[01])\./.test(host)) return false
     return true
   } catch {
     return false

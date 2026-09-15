@@ -4,7 +4,9 @@
   var S = window.SATSTREET;
   var $ = function (id) { return document.getElementById(id); };
   var esc = S.esc;
-  S.mountHeader('Structure');
+  /* Explorer has its own nav entry on this branch. It used to mount as
+     'Structure' because it had no tab of its own to light up. */
+  S.mountHeader('Explorer');
 
   function attr(value) {
     return esc(value).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
