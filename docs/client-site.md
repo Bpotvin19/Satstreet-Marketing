@@ -3,6 +3,18 @@
 `main` builds the desk terminal. This branch builds the client-facing site from
 the same pages, and deploys to a separate Netlify site.
 
+| | Branch | Site |
+| --- | --- | --- |
+| Desk | `main` | <https://satstreet.netlify.app> |
+| Client | `client-site` | <https://satstreet-terminal.netlify.app> |
+
+Both sites build from this one repository, each pinned to its own branch. A
+push to `client-site` redeploys the client site and does not touch the desk
+build; a push to `main` does the reverse. The production branch is set per
+site in Netlify, so the thing to check after any change to a site's build
+settings is that this one still says `client-site` — defaulting it back to
+`main` would publish the desk build, Macro Desk and all, to the public URL.
+
 The two share everything a client and the desk both look at — Overview, Markets,
 Chart, Structure, Treasuries, Explorer, Portfolio. They differ only in what this
 branch takes away.
