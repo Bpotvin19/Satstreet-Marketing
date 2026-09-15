@@ -11,34 +11,40 @@
 <body>
 <div id="shell-header"></div>
 <main class="wrap odds-page">
-  <header class="odds-head">
+
+  <div class="pagehead">
     <div>
       <p class="eyebrow">Market-implied probability</p>
-      <h1>Event Odds</h1>
-      <p>What a liquid prediction market currently prices for rate decisions, Bitcoin levels and the macro backdrop. Reported, not interpreted.</p>
+      <div class="page-title-row">
+        <span class="page-emblem" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 18V9M10 18V5M16 18v-6M22 18V8"/><path d="M3 21h18"/></svg></span>
+        <h1>Event Odds</h1>
+      </div>
+      <p>What a liquid prediction market prices for rate decisions, Bitcoin levels and the macro backdrop.</p>
     </div>
-    <div class="feedstate"><i class="pip" id="pip"></i><span id="feed-status">Loading current markets&hellip;</span></div>
-  </header>
+    <span class="feedstate"><span class="pip" id="pip"></span><span id="feed-status">Loading&hellip;</span></span>
+  </div>
 
-  <section class="odds-toolbar" aria-label="Market controls">
-    <label class="market-search"><span class="sr">Search markets</span><input id="market-search" type="search" placeholder="Search markets..." autocomplete="off" /></label>
-    <nav class="category-tabs" id="category-tabs" aria-label="Market categories"></nav>
-    <div class="control-row">
-      <dl class="market-stats">
-        <div><dt>Active markets</dt><dd id="active-count">—</dd></div>
-        <div><dt>Reported volume</dt><dd id="total-volume">—</dd></div>
-        <div><dt>Last updated</dt><dd id="updated-at">&mdash;</dd></div>
-        <div><dt>Source</dt><dd id="source-name">&mdash;</dd></div>
-      </dl>
-      <div class="sort-control"><label for="market-sort">Sort</label><select id="market-sort"><option value="volume">Reported volume</option><option value="probability">Highest probability</option><option value="closing">Closing soon</option></select></div>
-    </div>
-  </section>
+  <div class="tabs" id="category-tabs" role="tablist" aria-label="Market categories"></div>
 
-  <section aria-labelledby="all-heading"><div class="section-title"><h2 id="all-heading">ALL MARKETS</h2><span id="result-count" aria-live="polite"></span></div><div class="market-grid" id="market-grid" aria-live="polite"><div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div></div></section>
+  <p class="odds-lede">Prices quoted on an independent prediction market, reported without interpretation. A price of 62% means participants are collectively pricing that outcome at roughly a 62% chance &mdash; the crowd&rsquo;s current opinion with money behind it, not a measurement.</p>
 
-  <p class="srcnote data-note" style="margin-top:22px">A price of 62% means participants are collectively pricing that outcome at roughly a 62% chance. It is the crowd&rsquo;s current opinion with money behind it, not a measurement, and it moves. Each card states whether its lines are alternatives to one another or separate questions.</p>
+  <dl class="market-stats">
+    <div><dt>Active markets</dt><dd id="active-count">&mdash;</dd></div>
+    <div><dt>Reported volume</dt><dd id="total-volume">&mdash;</dd></div>
+    <div><dt>Source</dt><dd id="source-name">&mdash;</dd></div>
+  </dl>
+
+  <div class="odds-controls">
+    <label class="market-search"><span class="sr">Search markets</span><input id="market-search" type="search" placeholder="Search markets, outcomes or categories&hellip;" autocomplete="off" /></label>
+    <div class="sort-control"><label for="market-sort">Sort</label><select id="market-sort"><option value="volume">Reported volume</option><option value="probability">Highest probability</option><option value="closing">Closing soon</option></select></div>
+  </div>
+
+  <div class="section-title"><h2 id="all-heading">All markets</h2><span id="result-count" aria-live="polite"></span></div>
+
+  <div class="market-grid" id="market-grid" aria-labelledby="all-heading" aria-live="polite"><div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div></div>
 
   <footer class="odds-disclosure"><strong>Not a Satstreet view.</strong> These figures are prices quoted on an independent prediction market, reproduced here for reference. Satstreet does not operate that market, take positions in it, verify its outcomes, or provide access to it. Nothing on this page is a Satstreet forecast, a recommendation, an offer, or an executable price.</footer>
+
 </main>
 <script src="./assets/terminal.js"></script>
 <script src="./assets/event-odds.js"></script>

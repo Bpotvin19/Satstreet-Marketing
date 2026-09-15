@@ -57,6 +57,8 @@ test('categories come from the feed rather than a fixed list', async () => {
   // sections the endpoint cannot fill.
   assert.match(js, /function renderTabs/)
   assert.match(js, /markets\.forEach/)
+  // Drawn with the terminal's own tab component, not a bespoke control.
+  assert.match(js, /aria-selected/)
   for (const absent of ['Politics', 'Geopolitics', 'Commodities']) {
     assert.doesNotMatch(
       js,

@@ -293,9 +293,13 @@
     });
     var all = ['All'].concat(present);
     if (all.indexOf(category) === -1) category = 'All';
+    // Rendered as the terminal's own .tabs component, the same control
+    // Market Structure uses for its sections, so this page reads as part of
+    // the set rather than as something with its own idea of a filter.
     $('category-tabs').innerHTML = all.map(function (c) {
-      return '<button type="button" data-category="' + esc(c) + '" aria-pressed="' +
-        (c === category) + '">' + esc(c) + '</button>';
+      var on = c === category;
+      return '<button type="button" role="tab" data-category="' + esc(c) + '"' +
+        ' aria-selected="' + on + '"' + (on ? '' : ' tabindex="-1"') + '>' + esc(c) + '</button>';
     }).join('');
     $('category-tabs').querySelectorAll('button').forEach(function (b) {
       b.addEventListener('click', function () {
@@ -332,7 +336,7 @@
     markets = [];
     $('active-count').textContent = '—';
     $('total-volume').textContent = '—';
-    $('updated-at').textContent = 'Unavailable';
+    $('source-name').textContent = '—';
     $('result-count').textContent = '';
     status('Data temporarily unavailable', false);
     $('market-grid').innerHTML =
@@ -361,9 +365,9 @@
 
         $('active-count').textContent = markets.length;
         $('total-volume').textContent = volume ? money(volume) : 'Unavailable';
-        $('updated-at').textContent = updatedAt;
         $('source-name').textContent = source;
-        status('Live feed', true);
+        // The pill carries the timestamp, the same as every other page's does.
+        status(isNaN(t) ? 'Updated' : 'Updated ' + updatedAt, true);
 
         renderTabs();
         render();
