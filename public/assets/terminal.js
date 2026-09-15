@@ -26,6 +26,7 @@ window.SATSTREET = (function () {
     ['Structure', './structure.html'],
     ['Treasuries','./treasuries.html'],
     ['Explorer',  './explorer.html'],
+    ['Event Odds','./event-odds.html'],
     ['Portfolio', './portfolio.html']
   ];
 
@@ -37,7 +38,7 @@ window.SATSTREET = (function () {
      nav label of the page drawing it, so the underline and aria-current are
      always in step with where the visitor actually is. */
   function header(current) {
-    var wide = current === 'Markets' || current === 'Chart' || current === 'Treasuries' || current === 'Explorer';
+    var wide = current === 'Markets' || current === 'Chart' || current === 'Treasuries' || current === 'Explorer' || current === 'Event Odds';
     var links = NAV.map(function (n) {
       var on = n[0] === current;
       return '<a href="' + n[1] + '"' + (on ? ' aria-current="page"' : '') + '>' + esc(n[0]) + '</a>';
