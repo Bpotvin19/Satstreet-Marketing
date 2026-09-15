@@ -287,6 +287,56 @@
     else if (!$('p-network').hidden) startFeed();
   });
 
+
+  /* ---- Bitcoin Halving Countdown ---- */
+  var halvingTimer = null;
+  var NEXT_HALVING = 1050000;
+
+  function renderHalving(height) {
+    if (halvingTimer) { clearInterval(halvingTimer); halvingTimer = null; }
+    var el = $('net-halving');
+    if (!el) return;
+    height = Number(height);
+    if (!isFinite(height) || height <= 0) { el.innerHTML = ''; return; }
+
+    var blocksLeft = Math.max(0, NEXT_HALVING - height);
+    var secsLeft = blocksLeft * 600; // 10 min avg per block
+    var predictedMs = Date.now() + secsLeft * 1000;
+    var predictedDate = new Date(predictedMs);
+
+    function pad(n) { return String(Math.floor(n)).padStart(2, '0'); }
+
+    function tick() {
+      var remaining = Math.max(0, predictedMs - Date.now());
+      var d = Math.floor(remaining / 86400000);
+      var h = Math.floor((remaining % 86400000) / 3600000);
+      var m = Math.floor((remaining % 3600000) / 60000);
+      var s = Math.floor((remaining % 60000) / 1000);
+      var cdEl = $('halving-cd');
+      if (cdEl) cdEl.textContent = d + 'd ' + pad(h) + 'h ' + pad(m) + 'm ' + pad(s) + 's';
+    }
+
+    var predictedStr = predictedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    var progressPct = Math.min(100, ((NEXT_HALVING - 210000) === 840000
+      ? (height - 840000) / 210000 * 100
+      : (210000 - blocksLeft) / 210000 * 100)).toFixed(1);
+
+    el.innerHTML =
+      '<header><h2>Next Bitcoin Halving</h2><span class="eyebrow">Block ' + NEXT_HALVING.toLocaleString('en-US') + '</span></header>' +
+      '<div class="halving-cd-wrap"><span id="halving-cd" class="halving-cd">—</span><span class="halving-cd-label">estimated time remaining</span></div>' +
+      '<div class="dgrid" style="margin-top:14px">' +
+        '<div class="dcell"><div class="k">Blocks Remaining</div><div class="v">' + blocksLeft.toLocaleString('en-US') + '</div><div class="s">at ~10 min / block</div></div>' +
+        '<div class="dcell"><div class="k">Current Height</div><div class="v">' + height.toLocaleString('en-US') + '</div><div class="s">chain tip</div></div>' +
+        '<div class="dcell"><div class="k">Predicted Date</div><div class="v" style="font-size:15px">' + esc(predictedStr) + '</div><div class="s">estimate only</div></div>' +
+        '<div class="dcell"><div class="k">Epoch Progress</div><div class="v">' + progressPct + '%</div><div class="s">blocks 840,000 → 1,050,000</div></div>' +
+      '</div>' +
+      '<div class="halving-bar-wrap"><div class="halving-bar" style="width:' + progressPct + '%"></div></div>' +
+      '<div class="venue"><span>Source: mempool.space</span><span>Halving #5 · reward drops to 1.5625 BTC</span></div>';
+
+    tick();
+    halvingTimer = setInterval(tick, 1000);
+  }
+
   function loadNetwork() {
     var api = 'https://mempool.space/api/';
     $('net').innerHTML = '<div class="metric">' + S.skeleton(2, 16) + '</div><div class="metric">' + S.skeleton(2, 16) + '</div><div class="metric">' + S.skeleton(2, 16) + '</div><div class="metric">' + S.skeleton(2, 16) + '</div>';
@@ -318,6 +368,7 @@
         m('Block height', height !== null ? Number(height).toLocaleString('en-US') : '\u2014', 'chain tip');
       renderFees(fees, pool);
       renderStrip(pending, blocks);
+      renderHalving(height);
 
       var rows = [];
       if (diff) {
@@ -338,6 +389,8 @@
       $('net-fees').innerHTML = '';
       $('net-blocks').innerHTML = '';
       $('net-extra').innerHTML = S.errorState('Network data unavailable', e.message, 'retry-n');
+      if (halvingTimer) { clearInterval(halvingTimer); halvingTimer = null; }
+      var hEl = $('net-halving'); if (hEl) hEl.innerHTML = '';
       updated.network = 'error'; stamp('network');
       var r = $('retry-n'); if (r) r.addEventListener('click', function () { loaded.network = false; show('network'); });
     });

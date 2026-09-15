@@ -229,6 +229,72 @@ test('a genuinely different question is kept as the label', async () => {
   assert.equal(ev.outcomes[0].label, 'Will the Fed hold rates steady?')
 })
 
+test('settlement terms are carried, but only when they say something', async () => {
+  const realRules =
+    'This market resolves to the upper bound of the target federal funds range as ' +
+    'published by the FOMC after its September meeting. If the rate moves to a level ' +
+    'not listed, it rounds up to the nearest 25 bps. The resolution source is the ' +
+    'FOMC statement on the official Federal Reserve calendar.'
+
+  stub((url) =>
+    url.includes('tag_slug=fed')
+      ? [gammaEvent({ description: realRules })]
+      // A "description" that is just the question again. Showing it would
+      // promise the reader settlement terms and hand back the heading.
+      : [gammaEvent({ title: 'What price will Bitcoin hit in 2026?', description: 'What price will Bitcoin hit in 2026?' })],
+  )
+  const body = await (await handler(GET())).json()
+
+  const fed = body.categories.find((c: any) => c.label === 'Rates and the Fed').events[0]
+  const btc = body.categories.find((c: any) => c.label === 'Bitcoin').events[0]
+  assert.match(fed.rules, /FOMC statement/)
+  assert.equal(btc.rules, null)
+})
+
+test('a probability line is fetched server-side and its token never ships', async () => {
+  const points = Array.from({ length: 12 }, (_, i) => ({ t: 1788900000 + i * 3600, p: 0.5 + i * 0.03 }))
+  const asked: string[] = []
+  globalThis.fetch = (async (input: RequestInfo | URL) => {
+    const url = String(input)
+    asked.push(url)
+    const payload = url.includes('clob.polymarket.com') ? { history: points } : [gammaEvent()]
+    return new Response(JSON.stringify(payload), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    })
+  }) as typeof fetch
+
+  const res = await handler(GET())
+  const raw = await res.text()
+  const body = JSON.parse(raw)
+  const ev = body.categories.find((c: any) => c.label === 'Rates and the Fed').events[0]
+
+  assert.equal(ev.history.length, 12)
+  assert.deepEqual(Object.keys(ev.history[0]).sort(), ['p', 't'])
+
+  // The history call needs the venue's token. That is precisely why it runs
+  // here: the token addresses an order book, and a list of timestamps does not.
+  assert.ok(asked.some((u) => u.includes('clob.polymarket.com')), 'history was requested')
+  assert.equal(raw.includes('clobTokenIds'), false)
+  assert.equal(raw.includes('111'), false)
+})
+
+test('a market whose history fails still renders', async () => {
+  globalThis.fetch = (async (input: RequestInfo | URL) => {
+    const url = String(input)
+    if (url.includes('clob.polymarket.com')) throw new Error('clob down')
+    return new Response(JSON.stringify([gammaEvent()]), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    })
+  }) as typeof fetch
+
+  const body = await (await handler(GET())).json()
+  const ev = body.categories.find((c: any) => c.label === 'Rates and the Fed').events[0]
+  assert.equal(ev.history, null)
+  assert.ok(ev.outcomes.length > 0, 'the market is still shown')
+})
+
 test('rejects a non-GET request', async () => {
   const res = await handler(new Request('https://satstreet.test/api/forecasts', { method: 'POST' }))
   assert.equal(res.status, 405)
