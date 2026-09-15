@@ -14,7 +14,7 @@
 
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { readFile } from 'node:fs/promises'
+import { readFile, readdir } from 'node:fs/promises'
 import { join } from 'node:path'
 
 const pub = join(process.cwd(), 'public')
@@ -93,4 +93,36 @@ test('an unavailable feed shows nothing rather than something stale', async () =
   assert.match(js, /temporarily unavailable/i)
   assert.match(js, /function fail/)
   assert.match(js, /Try again/)
+})
+
+test('every page uses a container the stylesheet actually defines', async () => {
+  // Event Odds shipped with <main class="wrap">, and nothing defines .wrap.
+  // The page therefore had no gutter and no max width, and nothing errored —
+  // it just rendered flush to the window edge on every screen. A class that
+  // does not exist fails silently, so it is worth asserting.
+  const css = await readFile(join(pub, 'assets/terminal.css'), 'utf8')
+  // Every class token anywhere in a selector, so compound rules like
+  // `.shell.wide { … }` register `wide` as defined and not only `shell`.
+  const defined = new Set(
+    (css.match(/\.[a-zA-Z][a-zA-Z0-9_-]*/g) || []).map((c) => c.slice(1).toLowerCase()),
+  )
+
+  const pages = (await readdir(pub)).filter((f) => f.endsWith('.html'))
+  assert.ok(pages.length >= 5, 'expected the terminal pages to be present')
+
+  for (const page of pages) {
+    const html = await readFile(join(pub, page), 'utf8')
+    const main = html.match(/<main[^>]*class="([^"]*)"/i)
+    assert.ok(main, `${page} has no <main class>`)
+
+    const classes = main[1].split(/\s+/).filter(Boolean)
+    assert.ok(
+      classes.includes('shell'),
+      `${page} uses "${main[1]}" \u2014 pages are laid out with .shell`,
+    )
+    for (const c of classes) {
+      if (c.endsWith('-page')) continue // page-local hook, styled in its own file
+      assert.ok(defined.has(c), `${page}: .${c} is not defined in terminal.css`)
+    }
+  }
 })
