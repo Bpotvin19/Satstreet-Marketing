@@ -16,7 +16,11 @@
   .asset-dot { width:22px; height:22px; display:grid; place-items:center; flex:none; border-radius:50%; color:#fff; font-size:12px; font-weight:700; }
   .asset-dot.btc { background:#f7931a; }
   .asset-dot.eth { background:#5968a8; }
-  .asset-dot.rank { background:#0f8a63; font-size:13px; }
+  /* Ascending bars — the ordinary shape for a ranking. Drawn here rather than
+     borrowed, so the tab carries no other company's mark. Amber because gold
+     tops the table. */
+  .asset-dot.rank { background:#d99a2b; }
+  .asset-dot.rank svg { width:13px; height:13px; fill:#fff; display:block; }
 
   /* Largest assets by market cap */
   .amc-lede { font-size:14px; color:var(--ink-2); max-width:80ch; margin:0 0 16px; }
@@ -121,7 +125,7 @@
   <div class="treasury-tabs" role="tablist" aria-label="Treasury asset">
     <button id="tab-btc" role="tab" aria-selected="true" data-asset="btc"><span class="asset-dot btc">₿</span>Bitcoin Treasuries</button>
     <button id="tab-eth" role="tab" aria-selected="false" data-asset="eth"><span class="asset-dot eth">Ξ</span>Strategic ETH Reserve</button>
-    <button id="tab-amc" role="tab" aria-selected="false" data-asset="assets"><span class="asset-dot rank">#</span>Largest Assets</button>
+    <button id="tab-amc" role="tab" aria-selected="false" data-asset="assets"><span class="asset-dot rank"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="4.6" cy="18.4" r="2.9"/><rect x="9.5" y="9" width="5.6" height="12.3" rx="2.8"/><rect x="17.4" y="2.6" width="5.6" height="18.7" rx="2.8"/></svg></span>Largest Assets</button>
   </div>
 
   <div class="source-row">
@@ -152,6 +156,8 @@
 
   <section id="assets-section" hidden aria-labelledby="amc-h">
     <p class="amc-lede">Where Bitcoin sits against the metals and the largest listed companies. Market capitalisation is computed from a live price and a share or unit count rather than quoted, so every figure moves with the market. This is a selected list, not every listed company.</p>
+    <section class="metrics" id="amc-metrics" aria-label="Asset ranking summary"></section>
+
     <section class="card">
       <div class="amc-head">
         <h2 id="amc-h" style="margin:0">Largest assets by market cap</h2>
@@ -379,6 +385,25 @@
             '<td class="amc-country">' + place(a) + '</td>' +
             '</tr>';
         }).join('');
+
+        var m = $('amc-metrics');
+        if (m) {
+          var cell = function (k, v, sub) {
+            return '<div class="metric"><div class="k">' + S.esc(k) + '</div>' +
+              '<div class="v">' + v + '</div><div class="s">' + S.esc(sub || '') + '</div></div>';
+          };
+          var b = list.filter(function (a) { return a.symbol === 'BTC'; })[0];
+          m.innerHTML =
+            cell('Total market cap', S.fmt.compact(d.totalMarketCapUsd),
+                 'the ' + list.length + ' assets listed here') +
+            cell('Bitcoin', b ? S.fmt.compact(b.marketCapUsd) : '\u2014',
+                 b ? 'ranked ' + b.rank + ' of ' + list.length : '') +
+            cell('Bitcoin share', d.bitcoinSharePct === null || d.bitcoinSharePct === undefined
+                   ? '\u2014' : d.bitcoinSharePct.toFixed(2) + '%',
+                 'of the total above') +
+            cell('Largest', list.length ? S.esc(list[0].name) : '\u2014',
+                 list.length ? S.fmt.compact(list[0].marketCapUsd) : '');
+        }
 
         var line = $('amc-btc');
         if (line) {

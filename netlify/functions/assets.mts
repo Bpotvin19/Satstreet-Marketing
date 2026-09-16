@@ -270,16 +270,28 @@ export default async function handler(): Promise<Response> {
   rows.sort((a, b) => b.marketCapUsd - a.marketCapUsd)
   const ranked: AssetRow[] = rows.map((r, i) => ({ rank: i + 1, ...r }))
 
+  /* The total is the sum of what is actually on the table, not an estimate of
+     the world. It moves when a symbol fails to price, which is why the count
+     it covers travels with it. */
+  const totalMarketCapUsd = ranked.reduce((sum, r) => sum + r.marketCapUsd, 0)
+  const btc = ranked.find((r) => r.symbol === 'BTC')
+
   return json({
     asOf: new Date().toISOString(),
     assets: ranked,
     total: ranked.length,
     expected: COMPANIES.length + METALS.length + CRYPTO.length,
-    bitcoinRank: ranked.find((r) => r.symbol === 'BTC')?.rank ?? null,
+    totalMarketCapUsd,
+    bitcoinRank: btc?.rank ?? null,
+    /** Bitcoin as a share of the assets listed here — not of all assets. */
+    bitcoinSharePct: btc && totalMarketCapUsd > 0
+      ? (btc.marketCapUsd / totalMarketCapUsd) * 100
+      : null,
     note:
       'Market capitalisation is computed from a live price and a share or unit count, not quoted. ' +
       'Company share counts come from SEC filings and are refreshed quarterly. This is a selected ' +
-      'list, not every listed company.',
+      'list, not every listed company, so the total is the sum of these rows rather than of all ' +
+      'traded assets.',
   })
 }
 
