@@ -33,6 +33,10 @@
   .amc-kind.company { color:#4f7189; background:#eaf1f5; }
   .amc-kind.metal   { color:#8a6d1f; background:#fdf3d8; }
   .amc-kind.crypto  { color:#b1620c; background:#fdeedb; }
+  .amc-table th.spk, .amc-table td.spk { width:86px; }
+  .amc-table td.spk svg { display:block; }
+  .amc-flag { font-size:15px; line-height:1; margin-right:6px; vertical-align:-1px; }
+  .amc-country { white-space:nowrap; color:var(--ink-2); }
   .amc-table tr.is-btc td { background:#fff8ee; }
   .amc-table tr.is-btc .amc-name { color:#b1620c; }
   .amc-head { display:flex; justify-content:space-between; align-items:baseline; gap:14px; flex-wrap:wrap; margin-bottom:4px; }
@@ -148,7 +152,7 @@
       </div>
       <div class="table-scroll">
         <table class="amc-table">
-          <thead><tr><th>#</th><th>Asset</th><th class="num">Market cap</th><th class="num">Price</th><th class="num">Today</th><th>Type</th></tr></thead>
+          <thead><tr><th>#</th><th>Asset</th><th class="num">Market cap</th><th class="num">Price</th><th class="num">Today</th><th class="spk">Price (30 days)</th><th>Country</th></tr></thead>
           <tbody id="amc-rows"></tbody>
         </table>
       </div>
@@ -300,11 +304,34 @@
     if ($('assets-section')) $('assets-section').hidden = treasury;
   }
 
+  /* A flag from an ISO 3166-1 alpha-2 code: each letter maps to its regional
+     indicator symbol, and the pair renders as one flag. */
+  function flag(cc) {
+    if (!cc || cc.length !== 2) return '';
+    return String.fromCodePoint.apply(null, cc.toUpperCase().split('').map(function (ch) {
+      return 127397 + ch.charCodeAt(0);
+    }));
+  }
+
+  /* Companies get their country; gold, silver and the two coins have none, so
+     the column carries what they are instead of sitting empty. */
+  function place(a) {
+    if (a.country) return '<span class="amc-flag">' + flag(a.country) + '</span>' + S.esc(a.countryName || a.country);
+    return '<span class="amc-kind ' + a.kind + '">' + a.kind + '</span>';
+  }
+
+  /* The sparkline is coloured by the month, not by the day, so the line and
+     the percentage beside it can legitimately disagree. */
+  function trend(series) {
+    if (!series || series.length < 2) return 'flat';
+    return series[series.length - 1] >= series[0] ? 'up' : 'down';
+  }
+
   function loadAssets() {
     var body = $('amc-rows');
     if (!body) return;
     if (!body.children.length) {
-      body.innerHTML = '<tr><td colspan="6" style="color:var(--muted);padding:18px 10px">Loading\u2026</td></tr>';
+      body.innerHTML = '<tr><td colspan="7" style="color:var(--muted);padding:18px 10px">Loading\u2026</td></tr>';
     }
     fetch('/api/assets', { cache: 'no-store' })
       .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
@@ -323,7 +350,8 @@
             '<td class="num amc-cap" title="' + S.esc(a.basis) + '">' + S.fmt.compact(a.marketCapUsd) + '</td>' +
             '<td class="num">' + S.fmt.money(a.priceUsd, 'USD', dp) + '</td>' +
             '<td class="num ' + S.fmt.dir(a.changePct) + '">' + S.fmt.pct(a.changePct) + '</td>' +
-            '<td><span class="amc-kind ' + a.kind + '">' + a.kind + '</span></td>' +
+            '<td class="spk">' + S.spark(a.spark || [], trend(a.spark), 74, 26) + '</td>' +
+            '<td class="amc-country">' + place(a) + '</td>' +
             '</tr>';
         }).join('');
 
@@ -345,7 +373,7 @@
         }
       })
       .catch(function (e) {
-        body.innerHTML = '<tr><td colspan="6">' +
+        body.innerHTML = '<tr><td colspan="7">' +
           S.errorState('Assets unavailable', e.message, 'retry-amc') + '</td></tr>';
         var r = $('retry-amc'); if (r) r.addEventListener('click', loadAssets);
       });

@@ -52,7 +52,9 @@ interface Company {
   kind: 'company'
   symbol: string
   name: string
+  /** ISO 3166-1 alpha-2; the page turns it into a flag. */
   country: string
+  countryName: string
   shares: number
   /** The filing the share count came from, so staleness is visible. */
   filed: string
@@ -73,31 +75,34 @@ interface Crypto {
   id: string
   symbol: string
   name: string
+  /** Market cap comes from CoinGecko, but the 30-day line comes from the same
+      chart endpoint as everything else so the shapes are drawn alike. */
+  chartSymbol: string
 }
 
 /* Share counts: dei:EntityCommonStockSharesOutstanding unless noted. */
 const COMPANIES: Company[] = [
-  { kind:'company', symbol:'NVDA',  name:'NVIDIA',              country:'US', shares:24_100_000_000, filed:'2026-08-26' },
-  { kind:'company', symbol:'AAPL',  name:'Apple',               country:'US', shares:14_594_180_000, filed:'2026-07-31' },
-  { kind:'company', symbol:'GOOGL', name:'Alphabet',            country:'US', shares:12_230_000_000, filed:'2026-07-23', note:'us-gaap:CommonStockSharesOutstanding; the tagged rows are per class and are not summed' },
-  { kind:'company', symbol:'MSFT',  name:'Microsoft',           country:'US', shares:7_425_545_491,  filed:'2026-07-29' },
-  { kind:'company', symbol:'AMZN',  name:'Amazon',              country:'US', shares:10_786_313_572, filed:'2026-07-31' },
-  { kind:'company', symbol:'TSM',   name:'TSMC',                country:'TW', shares:5_186_504_904,  filed:'2026-04-16', note:'20-F reports 25,932,524,521 ordinary shares; one ADR is five ordinary, and the price used here is the ADR' },
-  { kind:'company', symbol:'AVGO',  name:'Broadcom',            country:'US', shares:4_773_629_865,  filed:'2026-09-10' },
-  { kind:'company', symbol:'TSLA',  name:'Tesla',               country:'US', shares:3_949_547_394,  filed:'2026-07-23' },
-  { kind:'company', symbol:'WMT',   name:'Walmart',             country:'US', shares:7_933_746_241,  filed:'2026-08-28' },
-  { kind:'company', symbol:'MU',    name:'Micron Technology',   country:'US', shares:1_129_393_151,  filed:'2026-06-25' },
-  { kind:'company', symbol:'JPM',   name:'JPMorgan Chase',      country:'US', shares:2_658_186_195,  filed:'2026-08-06' },
-  { kind:'company', symbol:'XOM',   name:'ExxonMobil',          country:'US', shares:4_111_911_960,  filed:'2026-08-03' },
-  { kind:'company', symbol:'JNJ',   name:'Johnson & Johnson',   country:'US', shares:2_409_898_597,  filed:'2026-07-23' },
-  { kind:'company', symbol:'ABBV',  name:'AbbVie',              country:'US', shares:1_767_117_285,  filed:'2026-08-03' },
-  { kind:'company', symbol:'ORCL',  name:'Oracle',              country:'US', shares:3_023_736_000,  filed:'2026-09-11' },
-  { kind:'company', symbol:'BAC',   name:'Bank of America',     country:'US', shares:6_992_748_365,  filed:'2026-07-31' },
-  { kind:'company', symbol:'KO',    name:'Coca-Cola',           country:'US', shares:4_302_482_418,  filed:'2026-04-30' },
-  { kind:'company', symbol:'COST',  name:'Costco',              country:'US', shares:443_478_804,    filed:'2026-06-03' },
-  { kind:'company', symbol:'PG',    name:'Procter & Gamble',    country:'US', shares:2_324_433_060,  filed:'2026-08-04' },
-  { kind:'company', symbol:'NFLX',  name:'Netflix',             country:'US', shares:4_163_939_676,  filed:'2026-07-17' },
-  { kind:'company', symbol:'HD',    name:'Home Depot',          country:'US', shares:997_689_626,    filed:'2026-08-25' },
+  { kind:'company', symbol:'NVDA',  name:'NVIDIA',              country:'US', countryName:'USA', shares:24_100_000_000, filed:'2026-08-26' },
+  { kind:'company', symbol:'AAPL',  name:'Apple',               country:'US', countryName:'USA', shares:14_594_180_000, filed:'2026-07-31' },
+  { kind:'company', symbol:'GOOGL', name:'Alphabet',            country:'US', countryName:'USA', shares:12_230_000_000, filed:'2026-07-23', note:'us-gaap:CommonStockSharesOutstanding; the tagged rows are per class and are not summed' },
+  { kind:'company', symbol:'MSFT',  name:'Microsoft',           country:'US', countryName:'USA', shares:7_425_545_491,  filed:'2026-07-29' },
+  { kind:'company', symbol:'AMZN',  name:'Amazon',              country:'US', countryName:'USA', shares:10_786_313_572, filed:'2026-07-31' },
+  { kind:'company', symbol:'TSM',   name:'TSMC',                country:'TW', countryName:'Taiwan', shares:5_186_504_904,  filed:'2026-04-16', note:'20-F reports 25,932,524,521 ordinary shares; one ADR is five ordinary, and the price used here is the ADR' },
+  { kind:'company', symbol:'AVGO',  name:'Broadcom',            country:'US', countryName:'USA', shares:4_773_629_865,  filed:'2026-09-10' },
+  { kind:'company', symbol:'TSLA',  name:'Tesla',               country:'US', countryName:'USA', shares:3_949_547_394,  filed:'2026-07-23' },
+  { kind:'company', symbol:'WMT',   name:'Walmart',             country:'US', countryName:'USA', shares:7_933_746_241,  filed:'2026-08-28' },
+  { kind:'company', symbol:'MU',    name:'Micron Technology',   country:'US', countryName:'USA', shares:1_129_393_151,  filed:'2026-06-25' },
+  { kind:'company', symbol:'JPM',   name:'JPMorgan Chase',      country:'US', countryName:'USA', shares:2_658_186_195,  filed:'2026-08-06' },
+  { kind:'company', symbol:'XOM',   name:'ExxonMobil',          country:'US', countryName:'USA', shares:4_111_911_960,  filed:'2026-08-03' },
+  { kind:'company', symbol:'JNJ',   name:'Johnson & Johnson',   country:'US', countryName:'USA', shares:2_409_898_597,  filed:'2026-07-23' },
+  { kind:'company', symbol:'ABBV',  name:'AbbVie',              country:'US', countryName:'USA', shares:1_767_117_285,  filed:'2026-08-03' },
+  { kind:'company', symbol:'ORCL',  name:'Oracle',              country:'US', countryName:'USA', shares:3_023_736_000,  filed:'2026-09-11' },
+  { kind:'company', symbol:'BAC',   name:'Bank of America',     country:'US', countryName:'USA', shares:6_992_748_365,  filed:'2026-07-31' },
+  { kind:'company', symbol:'KO',    name:'Coca-Cola',           country:'US', countryName:'USA', shares:4_302_482_418,  filed:'2026-04-30' },
+  { kind:'company', symbol:'COST',  name:'Costco',              country:'US', countryName:'USA', shares:443_478_804,    filed:'2026-06-03' },
+  { kind:'company', symbol:'PG',    name:'Procter & Gamble',    country:'US', countryName:'USA', shares:2_324_433_060,  filed:'2026-08-04' },
+  { kind:'company', symbol:'NFLX',  name:'Netflix',             country:'US', countryName:'USA', shares:4_163_939_676,  filed:'2026-07-17' },
+  { kind:'company', symbol:'HD',    name:'Home Depot',          country:'US', countryName:'USA', shares:997_689_626,    filed:'2026-08-25' },
 ]
 
 /* Metals are priced off the front-month future, which tracks spot closely
@@ -111,8 +116,8 @@ const METALS: Metal[] = [
 ]
 
 const CRYPTO: Crypto[] = [
-  { kind:'crypto', id:'bitcoin',  symbol:'BTC', name:'Bitcoin' },
-  { kind:'crypto', id:'ethereum', symbol:'ETH', name:'Ethereum' },
+  { kind:'crypto', id:'bitcoin',  symbol:'BTC', name:'Bitcoin',  chartSymbol:'BTC-USD' },
+  { kind:'crypto', id:'ethereum', symbol:'ETH', name:'Ethereum', chartSymbol:'ETH-USD' },
 ]
 
 interface AssetRow {
@@ -121,25 +126,48 @@ interface AssetRow {
   symbol: string
   name: string
   country: string | null
+  countryName: string | null
   marketCapUsd: number
   priceUsd: number
   changePct: number | null
+  /** Daily closes over the last month, oldest first, for the sparkline. */
+  spark: number[]
   /** How the market cap was arrived at, shown to the reader on hover. */
   basis: string
 }
 
-async function yahoo(symbol: string): Promise<{ price: number; changePct: number | null } | null> {
+interface Quote {
+  price: number
+  changePct: number | null
+  /** Daily closes, oldest first. Empty when the series is unusable. */
+  spark: number[]
+}
+
+/* A month of daily closes costs the same one request as a single day, and
+   carries the price, the day's move and the shape of the month together. */
+async function yahoo(symbol: string): Promise<Quote | null> {
   try {
-    const r = await fetch(`${YAHOO}${encodeURIComponent(symbol)}?interval=1d&range=1d`, {
-      signal: AbortSignal.timeout(7000),
+    const r = await fetch(`${YAHOO}${encodeURIComponent(symbol)}?interval=1d&range=1mo`, {
+      signal: AbortSignal.timeout(8000),
       headers: { accept: 'application/json' },
     })
     if (!r.ok) return null
-    const m = (await r.json())?.chart?.result?.[0]?.meta
-    const price = Number(m?.regularMarketPrice)
+    const res = (await r.json())?.chart?.result?.[0]
+    const price = Number(res?.meta?.regularMarketPrice)
     if (!isFinite(price) || price <= 0) return null
-    const chg = Number(m?.regularMarketChangePercent)
-    return { price, changePct: isFinite(chg) ? chg : null }
+    const chg = Number(res?.meta?.regularMarketChangePercent)
+
+    /* A market holiday leaves a null close in the series; dropping them keeps
+       the line continuous rather than breaking the path. Six significant
+       figures is far past what a 74px sparkline can render and keeps the
+       payload small. */
+    const raw: unknown[] = res?.indicators?.quote?.[0]?.close ?? []
+    const spark = raw
+      .map((v) => Number(v))
+      .filter((v) => isFinite(v) && v > 0)
+      .map((v) => Number(v.toPrecision(6)))
+
+    return { price, changePct: isFinite(chg) ? chg : null, spark: spark.length >= 3 ? spark : [] }
   } catch {
     return null
   }
@@ -159,9 +187,10 @@ export default async function handler(): Promise<Response> {
   /* Every quote is independent: one symbol that fails drops its own row and
      leaves the ranking intact. A table missing Costco still answers the
      question it exists to answer. */
-  const [equityQuotes, metalQuotes, coins] = await Promise.all([
+  const [equityQuotes, metalQuotes, cryptoQuotes, coins] = await Promise.all([
     Promise.all(COMPANIES.map((c) => yahoo(c.symbol))),
     Promise.all(METALS.map((m) => yahoo(m.symbol))),
+    Promise.all(CRYPTO.map((c) => yahoo(c.chartSymbol))),
     fetch(COINGECKO, { signal: AbortSignal.timeout(7000) })
       .then((r) => (r.ok ? r.json() : null))
       .catch(() => null),
@@ -173,8 +202,10 @@ export default async function handler(): Promise<Response> {
     const q = equityQuotes[i]
     if (!q) return
     rows.push({
-      kind: 'company', symbol: c.symbol, name: c.name, country: c.country,
+      kind: 'company', symbol: c.symbol, name: c.name,
+      country: c.country, countryName: c.countryName,
       marketCapUsd: q.price * c.shares, priceUsd: q.price, changePct: q.changePct,
+      spark: q.spark,
       basis: `${c.shares.toLocaleString('en-US')} shares outstanding, as filed ${c.filed}`,
     })
   })
@@ -184,22 +215,29 @@ export default async function handler(): Promise<Response> {
     if (!q) return
     const ounces = m.tonnes * OZ_PER_TONNE
     rows.push({
-      kind: 'metal', symbol: m.name.toUpperCase(), name: m.name, country: null,
+      kind: 'metal', symbol: m.name.toUpperCase(), name: m.name,
+      country: null, countryName: null,
       marketCapUsd: q.price * ounces, priceUsd: q.price, changePct: q.changePct,
+      spark: q.spark,
       basis: `${m.tonnes.toLocaleString('en-US')} tonnes above ground — ${m.source}`,
     })
   })
 
   if (Array.isArray(coins)) {
-    CRYPTO.forEach((c) => {
+    CRYPTO.forEach((c, i) => {
       const hit = coins.find((x: any) => x?.id === c.id)
       const cap = Number(hit?.market_cap)
       const px = Number(hit?.current_price)
       if (!isFinite(cap) || !isFinite(px)) return
       const chg = Number(hit?.price_change_percentage_24h)
+      /* The chart is a bonus here: if it failed, the row still ranks, it
+         just draws no line. */
+      const q = cryptoQuotes[i]
       rows.push({
-        kind: 'crypto', symbol: c.symbol, name: c.name, country: null,
+        kind: 'crypto', symbol: c.symbol, name: c.name,
+        country: null, countryName: null,
         marketCapUsd: cap, priceUsd: px, changePct: isFinite(chg) ? chg : null,
+        spark: q?.spark ?? [],
         basis: 'circulating supply x price, as reported by CoinGecko',
       })
     })
