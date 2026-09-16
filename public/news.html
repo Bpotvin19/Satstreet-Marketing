@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Satstreet · News</title>
+<meta name="description" content="Latest crypto news and market coverage." />
+
+<!--
+  News.
+
+  A reading list, not a view. Every headline, summary and section on this page
+  is CoinDesk's, pulled from their public RSS feed and linked back to the
+  article on coindesk.com. Satstreet writes none of it, ranks none of it and
+  takes no position on any of it, which is why nothing here carries a
+  sentiment badge: the chip on each item is the section CoinDesk filed the
+  piece under, which is a fact they published, rather than a judgment this
+  desk would be authoring.
+
+  The feed is fetched server-side at /api/news because it sends no CORS
+  header. That endpoint also refuses any item whose link points somewhere
+  other than coindesk.com.
+-->
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="./assets/terminal.css" />
+<style>
+  .news-lede { font-size: 14px; color: var(--ink-2); margin: 0 0 18px; max-width: 78ch; }
+
+  .newsgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 16px; }
+
+  .story { display: flex; flex-direction: column; background: #fff; border: 1px solid var(--border); border-radius: 11px; overflow: hidden; transition: border-color .15s, box-shadow .15s; }
+  .story:hover { border-color: #b7d7ff; box-shadow: 0 2px 14px rgba(16,42,67,.07); }
+  .story .thumb { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: var(--border-2); border-bottom: 1px solid var(--border); }
+  .story .in { padding: 14px 16px 15px; display: flex; flex-direction: column; flex: 1; }
+
+  .story .meta { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 8px; }
+  .story .ago { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .chip { font-size: 10.5px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: #087fac; background: #e3f3f8; padding: 3px 8px; border-radius: 20px; white-space: nowrap; }
+
+  .story h3 { font-size: 16px; line-height: 1.34; margin: 0 0 7px; font-weight: 600; }
+  .story h3 a { color: var(--ink); text-decoration: none; }
+  .story h3 a:hover { color: var(--blue); text-decoration: underline; }
+  .story p { font-size: 13.5px; line-height: 1.55; color: var(--ink-2); margin: 0 0 12px; }
+  .story .by { margin-top: auto; padding-top: 10px; border-top: 1px solid var(--border-2); font-size: 11.5px; color: var(--muted); display: flex; justify-content: space-between; gap: 10px; }
+
+  .newsfilters { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 18px; }
+  .newsfilters button { font: inherit; font-size: 12.5px; font-weight: 600; padding: 7px 13px; border: 1px solid var(--border); border-radius: 20px; background: #fff; color: var(--muted); cursor: pointer; }
+  .newsfilters button:hover { color: var(--ink); }
+  .newsfilters button[aria-pressed="true"] { background: #e3f3f8; border-color: #b7d7ff; color: #087fac; }
+
+  .news-disclosure { margin-top: 28px; padding: 22px 0 40px; border-top: 1px solid var(--border); font-size: 12.5px; color: var(--muted); line-height: 1.65; }
+  .news-disclosure strong { color: var(--ink); }
+
+  .skelcard { height: 250px; border-radius: 11px; background: linear-gradient(90deg, var(--border-2) 25%, #e6ecf5 37%, var(--border-2) 63%); background-size: 400% 100%; animation: nsh 1.3s ease-in-out infinite; }
+  @keyframes nsh { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+</style>
+</head>
+<body>
+<div id="shell-header"></div>
+<main class="shell wide">
+
+  <div class="pagehead">
+    <div>
+      <p class="eyebrow">Market news</p>
+      <div class="page-title-row">
+        <span class="page-emblem" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5h11v14H4zM15 9h4a1 1 0 0 1 1 1v7a2 2 0 0 1-4 0V5"/><path d="M7 9h5M7 12h5M7 15h3"/></svg></span>
+        <h1>News</h1>
+      </div>
+      <p>Market coverage from the wires, updated continuously.</p>
+    </div>
+    <span class="feedstate"><span class="pip" id="pip"></span><span id="feed-status">Loading&hellip;</span></span>
+  </div>
+
+  <p class="news-lede">Headlines and summaries are the original publisher&rsquo;s, reproduced from their public feed and linked back to the full article. Satstreet does not write, select or rank this coverage, and nothing on this page is a Satstreet view on the market. Full attribution is at the foot of the page.</p>
+
+  <div class="newsfilters" id="news-filters" role="group" aria-label="Filter by section"></div>
+
+  <div class="newsgrid" id="news-grid" aria-live="polite"><div class="skelcard"></div><div class="skelcard"></div><div class="skelcard"></div><div class="skelcard"></div><div class="skelcard"></div><div class="skelcard"></div></div>
+
+  <footer class="news-disclosure"><strong>Not a Satstreet view.</strong> News on this page is published by CoinDesk and syndicated through their public feed. Satstreet does not originate, edit, endorse or verify it, receives nothing for carrying it, and applies no sentiment or directional label to any item. Coverage of an asset, venue or company is not a recommendation to buy, sell or hold it, and nothing here is an offer or an executable price. Read the full article at the source before relying on anything in it.</footer>
+
+</main>
+<script src="./assets/terminal.js"></script>
+<script src="./assets/news-desk.js"></script>
+</body>
+</html>
