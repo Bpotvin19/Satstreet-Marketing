@@ -68,8 +68,10 @@
       '<h3><a href="' + escAttr(n.link) + '" target="_blank" rel="noopener noreferrer">' +
         esc(n.title) + '</a></h3>' +
       (n.summary ? '<p>' + esc(n.summary) + '</p>' : '') +
-      '<div class="by"><span>' + esc(n.author || 'CoinDesk') + '</span>' +
-        '<span>CoinDesk</span></div>' +
+      /* The byline only, and only when the feed carries one. The source is
+         named once, in the disclosure at the foot of the page, rather than
+         stamped on every card. */
+      (n.author ? '<div class="by"><span>' + esc(n.author) + '</span></div>' : '') +
       '</div></article>';
   }
 
@@ -121,7 +123,7 @@
         var grid = $('news-grid');
         if (grid) {
           grid.innerHTML = S.errorState('News unavailable',
-            'The CoinDesk feed could not be read (' + e.message + ').', 'retry-news');
+            'The news feed could not be read (' + e.message + ').', 'retry-news');
         }
         var f = $('news-filters'); if (f) f.innerHTML = '';
         stamp('error');

@@ -411,6 +411,7 @@
     <p><strong>Indicative reference prices only.</strong> Figures shown are indicative references drawn from third-party venues. They are not executable prices or an offer. Exchange-traded and macro feeds may be delayed.</p>
     <p>Market data is provided for information only and may be delayed or unavailable. Nothing on this page is investment advice or a recommendation to transact in any asset. Digital asset values can fall as well as rise.</p>
     <p>Portfolio figures reflect public blockchain data for addresses entered by the viewer on this device. They are not a statement of account and do not reflect any holdings, positions or balances held with Satstreet.</p>
+    <p><strong>News is published by CoinDesk</strong> and carried here through their public feed. Satstreet does not originate, edit, endorse or verify it, receives nothing for carrying it, and applies no sentiment or directional label to any item. Headlines link to the full article at the source.</p>
   </footer>
 
 </main>
@@ -769,10 +770,10 @@
             (n.summary ? '<p>' + esc(n.summary) + '</p>' : '') +
             '</article>';
         }).join('') +
-        '<div class="nsrc"><span>Source: CoinDesk</span><span>Not a Satstreet view</span></div>';
+        '<div class="nsrc"><span>Not a Satstreet view</span></div>';
       })
       .catch(function (e) {
-        $('news').innerHTML = '<p class="errbox"><b>News unavailable</b>The CoinDesk feed could not be read (' +
+        $('news').innerHTML = '<p class="errbox"><b>News unavailable</b>The news feed could not be read (' +
           esc(e.message) + ').</p>';
       });
   }
