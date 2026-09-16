@@ -33,6 +33,29 @@ const ALLOWED_HOST = /(^|\.)coindesk\.com$/i
 
 const MAX_ITEMS = 40
 
+/* Sections whose name carries the publisher's own brand.
+
+   CoinDesk files some coverage under "CoinDesk Indices" — promotion for
+   their index products rather than market news. It arrives with the brand
+   in the section name, so it would surface as a filter chip and a label on
+   every one of its cards, putting the publisher's name back on exactly the
+   surfaces this page deliberately keeps it off. The name is credited once,
+   in the disclosure at the foot of each page, and that is the whole of it.
+
+   Matched case-insensitively as a substring, so a future "CoinDesk Studio"
+   needs no code change. Override with NEWS_EXCLUDED_SECTIONS, a comma list;
+   set it empty to carry everything. */
+const EXCLUDED_SECTIONS = (process.env.NEWS_EXCLUDED_SECTIONS ?? 'CoinDesk')
+  .split(',')
+  .map((x) => x.trim().toLowerCase())
+  .filter(Boolean)
+
+function isExcludedSection(section: string): boolean {
+  if (!section) return false
+  const s = section.toLowerCase()
+  return EXCLUDED_SECTIONS.some((x) => s.includes(x))
+}
+
 interface Item {
   title: string
   link: string
@@ -124,6 +147,9 @@ function parse(xml: string): Item[] {
     /* A headline with no article behind it is not worth a row. */
     if (!title || !link) continue
 
+    const section = sectionOf(chunk)
+    if (isExcludedSection(section)) continue
+
     const pub = tagOf(chunk, 'pubDate')
     const when = pub ? new Date(pub) : null
     const rawImg = /<media:content[^>]*\surl="([^"]+)"/i.exec(chunk)?.[1] ?? ''
@@ -133,7 +159,7 @@ function parse(xml: string): Item[] {
       title,
       link,
       summary: tagOf(chunk, 'description'),
-      section: sectionOf(chunk),
+      section,
       author: tagOf(chunk, 'dc:creator'),
       image: img && /^https:\/\//i.test(img) ? img : '',
       publishedAt: when && !isNaN(when.getTime()) ? when.toISOString() : '',
