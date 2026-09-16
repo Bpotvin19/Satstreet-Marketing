@@ -5,6 +5,10 @@
 # Macro Desk news page and the Resource Centre. Both are gone from the tree
 # here rather than hidden behind a nav that a curious visitor could walk past,
 # and so are the endpoints that fed them.
+#
+# The News page here is not the Macro Desk. It shares a filename and nothing
+# else: CoinDesk's public feed, syndicated and linked back, with no Satstreet
+# commentary, no internal sourcing and no bias meters.
 
 [build]
   publish = "public"
@@ -20,9 +24,9 @@
 
 # Overview is the front page.
 #
-# The desk build answers "/" with news.html. That page does not exist on this
-# branch, so the client site opens on Overview instead — the cross-asset
-# monitor, which is the page a client has a reason to land on.
+# The desk build answers "/" with its Macro Desk news page. Nothing internal
+# is served from this branch, so the client site opens on Overview instead —
+# the cross-asset monitor, which is the page a client has a reason to land on.
 #
 # status = 200 makes this a rewrite rather than a redirect: the visitor stays
 # on "/" and the address bar does not change.
@@ -34,10 +38,11 @@
 # The desk build's own pages are not merely unlinked here, they are absent.
 # Anyone arriving on a bookmarked or indexed URL gets the front page rather
 # than a 404, which says less about what else exists.
-[[redirects]]
-  from = "/news.html"
-  to = "/overview.html"
-  status = 302
+#
+# /news.html used to redirect here too, because the desk build answers it with
+# the internal Macro Desk page and that was never client material. This branch
+# now has its own News page — syndicated CoinDesk headlines, nothing internal —
+# so the path is served rather than swallowed.
 
 [[redirects]]
   from = "/resources.html"

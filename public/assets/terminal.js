@@ -21,6 +21,7 @@ window.SATSTREET = (function () {
      wants and the edge function no longer touches the nav at all. */
   var NAV = [
     ['Overview',  './overview.html'],
+    ['News',      './news.html'],
     ['Markets',   './ticker.html'],
     ['Chart',     './chart.html'],
     ['Structure', './structure.html'],
@@ -38,7 +39,7 @@ window.SATSTREET = (function () {
      nav label of the page drawing it, so the underline and aria-current are
      always in step with where the visitor actually is. */
   function header(current) {
-    var wide = current === 'Markets' || current === 'Chart' || current === 'Treasuries' || current === 'Explorer' || current === 'Event Odds';
+    var wide = current === 'Markets' || current === 'Chart' || current === 'Treasuries' || current === 'Explorer' || current === 'Event Odds' || current === 'News';
     var links = NAV.map(function (n) {
       var on = n[0] === current;
       return '<a href="' + n[1] + '"' + (on ? ' aria-current="page"' : '') + '>' + esc(n[0]) + '</a>';
