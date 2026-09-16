@@ -33,6 +33,13 @@
   .amc-kind.company { color:#4f7189; background:#eaf1f5; }
   .amc-kind.metal   { color:#8a6d1f; background:#fdf3d8; }
   .amc-kind.crypto  { color:#b1620c; background:#fdeedb; }
+  .amc-asset { display:flex; align-items:center; gap:11px; }
+  .amc-logo { position:relative; width:30px; height:30px; flex:none; display:grid; place-items:center; }
+  .amc-logo img { width:30px; height:30px; object-fit:contain; display:block; }
+  /* Shown only when the mark fails to load, so a broken image never leaves a
+     gap where a logo should be. */
+  .amc-logo i { display:none; width:30px; height:30px; border-radius:50%; background:var(--border-2); color:var(--muted); font-style:normal; font-size:11px; font-weight:700; letter-spacing:.3px; place-items:center; }
+  .amc-logo.fallback i { display:grid; }
   .amc-table th.spk, .amc-table td.spk { width:86px; }
   .amc-table td.spk svg { display:block; }
   .amc-flag { font-size:15px; line-height:1; margin-right:6px; vertical-align:-1px; }
@@ -313,6 +320,24 @@
     }));
   }
 
+  /* Initials for a mark that will not load: up to two, from the words of the
+     name, so the row still reads as itself. */
+  function initials(name) {
+    var words = String(name || '').split(/[^A-Za-z0-9]+/).filter(Boolean);
+    if (!words.length) return '?';
+    return (words.length === 1 ? words[0].slice(0, 2) : words[0][0] + words[1][0]).toUpperCase();
+  }
+
+  /* The logo is decorative — the name beside it carries the meaning — so the
+     alt is empty and a failure swaps in initials rather than an icon. */
+  function mark(a) {
+    var fb = '<i>' + S.esc(initials(a.name)) + '</i>';
+    if (!a.logoUrl) return '<span class="amc-logo fallback">' + fb + '</span>';
+    return '<span class="amc-logo"><img src="' + S.esc(a.logoUrl) + '" alt="" ' +
+      'loading="lazy" decoding="async" referrerpolicy="no-referrer" ' +
+      'onerror="this.parentNode.classList.add(&quot;fallback&quot;);this.remove()">' + fb + '</span>';
+  }
+
   /* Companies get their country; gold, silver and the two coins have none, so
      the column carries what they are instead of sitting empty. */
   function place(a) {
@@ -344,9 +369,9 @@
           var dp = a.priceUsd >= 1000 ? 0 : a.priceUsd >= 1 ? 2 : 4;
           return '<tr' + (isBtc ? ' class="is-btc"' : '') + '>' +
             '<td class="amc-rank">' + a.rank + '</td>' +
-            '<td><span class="amc-name">' + S.esc(a.name) + '</span>' +
-              '<span class="amc-tick">' + S.esc(a.symbol) +
-              (a.country ? ' \u00b7 ' + S.esc(a.country) : '') + '</span></td>' +
+            '<td><div class="amc-asset">' + mark(a) +
+              '<span><span class="amc-name">' + S.esc(a.name) + '</span>' +
+              '<span class="amc-tick">' + S.esc(a.symbol) + '</span></span></div></td>' +
             '<td class="num amc-cap" title="' + S.esc(a.basis) + '">' + S.fmt.compact(a.marketCapUsd) + '</td>' +
             '<td class="num">' + S.fmt.money(a.priceUsd, 'USD', dp) + '</td>' +
             '<td class="num ' + S.fmt.dir(a.changePct) + '">' + S.fmt.pct(a.changePct) + '</td>' +

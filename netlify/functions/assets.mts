@@ -42,6 +42,21 @@
    ────────────────────────────────────────────────────────────────────────── */
 
 const YAHOO = 'https://query1.finance.yahoo.com/v8/finance/chart/'
+
+/* Where the marks come from.
+
+   These are the companies' own trademarks, shown to identify the row they
+   sit on — the ordinary way any financial table uses them. The files
+   themselves are currently served from companiesmarketcap.com, which is a
+   hotlink: their bandwidth, and their path to change. It works and it costs
+   nothing, but it is the most fragile dependency on this page.
+
+   The durable fix is to serve the same twenty-five files from this site.
+   Point LOGO_BASE at './assets/logos/' once they are in public/assets/logos/
+   and nothing else here changes. The page already falls back to initials for
+   any mark that will not load, so neither arrangement can break a row. */
+const LOGO_BASE = process.env.ASSET_LOGO_BASE?.trim() ||
+  'https://companiesmarketcap.com/img/company-logos/64/'
 const COINGECKO =
   'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum&price_change_percentage=24h'
 
@@ -55,6 +70,8 @@ interface Company {
   /** ISO 3166-1 alpha-2; the page turns it into a flag. */
   country: string
   countryName: string
+  /** Logo file stem. Defaults to the symbol; set where the two differ. */
+  logo?: string
   shares: number
   /** The filing the share count came from, so staleness is visible. */
   filed: string
@@ -67,6 +84,7 @@ interface Metal {
   name: string
   /** Estimated above-ground stock, in tonnes. */
   tonnes: number
+  logo: string
   source: string
 }
 
@@ -75,6 +93,7 @@ interface Crypto {
   id: string
   symbol: string
   name: string
+  logo: string
   /** Market cap comes from CoinGecko, but the 30-day line comes from the same
       chart endpoint as everything else so the shapes are drawn alike. */
   chartSymbol: string
@@ -84,7 +103,7 @@ interface Crypto {
 const COMPANIES: Company[] = [
   { kind:'company', symbol:'NVDA',  name:'NVIDIA',              country:'US', countryName:'USA', shares:24_100_000_000, filed:'2026-08-26' },
   { kind:'company', symbol:'AAPL',  name:'Apple',               country:'US', countryName:'USA', shares:14_594_180_000, filed:'2026-07-31' },
-  { kind:'company', symbol:'GOOGL', name:'Alphabet',            country:'US', countryName:'USA', shares:12_230_000_000, filed:'2026-07-23', note:'us-gaap:CommonStockSharesOutstanding; the tagged rows are per class and are not summed' },
+  { kind:'company', symbol:'GOOGL', name:'Alphabet',            country:'US', countryName:'USA', logo:'GOOG', shares:12_230_000_000, filed:'2026-07-23', note:'us-gaap:CommonStockSharesOutstanding; the tagged rows are per class and are not summed' },
   { kind:'company', symbol:'MSFT',  name:'Microsoft',           country:'US', countryName:'USA', shares:7_425_545_491,  filed:'2026-07-29' },
   { kind:'company', symbol:'AMZN',  name:'Amazon',              country:'US', countryName:'USA', shares:10_786_313_572, filed:'2026-07-31' },
   { kind:'company', symbol:'TSM',   name:'TSMC',                country:'TW', countryName:'Taiwan', shares:5_186_504_904,  filed:'2026-04-16', note:'20-F reports 25,932,524,521 ordinary shares; one ADR is five ordinary, and the price used here is the ADR' },
@@ -111,13 +130,13 @@ const COMPANIES: Company[] = [
    of the above-ground stock is in jewellery and industrial use that no one
    counts precisely. */
 const METALS: Metal[] = [
-  { kind:'metal', symbol:'GC=F', name:'Gold',   tonnes:216_265,   source:'World Gold Council, above-ground stock' },
-  { kind:'metal', symbol:'SI=F', name:'Silver', tonnes:1_750_000, source:'Silver Institute, above-ground stock (estimate)' },
+  { kind:'metal', symbol:'GC=F', name:'Gold',   tonnes:216_265,   logo:'GOLD.XM',   source:'World Gold Council, above-ground stock' },
+  { kind:'metal', symbol:'SI=F', name:'Silver', tonnes:1_750_000, logo:'SILVER.XM', source:'Silver Institute, above-ground stock (estimate)' },
 ]
 
 const CRYPTO: Crypto[] = [
-  { kind:'crypto', id:'bitcoin',  symbol:'BTC', name:'Bitcoin',  chartSymbol:'BTC-USD' },
-  { kind:'crypto', id:'ethereum', symbol:'ETH', name:'Ethereum', chartSymbol:'ETH-USD' },
+  { kind:'crypto', id:'bitcoin',  symbol:'BTC', name:'Bitcoin',  logo:'BTC.X', chartSymbol:'BTC-USD' },
+  { kind:'crypto', id:'ethereum', symbol:'ETH', name:'Ethereum', logo:'ETH.X', chartSymbol:'ETH-USD' },
 ]
 
 interface AssetRow {
@@ -127,6 +146,8 @@ interface AssetRow {
   name: string
   country: string | null
   countryName: string | null
+  /** Absolute URL for the mark, or empty when there is none to show. */
+  logoUrl: string
   marketCapUsd: number
   priceUsd: number
   changePct: number | null
@@ -204,6 +225,7 @@ export default async function handler(): Promise<Response> {
     rows.push({
       kind: 'company', symbol: c.symbol, name: c.name,
       country: c.country, countryName: c.countryName,
+      logoUrl: LOGO_BASE + (c.logo ?? c.symbol) + '.png',
       marketCapUsd: q.price * c.shares, priceUsd: q.price, changePct: q.changePct,
       spark: q.spark,
       basis: `${c.shares.toLocaleString('en-US')} shares outstanding, as filed ${c.filed}`,
@@ -217,6 +239,7 @@ export default async function handler(): Promise<Response> {
     rows.push({
       kind: 'metal', symbol: m.name.toUpperCase(), name: m.name,
       country: null, countryName: null,
+      logoUrl: LOGO_BASE + m.logo + '.png',
       marketCapUsd: q.price * ounces, priceUsd: q.price, changePct: q.changePct,
       spark: q.spark,
       basis: `${m.tonnes.toLocaleString('en-US')} tonnes above ground — ${m.source}`,
@@ -236,6 +259,7 @@ export default async function handler(): Promise<Response> {
       rows.push({
         kind: 'crypto', symbol: c.symbol, name: c.name,
         country: null, countryName: null,
+        logoUrl: LOGO_BASE + c.logo + '.png',
         marketCapUsd: cap, priceUsd: px, changePct: isFinite(chg) ? chg : null,
         spark: q?.spark ?? [],
         basis: 'circulating supply x price, as reported by CoinGecko',
