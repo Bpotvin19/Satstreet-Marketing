@@ -16,6 +16,28 @@
   .asset-dot { width:22px; height:22px; display:grid; place-items:center; flex:none; border-radius:50%; color:#fff; font-size:12px; font-weight:700; }
   .asset-dot.btc { background:#f7931a; }
   .asset-dot.eth { background:#5968a8; }
+  .asset-dot.rank { background:#0f8a63; font-size:13px; }
+
+  /* Largest assets by market cap */
+  .amc-lede { font-size:14px; color:var(--ink-2); max-width:80ch; margin:0 0 16px; }
+  .amc-table { width:100%; border-collapse:collapse; font-size:14px; }
+  .amc-table th { text-align:left; padding:9px 10px; font-size:10.5px; font-weight:700; letter-spacing:.65px; text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--border); white-space:nowrap; }
+  .amc-table td { padding:11px 10px; border-bottom:1px solid var(--border-2); font-variant-numeric:tabular-nums; }
+  .amc-table tr:last-child td { border-bottom:0; }
+  .amc-table th.num, .amc-table td.num { text-align:right; }
+  .amc-rank { color:var(--muted); font-variant-numeric:tabular-nums; width:38px; }
+  .amc-name { font-weight:600; color:var(--ink); }
+  .amc-tick { display:block; font-size:11.5px; font-weight:500; color:var(--muted); font-family:var(--font-data); }
+  .amc-cap { font-weight:600; font-family:var(--font-data); }
+  .amc-kind { font-size:10px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; padding:2px 7px; border-radius:20px; white-space:nowrap; }
+  .amc-kind.company { color:#4f7189; background:#eaf1f5; }
+  .amc-kind.metal   { color:#8a6d1f; background:#fdf3d8; }
+  .amc-kind.crypto  { color:#b1620c; background:#fdeedb; }
+  .amc-table tr.is-btc td { background:#fff8ee; }
+  .amc-table tr.is-btc .amc-name { color:#b1620c; }
+  .amc-head { display:flex; justify-content:space-between; align-items:baseline; gap:14px; flex-wrap:wrap; margin-bottom:4px; }
+  .amc-btcline { font-size:13.5px; color:var(--ink-2); }
+  .amc-btcline strong { color:var(--ink); }
   .source-row { display:flex; align-items:center; justify-content:space-between; gap:14px; margin:-5px 0 16px; color:var(--muted); font-size:12.5px; }
   .source-row a { text-decoration:none; font-weight:600; }
   .source-row a:hover { text-decoration:underline; }
@@ -88,6 +110,7 @@
   <div class="treasury-tabs" role="tablist" aria-label="Treasury asset">
     <button id="tab-btc" role="tab" aria-selected="true" data-asset="btc"><span class="asset-dot btc">₿</span>Bitcoin Treasuries</button>
     <button id="tab-eth" role="tab" aria-selected="false" data-asset="eth"><span class="asset-dot eth">Ξ</span>Strategic ETH Reserve</button>
+    <button id="tab-amc" role="tab" aria-selected="false" data-asset="assets"><span class="asset-dot rank">#</span>Largest Assets</button>
   </div>
 
   <div class="source-row">
@@ -115,6 +138,26 @@
       <div id="bars"></div>
     </aside>
   </div>
+
+  <section id="assets-section" hidden aria-labelledby="amc-h">
+    <p class="amc-lede">Where Bitcoin sits against the metals and the largest listed companies. Market capitalisation is computed from a live price and a share or unit count rather than quoted, so every figure moves with the market. This is a selected list, not every listed company.</p>
+    <section class="card">
+      <div class="amc-head">
+        <h2 id="amc-h" style="margin:0">Largest assets by market cap</h2>
+        <span class="amc-btcline" id="amc-btc"></span>
+      </div>
+      <div class="table-scroll">
+        <table class="amc-table">
+          <thead><tr><th>#</th><th>Asset</th><th class="num">Market cap</th><th class="num">Price</th><th class="num">Today</th><th>Type</th></tr></thead>
+          <tbody id="amc-rows"></tbody>
+        </table>
+      </div>
+      <div class="srcnote data-note" style="margin-top:14px">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+        <span id="amc-note">Prices are live. Company share counts come from each company&rsquo;s own SEC filing and are refreshed quarterly; hover any market cap to see the count and filing date behind it. Metal market caps use published above-ground stock estimates. Bitcoin and Ethereum are circulating supply times price.</span>
+      </div>
+    </section>
+  </section>
 
   <div class="srcnote data-note">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
@@ -246,11 +289,77 @@
       var retry = $('retry-treasury'); if (retry) retry.addEventListener('click', load);
     });
   }
+  /* The two treasury tabs share one dataset and one layout. The assets tab is
+     a different table from a different endpoint, so it swaps the panel rather
+     than re-rendering the same one. */
+  function showPanel(which) {
+    var treasury = which !== 'assets';
+    var srcNote = $('method-note') ? $('method-note').closest('.srcnote') : null;
+    [document.querySelector('.source-row'), $('metrics'), $('treasury-grid'), srcNote]
+      .forEach(function (el) { if (el) el.hidden = !treasury; });
+    if ($('assets-section')) $('assets-section').hidden = treasury;
+  }
+
+  function loadAssets() {
+    var body = $('amc-rows');
+    if (!body) return;
+    if (!body.children.length) {
+      body.innerHTML = '<tr><td colspan="6" style="color:var(--muted);padding:18px 10px">Loading\u2026</td></tr>';
+    }
+    fetch('/api/assets', { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (d) {
+        var list = (d && d.assets) || [];
+        if (!list.length) throw new Error('no assets returned');
+        body.innerHTML = list.map(function (a) {
+          var isBtc = a.symbol === 'BTC';
+          /* Cheap assets need more than two decimals to say anything. */
+          var dp = a.priceUsd >= 1000 ? 0 : a.priceUsd >= 1 ? 2 : 4;
+          return '<tr' + (isBtc ? ' class="is-btc"' : '') + '>' +
+            '<td class="amc-rank">' + a.rank + '</td>' +
+            '<td><span class="amc-name">' + S.esc(a.name) + '</span>' +
+              '<span class="amc-tick">' + S.esc(a.symbol) +
+              (a.country ? ' \u00b7 ' + S.esc(a.country) : '') + '</span></td>' +
+            '<td class="num amc-cap" title="' + S.esc(a.basis) + '">' + S.fmt.compact(a.marketCapUsd) + '</td>' +
+            '<td class="num">' + S.fmt.money(a.priceUsd, 'USD', dp) + '</td>' +
+            '<td class="num ' + S.fmt.dir(a.changePct) + '">' + S.fmt.pct(a.changePct) + '</td>' +
+            '<td><span class="amc-kind ' + a.kind + '">' + a.kind + '</span></td>' +
+            '</tr>';
+        }).join('');
+
+        var line = $('amc-btc');
+        if (line) {
+          var btc = list.filter(function (a) { return a.symbol === 'BTC'; })[0];
+          line.innerHTML = btc
+            ? 'Bitcoin ranks <strong>#' + btc.rank + '</strong> of ' + list.length +
+              ' at ' + S.fmt.compact(btc.marketCapUsd)
+            : '';
+        }
+        /* A symbol that failed to quote drops its own row, so say so rather
+           than letting the ranking quietly shorten. */
+        var note = $('amc-note');
+        if (note && d.expected && d.total < d.expected) {
+          if (!note.dataset.base) note.dataset.base = note.textContent;
+          note.textContent = (d.expected - d.total) + ' of ' + d.expected +
+            ' assets could not be priced just now and are omitted. ' + note.dataset.base;
+        }
+      })
+      .catch(function (e) {
+        body.innerHTML = '<tr><td colspan="6">' +
+          S.errorState('Assets unavailable', e.message, 'retry-amc') + '</td></tr>';
+        var r = $('retry-amc'); if (r) r.addEventListener('click', loadAssets);
+      });
+  }
+
+  function refresh() { if (asset === 'assets') loadAssets(); else load(); }
+
   document.querySelector('.treasury-tabs').addEventListener('click', function (e) {
     var b = e.target.closest('[data-asset]'); if (!b || b.getAttribute('data-asset') === asset) return;
-    asset = b.getAttribute('data-asset'); Array.prototype.forEach.call(this.querySelectorAll('[data-asset]'), function (x) { x.setAttribute('aria-selected', String(x === b)); }); load();
+    asset = b.getAttribute('data-asset'); Array.prototype.forEach.call(this.querySelectorAll('[data-asset]'), function (x) { x.setAttribute('aria-selected', String(x === b)); });
+    showPanel(asset); refresh();
   });
-  load(); timer = setInterval(function () { if (!document.hidden) load(); }, 300000);
+  showPanel(asset); load();
+  timer = setInterval(function () { if (!document.hidden) refresh(); }, 300000);
 })();
 </script>
 </body>
