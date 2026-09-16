@@ -1,6 +1,6 @@
 {
-  "_comment": "Scheduled macro events. Every entry is verified against the issuing institution's own published schedule — see 'verified'. Add entries only from a primary source; a wrong date on a client-facing page costs more credibility than a short calendar. BLS blocks automated access to its release schedule, so US CPI and jobs dates beyond the next one must be added by hand from bls.gov/schedule.",
-  "updated": "2026-09-02",
+  "_comment": "Scheduled macro events. Every entry is verified against the issuing institution's own published schedule — see 'verified'. Add entries only from a primary source; a wrong date on a client-facing page costs more credibility than a short calendar. BLS blocks automated access from scripts, but its schedule pages load in a normal browser: US CPI and jobs dates come from bls.gov/schedule/news_release/cpi.htm and empsit.htm, and are published about a year ahead. FOMC dates are on federalreserve.gov/monetarypolicy/fomccalendars.htm. Bank of Canada dates are on bankofcanada.ca/press/upcoming-events/, which only lists the current year — BoC 2027 announcement dates are NOT yet in this file and should be added when the Bank publishes them.",
+  "updated": "2026-09-16",
   "events": [
     {
       "date": "2026-09-04",
@@ -24,6 +24,27 @@
       "verified": "federalreserve.gov"
     },
     {
+      "date": "2026-10-02",
+      "title": "US jobs report",
+      "detail": "Employment Situation for September, 8:30am ET",
+      "kind": "data",
+      "verified": "bls.gov"
+    },
+    {
+      "date": "2026-10-14",
+      "title": "US CPI",
+      "detail": "Consumer Price Index for September, 8:30am ET",
+      "kind": "data",
+      "verified": "bls.gov"
+    },
+    {
+      "date": "2026-10-19",
+      "title": "Bank of Canada Business Outlook Survey",
+      "detail": "With the Survey of Consumer Expectations, 11:30am ET",
+      "kind": "data",
+      "verified": "bankofcanada.ca"
+    },
+    {
       "date": "2026-10-28",
       "title": "Bank of Canada decision",
       "detail": "With the Monetary Policy Report, 9:45am ET",
@@ -38,6 +59,27 @@
       "verified": "federalreserve.gov"
     },
     {
+      "date": "2026-11-06",
+      "title": "US jobs report",
+      "detail": "Employment Situation for October, 8:30am ET",
+      "kind": "data",
+      "verified": "bls.gov"
+    },
+    {
+      "date": "2026-11-10",
+      "title": "US CPI",
+      "detail": "Consumer Price Index for October, 8:30am ET",
+      "kind": "data",
+      "verified": "bls.gov"
+    },
+    {
+      "date": "2026-12-04",
+      "title": "US jobs report",
+      "detail": "Employment Situation for November, 8:30am ET",
+      "kind": "data",
+      "verified": "bls.gov"
+    },
+    {
       "date": "2026-12-09",
       "title": "Bank of Canada decision",
       "detail": "Final decision of 2026, 9:45am ET",
@@ -48,6 +90,69 @@
       "date": "2026-12-09",
       "title": "Federal Reserve decision",
       "detail": "FOMC, 8–9 December, with updated projections — same day as the Bank of Canada",
+      "kind": "central-bank",
+      "verified": "federalreserve.gov"
+    },
+    {
+      "date": "2026-12-10",
+      "title": "US CPI",
+      "detail": "Consumer Price Index for November, 8:30am ET",
+      "kind": "data",
+      "verified": "bls.gov"
+    },
+    {
+      "date": "2027-01-27",
+      "title": "Federal Reserve decision",
+      "detail": "FOMC, 26-27 January",
+      "kind": "central-bank",
+      "verified": "federalreserve.gov"
+    },
+    {
+      "date": "2027-03-17",
+      "title": "Federal Reserve decision",
+      "detail": "FOMC, 16-17 March, with updated projections",
+      "kind": "central-bank",
+      "verified": "federalreserve.gov"
+    },
+    {
+      "date": "2027-04-28",
+      "title": "Federal Reserve decision",
+      "detail": "FOMC, 27-28 April",
+      "kind": "central-bank",
+      "verified": "federalreserve.gov"
+    },
+    {
+      "date": "2027-06-09",
+      "title": "Federal Reserve decision",
+      "detail": "FOMC, 8-9 June, with updated projections",
+      "kind": "central-bank",
+      "verified": "federalreserve.gov"
+    },
+    {
+      "date": "2027-07-28",
+      "title": "Federal Reserve decision",
+      "detail": "FOMC, 27-28 July",
+      "kind": "central-bank",
+      "verified": "federalreserve.gov"
+    },
+    {
+      "date": "2027-09-15",
+      "title": "Federal Reserve decision",
+      "detail": "FOMC, 14-15 September, with updated projections",
+      "kind": "central-bank",
+      "verified": "federalreserve.gov"
+    },
+    {
+      "date": "2027-10-27",
+      "title": "Federal Reserve decision",
+      "detail": "FOMC, 26-27 October",
+      "kind": "central-bank",
+      "verified": "federalreserve.gov"
+    },
+    {
+      "date": "2027-12-08",
+      "title": "Federal Reserve decision",
+      "detail": "FOMC, 7-8 December, with updated projections",
       "kind": "central-bank",
       "verified": "federalreserve.gov"
     }

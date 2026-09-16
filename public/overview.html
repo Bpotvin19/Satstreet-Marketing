@@ -361,7 +361,11 @@
     </section>
   </section>
 
-  <div class="grid cols-2" style="margin-top:16px">
+  <!-- align-items:start so each card ends where its content ends. The news
+       card is driven by a live feed and the calendar by a fixed schedule, so
+       they will rarely be the same height; stretching the shorter one just
+       trails empty white below its last row. -->
+  <div class="grid cols-2" style="margin-top:16px;align-items:start">
     <section class="card" aria-labelledby="news-h">
       <header>
         <div><p class="eyebrow">Latest crypto news</p><h2 id="news-h" class="sr">Latest crypto news</h2></div>
@@ -785,7 +789,7 @@
         if (!c || !c.events) throw new Error('unavailable');
         var today = new Date(); today.setHours(0, 0, 0, 0);
         var next = c.events.filter(function (e) { return new Date(e.date + 'T12:00:00') >= today; })
-          .sort(function (a, b) { return a.date < b.date ? -1 : 1; }).slice(0, 5);
+          .sort(function (a, b) { return a.date < b.date ? -1 : 1; }).slice(0, 8);
         if (!next.length) { $('cats').innerHTML = '<p class="emptybox">No scheduled events in the period ahead.</p>'; return; }
         $('cats').innerHTML = next.map(function (e) {
           var d = new Date(e.date + 'T12:00:00'), high = e.kind === 'central-bank';
