@@ -68,8 +68,31 @@ const MACRO: { symbol: string; label: string; kind: Quote['kind'] }[] = [
   { symbol: '^GSPC', label: 'S&P 500', kind: 'level' },
 ]
 
-async function yahoo(symbol: string, label: string, kind: Quote['kind']): Promise<Quote> {
-  const base: Quote = { symbol, label, price: null, changePct: null, changeAbs: null, spark: [], kind, source: 'Yahoo Finance' }
+/* A client's own watchlist arrives as ?symbols=XRP-USD,MSTR,EURUSD=X…
+   Crypto pairs (BASE-USD) are quoted from Coinbase; everything else is a
+   Yahoo chart symbol. Anything that does not look like either is dropped
+   before it reaches an upstream, and the list is capped. */
+const MAX_SYMBOLS = 16
+const CRYPTO_PAIR = /^[A-Z0-9]{1,12}-USD$/
+const YAHOO_SYMBOL = /^[\^]?[A-Z0-9.\-]{1,15}(=[XF])?$/
+const DEFAULT_LABELS: Record<string, { label: string; kind: Quote['kind'] }> = {
+  'BTC-USD': { label: 'Bitcoin', kind: 'usd' },
+  'ETH-USD': { label: 'Ethereum', kind: 'usd' },
+  ...Object.fromEntries(MACRO.map((m) => [m.symbol, { label: m.label, kind: m.kind }])),
+}
+/* How to print a Yahoo instrument nobody configured: yields as a percent,
+   FX as a rate, indices as a level, US-dollar prices with a $, anything
+   priced in another currency as a plain number. */
+function kindFor(symbol: string, currency: string | undefined, instrumentType: string | undefined): Quote['kind'] {
+  if (DEFAULT_LABELS[symbol]) return DEFAULT_LABELS[symbol].kind
+  if (/^\^(TNX|TYX|FVX|IRX)$/.test(symbol)) return 'pct'
+  if (/=X$/.test(symbol) || instrumentType === 'CURRENCY') return 'fx'
+  if (symbol.startsWith('^') || instrumentType === 'INDEX') return 'level'
+  return !currency || currency === 'USD' ? 'usd' : 'level'
+}
+
+async function yahoo(symbol: string, label: string, kind: Quote['kind'] | null): Promise<Quote> {
+  const base: Quote = { symbol, label, price: null, changePct: null, changeAbs: null, spark: [], kind: kind || 'usd', source: 'Yahoo Finance' }
   try {
     const r = await fetch(`${YAHOO}${encodeURIComponent(symbol)}?interval=1d&range=1mo`, {
       headers: { 'user-agent': 'Mozilla/5.0 (compatible; SatstreetDashboard/1.0)' },
@@ -98,6 +121,8 @@ async function yahoo(symbol: string, label: string, kind: Quote['kind']): Promis
 
     return {
       ...base,
+      label: label || meta?.shortName || meta?.longName || symbol,
+      kind: kind || kindFor(symbol, meta?.currency, meta?.instrumentType),
       price,
       changePct: isFinite(prev) && prev !== 0 ? ((price - prev) / prev) * 100 : null,
       changeAbs: isFinite(prev) ? price - prev : null,
@@ -115,9 +140,7 @@ async function yahoo(symbol: string, label: string, kind: Quote['kind']): Promis
 
 /* Crypto comes from Coinbase, which the rest of the site already quotes.
    Using the same venue keeps the strip and the focus chart aligned. */
-async function coinbase(): Promise<Quote[]> {
-  const out: Quote[] = []
-  const spot = async (pair: string, label: string, kind: Quote['kind']): Promise<Quote> => {
+async function spot(pair: string, label: string, kind: Quote['kind']): Promise<Quote> {
     const base: Quote = { symbol: pair, label, price: null, changePct: null, changeAbs: null, spark: [], kind, source: 'Digital asset venue' }
     try {
       const [t, s, c] = await Promise.all([
@@ -158,20 +181,22 @@ async function coinbase(): Promise<Quote[]> {
     } catch (e) {
       return { ...base, error: e instanceof Error ? e.message : 'failed' }
     }
-  }
-
-  out.push(await spot('BTC-USD', 'Bitcoin', 'usd'))
-  out.push(await spot('ETH-USD', 'Ethereum', 'usd'))
-  return out
 }
 
-export default async function handler(): Promise<Response> {
-  const [crypto, ...macro] = await Promise.all([
-    coinbase(),
-    ...MACRO.map((m) => yahoo(m.symbol, m.label, m.kind)),
-  ])
+const DEFAULT_SYMBOLS = ['BTC-USD', 'ETH-USD', ...MACRO.map((m) => m.symbol)]
 
-  const quotes = [...crypto, ...macro]
+export default async function handler(request: Request): Promise<Response> {
+  const asked = (new URL(request.url).searchParams.get('symbols') || '')
+    .split(',').map((x) => x.trim().toUpperCase()).filter(Boolean)
+  const symbols = asked.length
+    ? [...new Set(asked)].filter((x) => CRYPTO_PAIR.test(x) || YAHOO_SYMBOL.test(x)).slice(0, MAX_SYMBOLS)
+    : DEFAULT_SYMBOLS
+
+  const quotes = await Promise.all(symbols.map((sym) => {
+    const known = DEFAULT_LABELS[sym]
+    if (CRYPTO_PAIR.test(sym)) return spot(sym, known ? known.label : sym.replace('-USD', ''), 'usd')
+    return yahoo(sym, known ? known.label : '', known ? known.kind : null)
+  }))
   const failed = quotes.filter((q) => q.error).map((q) => q.label)
 
   return new Response(

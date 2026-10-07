@@ -22,7 +22,7 @@ export default async function terminalRefresh(_request: Request, context: any) {
   @media(max-width:900px){.navtoggle{display:block!important}.mainnav{display:none!important;position:absolute;top:58px;left:0;right:0;z-index:40;flex-direction:column;gap:0;margin:0;padding:6px 0 10px;background:var(--navy)}.mainnav.open{display:flex!important}.mainnav a{height:auto;padding:12px 20px}.pagehead{min-height:0;padding-top:6px;gap:18px}.pagehead h1{font-size:32px}}
   </style>`;
 
-  const js = `<script data-terminal-refresh>(function(){function run(){var g=document.getElementById('greeting');if(g){var h=new Date().getHours();g.textContent='Good '+(h<12?'morning':h<17?'afternoon':'evening')+'.'}}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run()})();</script>`;
+  const js = `<script data-terminal-refresh>(function(){function run(){var g=document.getElementById('greeting');if(g&&!g.hasAttribute('data-personal')){var h=new Date().getHours();g.textContent='Good '+(h<12?'morning':h<17?'afternoon':'evening')+'.'}}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run()})();</script>`;
 
   html = html.replace('</head>', css + '</head>').replace('</body>', js + '</body>');
 

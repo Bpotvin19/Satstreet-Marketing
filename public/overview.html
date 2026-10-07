@@ -315,6 +315,78 @@
   .amc-country { color:var(--ink-2, #465463); }
   .amc-table tr.is-btc td { background:#fff8ee; }
   .amc-table tr.is-btc .amc-name { color:#b1620c; }
+
+  /* ---- personal dashboard: board actions, welcome, customize, tour ---- */
+  .board-actions { display:flex; gap:8px; align-items:center; }
+  .board-actions .btn svg { width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+  .asset-mark.custom { background:linear-gradient(145deg,#e9f1f6,#dbe6ee); color:#3f5b70; font-size:9.5px; font-weight:700; letter-spacing:.2px; box-shadow:inset 0 0 0 1px #d0dde7; }
+  .asset-mark.custom.crypto-logo { background:#fff; }
+  body.dash-modal-open { overflow:hidden; }
+  .dash-layer { position:fixed; inset:0; z-index:120; }
+  .dash-layer[hidden] { display:none; }
+  .dash-backdrop { background:rgba(13,27,46,.5); display:grid; place-items:center; padding:16px; }
+  .dash-card { width:min(440px,100%); background:#fff; border-radius:16px; box-shadow:0 30px 70px rgba(13,27,46,.3); padding:30px 28px 24px; }
+  .dash-card .eyebrow { margin-bottom:6px; }
+  .dash-card h2 { font-family:var(--font-display); font-size:27px; font-weight:600; margin:0 0 8px; line-height:1.15; }
+  .dash-card p { margin:0 0 18px; color:var(--ink-2); font-size:14.5px; line-height:1.55; }
+  .dash-card label { display:block; font-size:12px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+  .dash-input { width:100%; box-sizing:border-box; font:inherit; font-size:15px; padding:11px 13px; border:1px solid var(--border); border-radius:9px; color:var(--ink); background:#fff; }
+  .dash-input:focus { outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(0,104,255,.12); }
+  .dash-card .dash-actions { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:18px; }
+  .dash-note { font-size:12px; color:var(--muted); margin:10px 0 0 !important; }
+  .linkbtn { font:inherit; font-size:13px; font-weight:600; color:var(--muted); background:none; border:0; padding:6px 0; cursor:pointer; }
+  .linkbtn:hover { color:var(--ink); }
+
+  .dash-drawer { background:rgba(13,27,46,.45); display:flex; justify-content:flex-end; }
+  .dash-panel { width:min(460px,100%); height:100%; background:#fff; display:flex; flex-direction:column; box-shadow:-20px 0 50px rgba(13,27,46,.2); }
+  .dash-panel-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:22px 22px 14px; border-bottom:1px solid var(--border-2); }
+  .dash-panel-head h2 { font-family:var(--font-display); font-size:23px; font-weight:600; margin:2px 0 0; }
+  .dash-x { width:34px; height:34px; border:1px solid var(--border); border-radius:8px; background:#fff; font-size:18px; cursor:pointer; color:var(--ink); }
+  .dash-panel-body { flex:1; overflow:auto; padding:18px 22px; }
+  .dash-section { margin-bottom:22px; }
+  .dash-section > .k { display:flex; justify-content:space-between; align-items:baseline; font-size:11px; font-weight:700; letter-spacing:.7px; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+  .dash-section > .k span:last-child { text-transform:none; letter-spacing:0; font-weight:600; }
+  .dash-list, .dash-results { list-style:none; margin:0; padding:0; }
+  .dash-row { display:flex; align-items:center; gap:11px; padding:9px 4px; border-bottom:1px solid var(--border-2); }
+  .dash-row:last-child { border-bottom:0; }
+  .dash-ic { position:relative; width:30px; height:30px; flex:none; border-radius:50%; display:grid; place-items:center; overflow:hidden; background:#fff; box-shadow:0 0 0 1px var(--border); }
+  .dash-ic img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; background:#fff; }
+  .dash-ic i { font-style:normal; font-size:9.5px; font-weight:700; color:#476177; }
+  .dash-ic.plain { background:linear-gradient(145deg,#edf3f7,#dfe8ee); }
+  .dash-name { flex:1; min-width:0; }
+  .dash-name b { display:block; font-size:14px; font-weight:650; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .dash-name small { display:block; font-size:11.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .dash-row-actions { display:flex; gap:4px; }
+  .dash-row-actions button { width:28px; height:28px; border:1px solid var(--border); border-radius:7px; background:#fff; color:var(--ink-2); cursor:pointer; font-size:13px; line-height:1; }
+  .dash-row-actions button:hover:not([disabled]) { background:var(--border-2); color:var(--ink); }
+  .dash-row-actions button[disabled] { opacity:.35; cursor:default; }
+  .dash-row-actions button[data-remove]:hover:not([disabled]) { color:var(--down); border-color:#f0c3c9; background:#fff5f6; }
+  .dash-chips { display:flex; flex-wrap:wrap; gap:7px; margin-top:10px; }
+  .dash-chip { font:inherit; font-size:12.5px; font-weight:600; padding:6px 11px; border:1px solid var(--border); border-radius:20px; background:#fff; color:var(--ink-2); cursor:pointer; }
+  .dash-chip:hover:not([disabled]) { border-color:#b7d7ff; background:#f2f8ff; color:var(--blue); }
+  .dash-chip[disabled] { color:var(--up); border-color:#cfe9de; background:#f3fbf7; cursor:default; }
+  .dash-results { margin-top:8px; }
+  .dash-result { width:100%; display:flex; align-items:center; gap:11px; padding:9px 8px; border:0; border-radius:9px; background:none; font:inherit; text-align:left; cursor:pointer; }
+  .dash-result:hover:not([disabled]) { background:#f4f8fb; }
+  .dash-result[disabled] { cursor:default; opacity:.6; }
+  .dash-type { font-size:10px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:#4f7189; background:#eaf1f5; padding:3px 7px; border-radius:20px; }
+  .dash-plus { font-size:12.5px; font-weight:650; color:var(--blue); white-space:nowrap; }
+  .dash-result[disabled] .dash-plus { color:var(--up); }
+  .dash-empty { padding:10px 6px; font-size:13px; color:var(--muted); }
+  .dash-msg { min-height:18px; font-size:12.5px; color:var(--up); margin:4px 0 0; }
+  .dash-panel-foot { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:14px 22px; border-top:1px solid var(--border-2); background:#fafcfe; }
+
+  .tour-spot { position:fixed; z-index:121; border-radius:12px; box-shadow:0 0 0 9999px rgba(13,27,46,.58), 0 0 0 2px rgba(255,255,255,.9); pointer-events:none; transition:all .3s ease; }
+  .tour-card { position:fixed; z-index:122; width:min(340px, calc(100vw - 24px)); background:#fff; border-radius:13px; box-shadow:0 18px 50px rgba(13,27,46,.35); padding:18px 18px 14px; transition:top .3s ease, left .3s ease; }
+  .tour-card .eyebrow { margin:0 0 4px; }
+  .tour-card h3 { font-family:var(--font-display); font-size:20px; font-weight:600; margin:0 0 6px; }
+  .tour-card p { font-size:14px; line-height:1.55; color:var(--ink-2); margin:0 0 14px; }
+  .tour-nav { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .tour-nav div { display:flex; gap:8px; }
+  @media (max-width: 760px) {
+    .board-actions { margin-top:8px; }
+    .dash-card { padding:24px 20px 20px; }
+  }
 </style>
 </head>
 <body>
@@ -338,13 +410,17 @@
 
   <section class="intro" aria-labelledby="greeting">
     <p class="datestamp" id="datestamp"></p>
-    <h1 id="greeting">Good morning.</h1>
+    <h1 id="greeting" data-personal>Good morning.</h1>
     <p class="summary" id="summary"></p>
   </section>
 
   <section class="marketboard" aria-labelledby="board-h">
     <header>
       <div><p class="eyebrow">Cross-asset monitor</p><h2 id="board-h">Markets at a glance</h2></div>
+      <div class="board-actions">
+        <button type="button" class="btn ghost small" id="tour-btn" aria-label="Take a quick tour of the dashboard">Tour</button>
+        <button type="button" class="btn ghost small" id="customize-btn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Customize</button>
+      </div>
     </header>
     <div class="asset-grid" id="asset-grid" aria-label="Covered markets"></div>
 
@@ -436,6 +512,66 @@
 
 </main>
 
+<!-- Personal dashboard: welcome, customize panel and tour (assets/dashboard.js) -->
+<div class="dash-layer dash-backdrop" id="dash-welcome" role="dialog" aria-modal="true" aria-labelledby="welcome-h" hidden>
+  <form class="dash-card" id="welcome-form" autocomplete="off">
+    <p class="eyebrow">Welcome to Satstreet</p>
+    <h2 id="welcome-h">What should we call you?</h2>
+    <p>We&rsquo;ll use it to greet you each time you open your dashboard.</p>
+    <label for="welcome-name">Your name</label>
+    <input class="dash-input" id="welcome-name" maxlength="40" placeholder="First name" />
+    <div class="dash-actions">
+      <button type="button" class="linkbtn" id="welcome-skip">Skip for now</button>
+      <button type="submit" class="btn">Continue</button>
+    </div>
+    <p class="dash-note">Saved on this device only. Satstreet does not receive it.</p>
+  </form>
+</div>
+
+<div class="dash-layer dash-drawer" id="dash-customize" role="dialog" aria-modal="true" aria-labelledby="dash-h" hidden>
+  <div class="dash-panel">
+    <div class="dash-panel-head">
+      <div><p class="eyebrow">Your dashboard</p><h2 id="dash-h">Customize</h2></div>
+      <button type="button" class="dash-x" id="dash-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="dash-panel-body">
+      <div class="dash-section">
+        <div class="k"><span>Your name</span></div>
+        <input class="dash-input" id="dash-name-input" maxlength="40" placeholder="First name" autocomplete="off" />
+      </div>
+      <div class="dash-section">
+        <div class="k"><span>Add a market</span></div>
+        <input class="dash-input" id="dash-search" type="search" placeholder="Search a coin, stock, ETF, index or currency" autocomplete="off" spellcheck="false" />
+        <ul class="dash-results" id="dash-results" aria-live="polite"></ul>
+        <div class="dash-chips" id="dash-popular" aria-label="Popular markets"></div>
+        <p class="dash-msg" id="dash-msg" role="status"></p>
+      </div>
+      <div class="dash-section">
+        <div class="k"><span>On your board</span><span id="dash-count"></span></div>
+        <ul class="dash-list" id="dash-list"></ul>
+      </div>
+    </div>
+    <div class="dash-panel-foot">
+      <div><button type="button" class="linkbtn" id="dash-reset">Reset to default</button> &nbsp;·&nbsp; <button type="button" class="linkbtn" id="dash-tour">Replay tour</button></div>
+      <button type="button" class="btn small" id="dash-done">Done</button>
+    </div>
+  </div>
+</div>
+
+<div class="dash-layer" id="dash-tour-layer" hidden>
+  <div class="tour-spot" id="tour-spot"></div>
+  <div class="tour-card" role="dialog" aria-modal="true" aria-labelledby="tour-title">
+    <p class="eyebrow" id="tour-step"></p>
+    <h3 id="tour-title"></h3>
+    <p id="tour-body"></p>
+    <div class="tour-nav">
+      <button type="button" class="linkbtn" id="tour-skip">Skip tour</button>
+      <div><button type="button" class="btn ghost small" id="tour-back">Back</button><button type="button" class="btn small" id="tour-next">Next</button></div>
+    </div>
+  </div>
+</div>
+
+<script src="./assets/dashboard.js"></script>
 <script>
 (function () {
   'use strict';
@@ -452,6 +588,8 @@
   $('datestamp').textContent = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
   var hr = now.getHours();
   $('greeting').textContent = 'Good ' + (hr < 12 ? 'morning' : hr < 17 ? 'afternoon' : 'evening') + '.';
+  if (window.SSProfile) window.SSProfile.greet();
+  var P = window.SSProfile;
 
   function fmtPrice(q, v) {
     if (v === null || v === undefined || !isFinite(v)) return '—';
@@ -499,7 +637,24 @@
     '^IXIC': { cls:'ndq index-logo', code:'NDX index', image:'data:image/png;base64,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' },
     '^GSPC': { cls:'spx', code:'SPX index', icon:'<path d="m4 16 4-4 3 2 5-6 4 2"/><path d="M4 20h16"/>' }
   };
+  /* Anything a client added that the desk's default board does not cover:
+     a coin gets its logo (initials if none loads), anything else initials. */
+  function customMeta(symbol) {
+    var crypto = /-USD$/.test(symbol), base = symbol.replace('-USD', '').replace(/^\^/, '').replace(/=.*/, '');
+    return {
+      cls: 'custom' + (crypto ? ' crypto-logo' : ''),
+      code: crypto ? base + ' / USD' : symbol,
+      image: crypto ? 'https://assets.coincap.io/assets/icons/' + base.toLowerCase() + '@2x.png' : null,
+      text: base.slice(0, 4)
+    };
+  }
+  function metaFor(symbol) { return ASSETS[symbol] || customMeta(symbol); }
   function assetIcon(symbol) {
+    if (!ASSETS[symbol]) {
+      var c = customMeta(symbol);
+      return '<span class="asset-mark ' + c.cls + '" aria-hidden="true">' +
+        (c.image ? '<img src="' + c.image + '" alt="" loading="lazy" onerror="this.parentNode.textContent=\'' + esc(c.text) + '\'" />' : esc(c.text)) + '</span>';
+    }
     var a = ASSETS[symbol] || { cls:'bond', icon:'<circle cx="12" cy="12" r="3"/>' };
     var body = a.image ? '<img src="' + a.image + '" alt="" loading="lazy" />' : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' + a.icon + '</svg>';
     return '<span class="asset-mark ' + a.cls + '" aria-hidden="true">' + body + '</span>';
@@ -544,7 +699,7 @@
     $('asset-grid').innerHTML = d.quotes.map(function (q) {
       var m = move(q), active = q.symbol === selectedSymbol;
       var state = q.error ? 'Unavailable' : (q.marketState === 'REGULAR' ? 'Open' : (q.marketState || 'Reference'));
-      var meta = ASSETS[q.symbol] || { code:q.symbol };
+      var meta = metaFor(q.symbol);
       return '<button type="button" class="asset-tile" data-symbol="' + esc(q.symbol) + '" aria-pressed="' + active + '" title="' + esc(q.source + ' · ' + state) + '">' +
         '<span class="tile-top"><span class="asset-id">' + assetIcon(q.symbol) + '<span><span class="tile-name">' + esc(q.label) + '</span><span class="tile-code">' + esc(meta.code) + '</span></span></span><span class="tile-change ' + m.c + '">' + m.t + '</span></span>' +
         '<span class="tile-px">' + fmtPrice(q, q.price) + '</span><span class="tile-foot"><span></span>' + tileSpark(q.spark, m.c) + '</span></button>';
@@ -554,8 +709,11 @@
     var by = {};
     d.quotes.forEach(function (q) { by[q.label] = q; });
     var btc = by['Bitcoin'], ten = by['US 10Y'], cad = by['USD/CAD'];
-    if (!btc || btc.price === null) return 'Reference prices are loading.';
-    var bits = ['Bitcoin is trading at ' + fmtPrice(btc, btc.price)];
+    /* A client may have taken Bitcoin off their board: lead with their
+       first market instead. */
+    if (!btc) btc = d.quotes.filter(function (q) { return q.price !== null && q.kind !== 'pct' && q.kind !== 'fx'; })[0];
+    if (!btc || btc.price === null) return d.quotes.length ? '' : 'Reference prices are loading.';
+    var bits = [btc.label + ' is trading at ' + fmtPrice(btc, btc.price)];
     if (btc.changePct !== null) bits[0] += ', ' + (btc.changePct >= 0 ? 'up ' : 'down ') + Math.abs(btc.changePct).toFixed(2) + '% on the session';
     if (ten && ten.price !== null) bits.push('the US 10-year is at ' + ten.price.toFixed(2) + '%');
     if (cad && cad.price !== null) bits.push('USD/CAD at ' + cad.price.toFixed(4));
@@ -581,10 +739,18 @@
 
   function loadMarket() {
     if (!market) skeletonTicker();
-    var request = usePreview ? Promise.resolve(previewMarket()) : fetch('/api/market', { cache: 'no-store' })
+    /* The client's own watchlist, if they have changed the default board. */
+    var custom = P ? P.customSymbols() : null;
+    var url = '/api/market' + (custom ? '?symbols=' + encodeURIComponent(custom.join(',')) : '');
+    var request = usePreview ? Promise.resolve(previewMarket()) : fetch(url, { cache: 'no-store' })
       .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
     return request
       .then(function (d) {
+        if (P) d.quotes.forEach(function (q) { var l = P.labelFor(q.symbol); if (l) q.label = l; });
+        if (!d.quotes.some(function (q) { return q.symbol === selectedSymbol; }) && d.quotes.length) {
+          selectedSymbol = d.quotes[0].symbol;
+          setTimeout(loadChart, 0);
+        }
         market = d;
         renderTicker(d);
         renderAssetGrid(d);
@@ -605,10 +771,13 @@
 
   function renderFocus(q) {
     if (!q) return;
-    var meta = ASSETS[q.symbol] || { cls:'bond', code:q.symbol };
+    var meta = metaFor(q.symbol);
     $('focus-name').textContent = q.label;
     $('focus-label').textContent = meta.code;
-    $('focus-icon').innerHTML = meta.image ? '<img src="' + meta.image + '" alt="" />' : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' + meta.icon + '</svg>';
+    $('focus-icon').innerHTML = meta.image
+      ? '<img src="' + meta.image + '" alt="" ' + (meta.text ? 'onerror="this.parentNode.textContent=\'' + esc(meta.text) + '\'" ' : '') + '/>'
+      : meta.icon ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' + meta.icon + '</svg>'
+      : esc(meta.text || '');
     $('focus-icon').className = 'coin asset-mark ' + meta.cls;
     $('chart').setAttribute('aria-label', q.label + ' reference price chart');
     if (q.price === null) {
@@ -730,6 +899,9 @@
   });
   var rz;
   window.addEventListener('resize', function () { clearTimeout(rz); rz = setTimeout(drawChart, 140); });
+
+  /* The customize panel calls this after the watchlist changes. */
+  window.SSDash = { reload: function () { market = null; return loadMarket(); } };
 
   /* The five most recent Decrypt headlines. The full feed, with section
      filters, is on the News page; this card is the glance version.

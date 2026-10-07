@@ -71,7 +71,12 @@ export default async function handler(request: Request): Promise<Response> {
   const symbol = url.searchParams.get('symbol') || 'BTC-USD'
   const requestedRange = url.searchParams.get('range') || '1W'
   const range = (requestedRange in RANGE ? requestedRange : '1W') as RangeKey
-  const instrument = INSTRUMENTS[symbol]
+  /* Beyond the default board, any instrument a client added to their own
+     watchlist: a Coinbase pair or a well-formed Yahoo symbol. */
+  const instrument = INSTRUMENTS[symbol] ||
+    (/^[A-Z0-9]{1,12}-USD$/.test(symbol) ? { provider: 'coinbase' as const, symbol, source: 'Digital asset venue' }
+      : /^[\^]?[A-Z0-9.\-]{1,15}(=[XF])?$/.test(symbol) ? { provider: 'yahoo' as const, symbol, source: 'Yahoo Finance' }
+      : null)
   if (!instrument) return json({ error: 'unsupported instrument' }, 400)
 
   try {
