@@ -106,7 +106,21 @@ async function indicator(s: Spec) {
   }
 }
 
-export default async () => {
+export default async (req: Request) => {
+  /* Temporary reachability probe for setup: /api/fred?probe=1 */
+  if (new URL(req.url).searchParams.get('probe')) {
+    const t0 = Date.now()
+    const tryUrl = async (u: string, ms: number) => {
+      const s = Date.now()
+      try { const r = await fetch(u, { headers: { 'user-agent': 'Mozilla/5.0 (compatible; SatstreetDashboard/1.0)' }, signal: AbortSignal.timeout(ms) }); return { status: r.status, ms: Date.now() - s, body: (await r.text()).slice(0, 160) } }
+      catch (e) { return { error: e instanceof Error ? e.message : String(e), ms: Date.now() - s } }
+    }
+    const [api, csv] = await Promise.all([
+      tryUrl('https://api.stlouisfed.org/fred/series/observations?series_id=DFF&file_type=json&limit=1', 9000),
+      tryUrl('https://fred.stlouisfed.org/graph/fredgraph.csv?id=DFF&cosd=2026-09-01', 9500),
+    ])
+    return new Response(JSON.stringify({ api, csv, keySet: !!KEY, total: Date.now() - t0 }), { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } })
+  }
   const indicators = await Promise.all(SERIES.map(indicator))
   const ok = indicators.filter((i: any) => !i.error).length
   return new Response(JSON.stringify({
