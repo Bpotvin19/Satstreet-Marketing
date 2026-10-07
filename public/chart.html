@@ -178,7 +178,7 @@
         $('mv').innerHTML = '<span class="' + d + '">' + (abs > 0 ? '+' : '−') +
           fmt.money(Math.abs(abs), 'USD', 2) + '  ' + fmt.pct(pct) + '</span> <span style="color:var(--muted)">today</span>';
       } else { $('mv').innerHTML = '<span style="color:var(--muted)">Daily change unavailable</span>'; }
-      $('stamp').textContent = 'Reference price · updated ' + fmt.time(Date.now());
+      $('stamp').textContent = 'Reference price';
     }).catch(function (e) {
       $('px').textContent = '—';
       $('mv').innerHTML = '<span style="color:var(--muted)">Reference price unavailable</span>';

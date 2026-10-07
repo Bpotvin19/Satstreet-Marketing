@@ -49,6 +49,49 @@
   to = "/overview.html"
   status = 302
 
+# Removed from the client-facing site. Old links land somewhere useful
+# rather than on a 404: Structure's network and ETF sections now live at the
+# foot of Markets; the other three have no client equivalent.
+[[redirects]]
+  from = "/structure.html"
+  to = "/ticker.html#structure"
+  status = 301
+
+[[redirects]]
+  from = "/structure"
+  to = "/ticker.html#structure"
+  status = 301
+
+[[redirects]]
+  from = "/treasuries.html"
+  to = "/overview.html"
+  status = 301
+
+[[redirects]]
+  from = "/treasuries"
+  to = "/overview.html"
+  status = 301
+
+[[redirects]]
+  from = "/event-odds.html"
+  to = "/overview.html"
+  status = 301
+
+[[redirects]]
+  from = "/event-odds"
+  to = "/overview.html"
+  status = 301
+
+[[redirects]]
+  from = "/portfolio.html"
+  to = "/overview.html"
+  status = 301
+
+[[redirects]]
+  from = "/portfolio"
+  to = "/overview.html"
+  status = 301
+
 [[headers]]
   for = "/*"
   [headers.values]

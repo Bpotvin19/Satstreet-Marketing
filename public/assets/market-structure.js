@@ -1,17 +1,17 @@
+/* Market structure: the Bitcoin network and spot ETF flows, shown as a
+   tabbed section at the foot of Markets. It used to be a page of its own
+   with a Derivatives tab; the derivatives view is not carried here. */
 (function () {
   'use strict';
   var S = window.SATSTREET, $ = function (id) { return document.getElementById(id); };
   var esc = S.esc, fmt = S.fmt;
-  S.mountHeader('Structure');
 
-  var TABS = ['network', 'institutional', 'derivatives'];
-  var loaded = {}, updated = {};
+  var root = $('structure');
+  if (!root) return;
+  var TABS = ['network', 'institutional'];
+  var loaded = {}, current = 'network', inView = false;
 
   var DISCLOSURE = {
-    derivatives:
-      '<p><strong>Source.</strong> Derivatives figures are drawn from a single third-party venue and describe positioning at that venue only. They are not a view on the wider market and not a recommendation.</p>' +
-      '<p><strong>Method.</strong> Funding is annualised from the venue\u2019s 8-hour rate. Basis is the perpetual mark against the venue\u2019s spot index. Open interest is USD notional as reported. Implied volatility is the venue\u2019s own 30-day index.</p>' +
-      '<p>Indicative reference data only \u2014 not a quote, not an offer, and not the price at which Satstreet will execute.</p>',
     network:
       '<p><strong>Source.</strong> Bitcoin network figures come from mempool.space and describe the public blockchain. Hashrate is an estimate derived from observed block times and is not directly measurable.</p>' +
       '<p>Fee estimates change continuously and are indicative of conditions at the time shown.</p>',
@@ -31,13 +31,13 @@
       var panel = $('p-' + t);
       if (panel) panel.hidden = !sel;
     });
-    if (name === 'network') startFeed(); else stopFeed();
-    $('disclosure').innerHTML = DISCLOSURE[name] || '';
-    stamp(name);
+    current = name;
+    if (name === 'network' && inView) startFeed(); else stopFeed();
+    $('structure-disclosure').innerHTML = DISCLOSURE[name] || '';
     if (!loaded[name]) { loaded[name] = true; (LOAD[name] || function () {})(); }
   }
 
-  var tablist = document.querySelector('.tabs');
+  var tablist = root.querySelector('.tabs');
   tablist.addEventListener('click', function (e) {
     var b = e.target.closest('button[data-t]');
     if (b) show(b.getAttribute('data-t'));
@@ -52,97 +52,6 @@
     n = (n + TABS.length) % TABS.length;
     show(TABS[n]); $('tab-' + TABS[n]).focus();
   });
-
-  function stamp(name) {
-    var at = updated[name];
-    if (!at) { $('pip').className = 'pip'; $('feedstate').textContent = 'Loading\u2026'; return; }
-    if (at === 'error') { $('pip').className = 'pip bad'; $('feedstate').textContent = 'Unavailable'; return; }
-    var st = S.staleness(at);
-    $('pip').className = 'pip ' + (st.stale ? 'warn' : 'ok');
-    $('feedstate').innerHTML = st.stale
-      ? '<span class="stale">Data ' + st.minutes + ' min old</span>'
-      : 'Updated ' + fmt.time(at);
-  }
-
-  var tip = function (label, text) {
-    return '<abbr class="tip" title="' + esc(text) + '">' + esc(label) + '</abbr>';
-  };
-
-  /* The futures curve. Annualised premium of each dated contract over the
-     index, plotted against days to expiry. Sloping up is contango, down is
-     backwardation, and the zero line is the thing to read it against. */
-  function curveChart(points) {
-    if (!points || points.length < 2) return '';
-    var w = 300, h = 96, padL = 6, padR = 6;
-    var vals = points.map(function (p) { return p.annualPct; });
-    var lo = Math.min.apply(null, vals.concat([0]));
-    var hi = Math.max.apply(null, vals.concat([0]));
-    if (hi - lo < 0.5) { hi += 0.25; lo -= 0.25; }
-    var span = hi - lo;
-    var maxDays = points[points.length - 1].days || 1;
-    var xOf = function (d) { return padL + (d / maxDays) * (w - padL - padR); };
-    var yOf = function (v) { return h - ((v - lo) / span) * h; };
-
-    var line = points.map(function (p, i) {
-      return (i ? 'L' : 'M') + xOf(p.days).toFixed(1) + ' ' + yOf(p.annualPct).toFixed(1);
-    }).join(' ');
-    var area = line + ' L' + xOf(maxDays).toFixed(1) + ' ' + yOf(lo).toFixed(1) +
-               ' L' + xOf(points[0].days).toFixed(1) + ' ' + yOf(lo).toFixed(1) + ' Z';
-    var zero = yOf(0).toFixed(1);
-    var dots = points.map(function (p) {
-      return '<circle cx="' + xOf(p.days).toFixed(1) + '" cy="' + yOf(p.annualPct).toFixed(1) +
-        '" r="2.4" fill="#0f8a63"><title>' + esc(p.label) + ' · ' + p.annualPct.toFixed(2) +
-        '% annualised · ' + p.days + 'd</title></circle>';
-    }).join('');
-
-    return '<div class="curvewrap"><svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none" role="img" aria-label="Futures curve">' +
-      '<defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">' +
-      '<stop offset="0%" stop-color="#0f8a63" stop-opacity=".22"/>' +
-      '<stop offset="100%" stop-color="#0f8a63" stop-opacity="0"/></linearGradient></defs>' +
-      '<path d="' + area + '" fill="url(#cg)"/>' +
-      '<line x1="0" y1="' + zero + '" x2="' + w + '" y2="' + zero + '" stroke="#c3cedb" stroke-width="1" stroke-dasharray="3 3"/>' +
-      '<path d="' + line + '" fill="none" stroke="#0f8a63" stroke-width="2" stroke-linejoin="round"/>' + dots +
-      '</svg><div class="curvefoot"><span>' + esc(points[0].label) + '</span>' +
-      '<span>' + (hi > 0 ? '+' : '') + hi.toFixed(1) + '% to ' + (lo > 0 ? '+' : '') + lo.toFixed(1) + '% annualised</span>' +
-      '<span>' + esc(points[points.length - 1].label) + '</span></div></div>';
-  }
-
-  function loadDerivatives() {
-    $('deriv').innerHTML = '<div class="card">' + S.skeleton(4, 18) + '</div><div class="card">' + S.skeleton(4, 18) + '</div>';
-    fetch('/api/structure', { cache: 'no-store' })
-      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(function (d) {
-        $('deriv').innerHTML = d.assets.map(function (a) {
-          if (a.error) return '<div class="card"><header><h2>' + esc(a.asset) + ' perpetual</h2></header>' + S.errorState('Unavailable', a.error, '') + '</div>';
-          var f = a.fundingAnnualPct, bs = a.basisPct;
-          var cell = function (k, tipText, val, cls, sub) {
-            return '<div class="dcell"><div class="k">' + tip(k, tipText) + '</div><div class="v ' + (cls || '') + '">' + val + '</div><div class="s">' + esc(sub || '') + '</div></div>';
-          };
-          var spark = function (series, cls) {
-            return series && series.length > 3 ? '<span class="trend">' + S.spark(series, cls, 120, 24) + '</span>' : '';
-          };
-          return '<div class="card"><header><h2>' + esc(a.asset) + ' perpetual</h2>' +
-            (a.curve && a.curve.length > 1
-              ? '<span class="eyebrow">' + (a.curve[a.curve.length - 1].annualPct >= a.curve[0].annualPct ? 'contango' : 'backwardation') + '</span>'
-              : '') +
-            '</header>' + curveChart(a.curve) + '<div class="dgrid">' +
-            cell('Funding', 'The periodic payment between long and short holders of a perpetual contract, shown annualised from the venue\u2019s 8-hour rate. Positive means long holders are paying short holders.', fmt.pct(f), fmt.dir(f), (f === null ? '' : f > 0 ? 'longs paying shorts' : f < 0 ? 'shorts paying longs' : 'flat')) +
-            cell('Basis', 'The perpetual contract\u2019s mark price relative to the venue\u2019s spot index, in percent. A positive basis means the contract trades above spot.', bs === null ? '\u2014' : (bs > 0 ? '+' : '') + bs.toFixed(3) + '%', fmt.dir(bs), 'perpetual vs spot') +
-            cell('Open interest', 'The total notional value of contracts currently open at this venue. It measures how much is committed, not direction.', fmt.compact(a.openInterestUsd), '', 'notional') +
-            cell('Implied volatility', 'The venue\u2019s 30-day volatility index, derived from options pricing. It reflects expected magnitude of movement, not direction.', a.impliedVol === null ? '\u2014' : a.impliedVol.toFixed(1), '', '30-day index') +
-            (spark(a.volHistory, 'up') ? '<div class="dcell"><div class="k">Seven days</div>' + spark(a.volHistory, 'up') + '<div class="s">implied volatility</div></div>' : '') +
-            (spark(a.fundingHistory, 'up') ? '<div class="dcell"><div class="k">Seven days</div>' + spark(a.fundingHistory, 'up') + '<div class="s">funding, annualised</div></div>' : '') +
-            '</div><div class="venue"><span>Venue: ' + esc(d.venue) + '</span><span>24h volume ' + fmt.compact(a.volume24hUsd) + '</span><span>Updated ' + fmt.time(d.asOf) + '</span></div></div>';
-        }).join('');
-        updated.derivatives = new Date(d.asOf).getTime();
-        stamp('derivatives');
-      })
-      .catch(function (e) {
-        $('deriv').innerHTML = '<div class="card">' + S.errorState('Derivatives data unavailable', e.message, 'retry-d') + '</div>';
-        updated.derivatives = 'error'; stamp('derivatives');
-        var r = $('retry-d'); if (r) r.addEventListener('click', function () { loaded.derivatives = false; show('derivatives'); });
-      });
-  }
 
   function feeWords(n) {
     if (!isFinite(n)) return '';
@@ -284,7 +193,7 @@
 
   document.addEventListener('visibilitychange', function () {
     if (document.hidden) stopFeed();
-    else if (!$('p-network').hidden) startFeed();
+    else if (inView && current === 'network') startFeed();
   });
 
 
@@ -382,8 +291,7 @@
       }
       $('net-extra').innerHTML = '<header><h2>Detail</h2></header><div class="dgrid">' + rows.map(function (x) {
         return '<div class="dcell"><div class="k">' + esc(x[0]) + '</div><div class="v" style="font-size:17px">' + esc(x[1]) + '</div><div class="s">' + esc(x[2]) + '</div></div>';
-      }).join('') + '</div><div class="venue"><span>Source: mempool.space</span><span>Updated ' + fmt.time(Date.now()) + '</span></div>';
-      updated.network = Date.now(); stamp('network');
+      }).join('') + '</div><div class="venue"><span>Source: mempool.space</span></div>';
     }).catch(function (e) {
       $('net').innerHTML = '';
       $('net-fees').innerHTML = '';
@@ -391,7 +299,6 @@
       $('net-extra').innerHTML = S.errorState('Network data unavailable', e.message, 'retry-n');
       if (halvingTimer) { clearInterval(halvingTimer); halvingTimer = null; }
       var hEl = $('net-halving'); if (hEl) hEl.innerHTML = '';
-      updated.network = 'error'; stamp('network');
       var r = $('retry-n'); if (r) r.addEventListener('click', function () { loaded.network = false; show('network'); });
     });
   }
@@ -496,7 +403,7 @@
               '<div style="text-align:right"><div class="v" style="font-size:16px">'+money(print)+'</div></div>' +
               '<span class="mag'+(Number(print)<0?' out':'')+'" style="width:'+w+'%"></span></div>';
           }).join('') : '<p class="ctx">Per-fund prints were not included in this refresh.</p>') +
-          '<div class="venue"><span>Updated '+fmt.time(d.asOf)+'</span></div>';
+          '';
         var rows = d.days.slice(-12).reverse();
         $('etf-days').innerHTML = '<header><h2>Recent sessions</h2><span class="eyebrow">Largest named prints on the tape</span></header>' +
           '<div style="overflow-x:auto"><table class="etf-table"><thead><tr><th>Session</th><th>Net flow</th><th>Lead inflow</th><th>Lead outflow</th></tr></thead><tbody>' +
@@ -504,8 +411,6 @@
             return '<tr><td>'+esc(day.date)+'</td><td class="'+fmt.dir(day.flowUsd)+'">'+money(day.flowUsd)+'</td><td>'+esc(day.leadIn || '\u2014')+'</td><td>'+esc(day.leadOut || '\u2014')+'</td></tr>';
           }).join('') + '</tbody></table></div>' +
           '<div class="venue"><a href="'+(d.sourceUrl||'https://www.tftc.io/bitcoin-etf-flows')+'" target="_blank" rel="noopener noreferrer">Open source tape \u2197</a></div>';
-        updated.institutional = new Date(d.asOf).getTime();
-        stamp('institutional');
       })
       .catch(function(e){
         $('etf-kpis').innerHTML = '';
@@ -513,11 +418,27 @@
         $('etf-cumulative').innerHTML = '';
         $('etf-issuers').innerHTML = '';
         $('etf-days').innerHTML = '';
-        updated.institutional = 'error'; stamp('institutional');
         var r = $('retry-i'); if (r) r.addEventListener('click', function(){ loaded.institutional=false; show('institutional'); });
       });
   }
 
-  var LOAD = { institutional: loadInstitutional, derivatives: loadDerivatives, network: loadNetwork };
-  show('network');
+  var LOAD = { institutional: loadInstitutional, network: loadNetwork };
+
+  /* Nothing loads, and the mempool socket stays closed, until the reader
+     scrolls down to the section. Leaving it again stops the live feed. */
+  $('structure-disclosure').innerHTML = DISCLOSURE.network;
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(function (entries) {
+      inView = entries[0].isIntersecting;
+      if (inView) {
+        if (!loaded[current]) show(current);
+        else if (current === 'network' && !document.hidden) startFeed();
+      } else {
+        stopFeed();
+      }
+    }, { rootMargin: '300px 0px' }).observe(root);
+  } else {
+    inView = true;
+    show('network');
+  }
 })();

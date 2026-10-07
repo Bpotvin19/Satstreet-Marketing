@@ -284,7 +284,7 @@
   }
   @media (prefers-reduced-motion: reduce) { * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; } }
 
-  /* Largest assets by market cap (moved here from Treasuries) */
+  /* Largest assets by market cap */
   .amc-head { display:flex; justify-content:space-between; align-items:baseline; gap:14px; flex-wrap:wrap; }
   .amc-btcline { font-size:13.5px; color:var(--ink-2, #465463); }
   .amc-btcline strong { color:var(--ink, #0d1b2e); }
@@ -328,11 +328,7 @@
       <a href="./news.html">News</a>
       <a href="./ticker.html">Markets</a>
       <a href="./chart.html">Chart</a>
-      <a href="./structure.html">Structure</a>
-      <a href="./treasuries.html">Treasuries</a>
       <a href="./explorer.html">Explorer</a>
-      <a href="./event-odds.html">Event Odds</a>
-      <a href="./portfolio.html">Portfolio</a>
     </nav>
     <span class="spacer"></span>
   </div>
@@ -344,7 +340,6 @@
     <p class="datestamp" id="datestamp"></p>
     <h1 id="greeting">Good morning.</h1>
     <p class="summary" id="summary"></p>
-    <p class="feedstate"><span class="pip" id="pip"></span><span id="feedstate">Connecting to the price feed…</span></p>
   </section>
 
   <section class="marketboard" aria-labelledby="board-h">
@@ -595,15 +590,10 @@
         renderTicker(d);
         renderAssetGrid(d);
         $('summary').textContent = summarise(d);
-        var t = new Date(d.asOf);
-        $('pip').className = 'pip ' + (d.degraded.length === d.quotes.length ? 'bad' : 'ok');
-        $('feedstate').textContent = d.preview ? 'Illustrative preview data · live feeds are not used' : (d.degraded.length ? d.degraded.length + ' feed(s) unavailable · ' : '') + 'Updated ' + t.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) + ' · indicative feeds';
         renderFocus(d.quotes.filter(function (q) { return q.symbol === selectedSymbol; })[0]);
         drawChart();
       })
       .catch(function (e) {
-        $('pip').className = 'pip bad';
-        $('feedstate').textContent = 'Price feed unavailable';
         $('summary').textContent = '';
         if ($('ticker')) $('ticker').innerHTML = '<div class="tick" style="min-width:auto"><span class="nm">Market data</span><span class="px">Unavailable</span><span class="ch flat">' + esc(e.message) + '</span></div>';
       });
@@ -819,8 +809,7 @@
       .catch(function () { $('cats').innerHTML = '<p class="errbox"><b>Calendar unavailable</b>Scheduled events could not be loaded.</p>'; });
   }
 
-  /* Largest assets by market cap. Same /api/assets feed and table the
-     Treasuries page used to carry; it lives here now. */
+  /* Largest assets by market cap. Fed by /api/assets. */
   var fmtCompact = function (v) {
     if (v === null || v === undefined || !isFinite(v)) return '—';
     var a = Math.abs(v);

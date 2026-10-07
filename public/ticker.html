@@ -66,6 +66,80 @@
     td, th button { padding-left: 9px; padding-right: 9px; }
     .asset .tk { display: block; }
   }
+
+  /* ---- Market structure (formerly its own page) ---- */
+  .structure { margin-top: 40px; padding-top: 28px; border-top: 1px solid var(--border); scroll-margin-top: 20px; }
+  .structure-head { margin-bottom: 14px; }
+  .structure-head h2 { font-family: var(--font-display, inherit); font-size: 26px; font-weight: 600; margin: 4px 0 6px; }
+  .structure-head p:last-child { margin: 0; font-size: 14px; color: var(--ink-2); max-width: 78ch; }
+  .structure .tabs { margin-bottom: 20px; }
+  .structure .disclosure { margin-top: 20px; }
+  .panelgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
+  .dgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 16px; }
+  .dcell .k { font-size: 11px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; color: var(--muted); }
+  .dcell .v { font-size: 21px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 2px; font-family:var(--font-data); }
+  .dcell .s { font-size: 12px; color: var(--muted); }
+  .venue { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-2); font-size: 12.5px; color: var(--muted); }
+  .ctx { font-size: 14px; color: var(--ink-2); margin: 0 0 16px; max-width: 78ch; }
+  .structure .tabs button { display:inline-flex; align-items:center; gap:7px; }
+  .tab-icon { width:21px; height:21px; display:grid; place-items:center; border-radius:50%; color:#4f7189; background:#eaf1f5; }
+  .tabs button[aria-selected="true"] .tab-icon { color:#087fac; background:#e3f3f8; }
+  .tab-icon svg { width:12px; height:12px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+  .panelgrid .card { position:relative; overflow:hidden; }
+  .panelgrid .card::after { content:''; position:absolute; width:135px; height:135px; right:-73px; top:-73px; border-radius:50%; background:rgba(0,162,211,.045); pointer-events:none; }
+  .flowbar { display:flex; align-items:flex-end; gap:3px; height:132px; margin:8px 0 4px; position:relative; }
+  .flowbar::after { content:''; position:absolute; left:0; right:0; top:50%; border-top:1px dashed var(--border); pointer-events:none; }
+  .flowbar i { flex:1; min-width:4px; border-radius:2px 2px 0 0; background:#27d3a5; opacity:.85; transition:opacity .15s; }
+  .flowbar i:hover { opacity:1; }
+  .flowbar i.out { background:#d15a5a; border-radius:0 0 2px 2px; align-self:flex-start; }
+  .etf-table { width:100%; border-collapse:collapse; font-size:13px; margin-top:8px; }
+  .etf-table th { text-align:left; padding:8px 7px; color:var(--muted); font-size:10.5px; text-transform:uppercase; letter-spacing:.65px; border-bottom:1px solid var(--border); }
+  .etf-table td { padding:9px 7px; border-bottom:1px solid var(--border-2); font-variant-numeric:tabular-nums; }
+  .etf-table tr:last-child td { border-bottom:0; }
+  .issuer { display:flex; justify-content:space-between; gap:12px; padding:9px 0; border-bottom:1px solid var(--border-2); position:relative; }
+  .issuer:last-child { border-bottom:0; }
+  .issuer .mag { position:absolute; left:0; bottom:2px; height:2px; border-radius:1px; background:#27d3a5; opacity:.55; }
+  .issuer .mag.out { background:#d15a5a; }
+  .feegrid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-top:4px; }
+  @media (max-width:700px){ .feegrid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  .feetier { border:1px solid var(--border); border-radius:9px; padding:12px 14px; background:#fff; }
+  .feetier .t { font-size:10.5px; font-weight:700; letter-spacing:.7px; text-transform:uppercase; color:var(--muted); }
+  .feetier .r { display:block; margin-top:5px; font-family:var(--font-data); font-size:20px; font-weight:600; line-height:1.1; }
+  .feetier .u { font-size:11px; color:var(--muted); }
+  .feetier.sel { border-color:#b7d7ff; background:#f2f8ff; }
+  .strip { display:flex; align-items:stretch; gap:8px; overflow-x:auto; padding:4px 2px 12px; scrollbar-width:thin; }
+  .strip::-webkit-scrollbar { height:6px; }
+  .strip::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+  .blk { flex:none; width:112px; border:1px solid var(--border); border-radius:9px; padding:10px 11px; background:#fff; position:relative; overflow:hidden; }
+  .blk::before { content:''; position:absolute; left:0; right:0; top:0; height:3px; background:var(--tone,#9fb3c4); }
+  .blk .fee { display:block; font-family:var(--font-data); font-size:15px; font-weight:600; line-height:1.2; margin-top:2px; }
+  .blk .rng { display:block; font-size:10.5px; color:var(--muted); font-family:var(--font-data); }
+  .blk .meta { display:block; margin-top:6px; font-size:10.5px; color:var(--muted); }
+  .blk .hgt { display:block; font-family:var(--font-data); font-size:11px; font-weight:600; color:var(--ink); }
+  .blk .fill { position:absolute; left:0; bottom:0; height:3px; background:var(--tone,#9fb3c4); opacity:.45; }
+  .blk.pending { background:linear-gradient(180deg,#fbfdff,#f4f8fb); border-style:dashed; }
+  .blk a { color:inherit; text-decoration:none; }
+  .blk a:hover .hgt { color:var(--blue); text-decoration:underline; }
+  .now { flex:none; width:1px; align-self:stretch; background:var(--border); position:relative; margin:0 12px; }
+  .now span { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) rotate(180deg); writing-mode:vertical-rl; font-size:9.5px; font-weight:700; letter-spacing:1.1px; text-transform:uppercase; color:var(--muted); background:var(--bg); padding:5px 1px; }
+  .striplegend { display:flex; gap:14px; flex-wrap:wrap; align-items:center; margin-top:2px; font-size:11px; color:var(--muted); }
+  .striplegend i { display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:5px; vertical-align:-1px; }
+  #net-feed canvas { display:block; width:100%; height:240px; margin-top:10px; border:1px solid var(--border); border-radius:9px; background:linear-gradient(180deg,#fbfdff,#f5f8fb); }
+  .feednote { margin:2px 0 0; font-size:12.5px; color:var(--muted); max-width:78ch; }
+  #feed-stat .dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--faint); margin-right:6px; vertical-align:1px; }
+  #feed-stat .dot.on { background:var(--up); }
+  .etf-left { display:grid; gap:16px; grid-template-rows:auto 1fr; min-width:0; }
+  #etf-cumulative { display:flex; flex-direction:column; }
+  #etf-cumulative svg { display:block; width:100%; flex:1 1 auto; height:auto; min-height:150px; overflow:visible; margin-top:8px; }
+  #etf-cumulative .cumfoot { margin-top:8px; }
+  @media (max-width:719px) { #etf-cumulative svg { flex:none; height:150px; } }
+  .cumfoot { display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-top:6px; font-size:11px; color:var(--muted); }
+  .cumfoot b { color:var(--ink); font-family:var(--font-data); font-size:12px; }
+  .halving-cd-wrap { display:flex; flex-direction:column; align-items:center; padding:22px 0 16px; }
+  .halving-cd { font-family:var(--font-data); font-size:36px; font-weight:700; letter-spacing:1px; color:var(--ink); font-variant-numeric:tabular-nums; }
+  .halving-cd-label { font-size:11.5px; font-weight:600; letter-spacing:.65px; text-transform:uppercase; color:var(--muted); margin-top:4px; }
+  .halving-bar-wrap { height:5px; border-radius:3px; background:var(--border); margin:14px 0 0; overflow:hidden; }
+  .halving-bar { height:100%; border-radius:3px; background:linear-gradient(90deg,#f7a427,#f97316); transition:width .4s; }
 </style>
 </head>
 <body>
@@ -80,7 +154,6 @@
       <div class="page-title-row"><span class="page-emblem" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 17 9 12l4 3 7-8"/><path d="M15 7h5v5"/></svg></span><h1>Markets</h1></div>
       <p>Reference pricing and market context across major digital assets.</p>
     </div>
-    <span class="feedstate"><span class="pip" id="pip"></span><span id="feedstate">Loading…</span></span>
   </div>
 
   <div class="metrics" id="globals"></div>
@@ -120,6 +193,45 @@
     </div>
   </div>
 
+  <section class="structure" id="structure" aria-labelledby="structure-h">
+    <div class="structure-head">
+      <p class="eyebrow">Market structure</p>
+      <h2 id="structure-h">Network conditions and fund flows</h2>
+      <p>Positioning and network conditions behind the price.</p>
+    </div>
+    <div class="tabs" role="tablist" aria-label="Market structure sections">
+      <button role="tab" id="tab-network" aria-selected="true" aria-controls="p-network" data-t="network"><span class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="19" cy="18" r="2"/><path d="m7 11 10-4M7 13l10 4"/></svg></span>Bitcoin network</button>
+      <button role="tab" id="tab-institutional" tabindex="-1" aria-selected="false" aria-controls="p-institutional" data-t="institutional"><span class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19h16M6 16h12M8 13h8M12 4l8 5H4z"/></svg></span>ETF Inflows + Outflows</button>
+    </div>
+    <section id="p-network" role="tabpanel" aria-labelledby="tab-network" tabindex="0">
+      <p class="ctx">Conditions on the Bitcoin network itself, independent of price.</p>
+      <div class="metrics" id="net"></div>
+      <section class="card" id="net-feed" style="margin-top:16px">
+        <header><h2>Live transactions</h2><span class="eyebrow" id="feed-stat"></span></header>
+        <p class="feednote">Every unconfirmed transaction as it is relayed. Each square is one transaction: area is its size in bytes, colour is what the sender pays per byte. They pack into the block being built, and clear when one is found.</p>
+        <canvas id="feed-canvas" height="240" aria-label="Live mempool transactions"></canvas>
+        <div class="striplegend" id="feed-legend"></div>
+      </section>
+      <div class="card" id="net-fees" style="margin-top:16px"></div>
+      <div class="card" id="net-blocks" style="margin-top:16px"></div>
+      <div class="card" id="net-extra" style="margin-top:16px"></div>
+      <div class="card" id="net-halving" style="margin-top:16px"></div>
+    </section>
+    <section id="p-institutional" hidden role="tabpanel" aria-labelledby="tab-institutional" tabindex="0">
+      <p class="ctx">US spot Bitcoin ETF creations and redemptions. Daily tape compiled by TFTC from SoSoValue and Farside Investors. Figures are not a Satstreet view on demand.</p>
+      <div class="metrics" id="etf-kpis"></div>
+      <div class="panelgrid" style="margin-top:16px">
+        <div class="etf-left">
+          <div class="card" id="etf-tape"></div>
+          <div class="card" id="etf-cumulative"></div>
+        </div>
+        <div class="card" id="etf-issuers"></div>
+      </div>
+      <div class="card" id="etf-days" style="margin-top:16px"></div>
+    </section>
+    <div class="disclosure" id="structure-disclosure"></div>
+  </section>
+
   <div class="disclosure">
     <p><strong>Reference data only.</strong> Prices, volumes and market capitalisations are
       indicative references from third-party venues and may be delayed. They are not a quote, not an
@@ -137,6 +249,7 @@
 </main>
 
 <script src="./assets/terminal.js"></script>
+<script src="./assets/mempool-feed.js"></script>
 <script>
 (function () {
   'use strict';
@@ -145,15 +258,14 @@
   S.mountHeader('Markets');
 
   var CG = 'https://api.coingecko.com/api/v3/';
-  var TOP = 50;               // rows on the board after the pegs come out
+  var TOP = 50;               // the board covers market-cap ranks 1 to TOP
   var RATES = 'https://api.coinbase.com/v2/exchange-rates?currency=USD';
   /* Dollar pegs are excluded from the board outright. A row pinned to $1.0000
      with 0.00% beside it tells a reader nothing, and roughly a third of the
      top fifty by market cap are pegs of one kind or another.
 
      Two passes, because neither alone holds up. The list is certain but goes
-     stale the moment a new peg launches — and since we now backfill from
-     deeper in the rankings to keep fifty rows, fresh ones keep surfacing. The
+     stale the moment a new peg launches into the top fifty. The
      behavioural test catches those: sitting on a round target and not moving
      is what a peg does, whatever it calls itself. It is deliberately narrow —
      both the 24h and 7d windows have to be flat — so an asset merely trading
@@ -251,8 +363,7 @@
   function render() {
     var list = visible();
     $('noresults').hidden = list.length > 0;
-    $('count').textContent = list.length + ' of ' + assets.length + ' assets' +
-      (asOf ? ' · updated ' + fmt.time(asOf) : '');
+    $('count').textContent = list.length + ' of ' + assets.length + ' assets';
     head();
     $('rows').innerHTML = list.map(function (a) {
       return '<tr data-sym="' + esc(a.symbol) + '">' +
@@ -365,9 +476,8 @@
 
   function load() {
     skeleton();
-    $('pip').className = 'pip'; $('feedstate').textContent = 'Loading…';
     Promise.all([
-      fetch(CG + 'coins/markets?vs_currency=usd&order=market_cap_desc&per_page=' + (TOP + 30) + '&page=1&sparkline=true&price_change_percentage=1h,24h,7d')
+      fetch(CG + 'coins/markets?vs_currency=usd&order=market_cap_desc&per_page=' + TOP + '&page=1&sparkline=true&price_change_percentage=1h,24h,7d')
         .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }),
       fetch(CG + 'global').then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }),
       fetch(RATES).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
@@ -380,7 +490,12 @@
           ch24: a.price_change_percentage_24h_in_currency,
           ch7: a.price_change_percentage_7d_in_currency
         });
-      }).slice(0, TOP).map(function (a) {
+      }).filter(function (a) {
+        /* The top fifty by market cap, pegs removed. The board used to
+           backfill from deeper in the rankings to keep fifty rows, which
+           pushed the last rank into the high sixties. */
+        return a.market_cap_rank && a.market_cap_rank <= TOP;
+      }).map(function (a) {
         return {
           rank: a.market_cap_rank, name: a.name, symbol: (a.symbol || '').toLowerCase(),
           image: a.image, price: a.current_price,
@@ -403,14 +518,10 @@
       $('ccy-cad').disabled = !cad;
       asOf = Date.now();
       renderGlobals(); render();
-      var st = S.staleness(asOf);
-      $('pip').className = 'pip ok';
-      $('feedstate').textContent = 'Live · updated ' + fmt.time(asOf);
     }).catch(function (e) {
       $('globals').innerHTML = '';
       $('rows').innerHTML = '<tr><td colspan="11" style="padding:20px">' +
         S.errorState('Market data unavailable', e.message, 'retry') + '</td></tr>';
-      $('pip').className = 'pip bad'; $('feedstate').textContent = 'Unavailable';
       var b = $('retry'); if (b) b.addEventListener('click', load);
     });
   }
@@ -422,5 +533,6 @@
   }, 120000);
 })();
 </script>
+<script src="./assets/market-structure.js"></script>
 </body>
 </html>

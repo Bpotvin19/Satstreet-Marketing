@@ -91,11 +91,6 @@
     }
   }
 
-  function setNetworkState(ok, message) {
-    $('network-pip').className = 'pip ' + (ok ? 'ok' : 'bad');
-    $('network-state').textContent = message;
-  }
-
   function metric(label, value, sub) {
     return '<div class="metric"><div class="k">' + esc(label) + '</div><div class="v">' +
       esc(value) + '</div><div class="s">' + esc(sub || '') + '</div></div>';
@@ -117,12 +112,9 @@
         metric('Latest block age', data.latestBlock ? age(data.latestBlock.timestamp) : 'Unavailable', data.latestBlock ? short(data.latestBlock.hash, 8, 6) : '') +
         metric('Mempool transactions', mempool, mempoolSub) +
         metric('Recommended fee', fee, data.recommendedFee === null ? 'Provider estimate unavailable' : 'Approximately 3-block target');
-      $('last-updated').textContent = 'Last updated ' + S.fmt.time(data.asOf);
-      setNetworkState(true, 'Network data available');
     } catch (error) {
       $('network-metrics').innerHTML = '<div class="card" style="grid-column:1/-1">' +
         S.errorState('Unable to load Bitcoin network data.', error.message, 'retry-network') + '</div>';
-      setNetworkState(false, 'Network data unavailable');
     }
   }
 
