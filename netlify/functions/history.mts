@@ -5,7 +5,7 @@
    /api/market. Every response includes source and timestamp so the UI never
    presents an anonymous line as real-time market data. */
 
-type Point = { t: number; v: number }
+type Point = { t: number; v: number; o?: number; h?: number; l?: number; volume?: number }
 type RangeKey = '1D' | '1W' | '1M' | '3M' | '1Y' | '5Y' | 'ALL'
 
 const RANGE: Record<RangeKey, { days: number; yahooRange: string; yahooInterval: string; coinbase: number }> = {
@@ -39,10 +39,24 @@ async function yahoo(symbol: string, range: RangeKey): Promise<Point[]> {
   if (!response.ok) throw new Error(`upstream http ${response.status}`)
   const result = (await response.json())?.chart?.result?.[0]
   const times: unknown[] = result?.timestamp ?? []
-  const closes: unknown[] = result?.indicators?.quote?.[0]?.close ?? []
+  const quote = result?.indicators?.quote?.[0] ?? {}
+  const closes: unknown[] = quote.close ?? []
+  const opens: unknown[] = quote.open ?? []
+  const highs: unknown[] = quote.high ?? []
+  const lows: unknown[] = quote.low ?? []
+  const volumes: unknown[] = quote.volume ?? []
   return times.flatMap((time, index) => {
     const value = Number(closes[index])
-    return typeof time === 'number' && isFinite(value) ? [{ t: time * 1000, v: value }] : []
+    if (typeof time !== 'number' || !isFinite(value)) return []
+    const point: Point = { t: time * 1000, v: value }
+    const fields: Array<[keyof Pick<Point, 'o' | 'h' | 'l' | 'volume'>, unknown]> = [
+      ['o', opens[index]], ['h', highs[index]], ['l', lows[index]], ['volume', volumes[index]],
+    ]
+    fields.forEach(([key, raw]) => {
+      const number = Number(raw)
+      if (raw !== null && raw !== undefined && isFinite(number)) point[key] = number
+    })
+    return [point]
   })
 }
 
@@ -61,11 +75,15 @@ async function coinbase(symbol: string, range: RangeKey): Promise<Point[]> {
     if (!response.ok) throw new Error(`upstream http ${response.status}`)
     return await response.json() as number[][]
   }))
-  const byTime = new Map<number, number>()
+  const byTime = new Map<number, Point>()
   rows.flat().forEach((row) => {
-    if (Array.isArray(row) && isFinite(row[0]) && isFinite(row[4])) byTime.set(row[0] * 1000, row[4])
+    if (Array.isArray(row) && isFinite(row[0]) && isFinite(row[4])) {
+      byTime.set(row[0] * 1000, {
+        t: row[0] * 1000, v: row[4], l: row[1], h: row[2], o: row[3], volume: row[5],
+      })
+    }
   })
-  return [...byTime].sort((a, b) => a[0] - b[0]).map(([t, v]) => ({ t, v }))
+  return [...byTime.values()].sort((a, b) => a.t - b.t)
 }
 
 export default async function handler(request: Request): Promise<Response> {
