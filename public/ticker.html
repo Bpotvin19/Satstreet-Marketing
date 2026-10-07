@@ -369,7 +369,7 @@
       return '<tr data-sym="' + esc(a.symbol) + '">' +
         '<td class="l rank">' + a.rank + '</td>' +
         '<td class="l"><a class="asset" href="./chart.html?symbol=' + encodeURIComponent(a.symbol.toUpperCase()) +
-          '&name=' + encodeURIComponent(a.name) + '">' +
+          '&name=' + encodeURIComponent(a.name) + '&id=' + encodeURIComponent(a.id || '') + '">' +
           (a.image ? '<img src="' + esc(a.image) + '" alt="" loading="lazy" />' : '') +
           '<span><span class="nm">' + esc(a.name) + '</span> <span class="tk">' + esc(a.symbol) + '</span></span></a></td>' +
         '<td>' + price(a.price) + '</td>' +
@@ -497,7 +497,7 @@
         return a.market_cap_rank && a.market_cap_rank <= TOP;
       }).map(function (a) {
         return {
-          rank: a.market_cap_rank, name: a.name, symbol: (a.symbol || '').toLowerCase(),
+          id: a.id, rank: a.market_cap_rank, name: a.name, symbol: (a.symbol || '').toLowerCase(),
           image: a.image, price: a.current_price,
           ch1: a.price_change_percentage_1h_in_currency,
           ch24: a.price_change_percentage_24h_in_currency,

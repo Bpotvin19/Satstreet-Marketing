@@ -107,6 +107,42 @@
   function moreButton(id, label) {
     return '<div class="pagination"><span></span><button class="btn ghost small" type="button" id="' + id + '">' + esc(label || 'Show more') + '</button><span></span></div>';
   }
+  /* Asset movements: logo, amount and what it is on the left, where it went
+     on the right. Used for token transfers, native ETH/SOL moves, balance
+     changes and holdings. */
+  var ETH_LOGO = 'https://coin-images.coingecko.com/coins/images/279/small/ethereum.png';
+  var SOL_LOGO = 'https://coin-images.coingecko.com/coins/images/4128/small/solana.png';
+  function logo(url, label) {
+    var words = String(label || '?').replace(/[^A-Za-z0-9 ]/g, ' ').trim().split(/\s+/);
+    var ini = (words.length > 1 ? words[0][0] + words[1][0] : (words[0] || '?').slice(0, 2)).toUpperCase();
+    return '<span class="mv-logo' + (url ? '' : ' fallback') + '">' +
+      (url ? '<img src="' + attr(url) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.classList.add(&quot;fallback&quot;);this.remove()">' : '') +
+      '<i>' + esc(ini) + '</i></span>';
+  }
+  function usdText(v) {
+    if (v === null || v === undefined || !isFinite(v)) return '';
+    return '≈ ' + S.fmt.money(Math.abs(v), 'USD', Math.abs(v) >= 1 ? 2 : 4);
+  }
+  /* o: { logo, label, amount, symbol, name, usd, tone, parties: [[label, html], …] } */
+  function moveRow(o) {
+    var sub = [o.name, usdText(o.usd)].filter(Boolean).join(' · ');
+    var parties = (o.parties || []).map(function (p, i) {
+      return (i ? '<span class="mv-arrow" aria-hidden="true">→</span>' : '') +
+        '<div class="mv-party"><small>' + esc(p[0]) + '</small>' + p[1] + '</div>';
+    }).join('');
+    return '<div class="move">' + logo(o.logo, o.label || o.symbol) +
+      '<div class="mv-amt"><b class="' + (o.tone || '') + '">' + esc(o.amount) +
+        (o.symbol ? ' <span class="mv-sym">' + o.symbol + '</span>' : '') + '</b>' +
+        (sub ? '<small>' + esc(sub) + '</small>' : '') + '</div>' +
+      (parties ? '<div class="mv-path">' + parties + '</div>' : '') +
+      (o.right ? '<div class="mv-right">' + o.right + '</div>' : '') + '</div>';
+  }
+  function moveSection(eyebrow, title, meta, rows) {
+    return '<section class="card subcard"><header><div><p class="eyebrow">' + esc(eyebrow) + '</p><h2>' + esc(title) +
+      '</h2></div>' + (meta ? '<span class="section-meta">' + esc(meta) + '</span>' : '') + '</header>' +
+      '<div class="move-list">' + rows.join('') + '</div></section>';
+  }
+
   function setLoading(chain, message) {
     $(chain + '-overview').hidden = true;
     $(chain + '-detail').hidden = true;
@@ -275,11 +311,23 @@
       .catch(function (e) { setError('eth', 'Block not found.', e.message); });
   }
 
-  function tokenAmount(t) {
-    if (!t.total) return '—';
-    if (t.total.value === undefined) return t.total.token_id ? '#' + short(t.total.token_id, 8, 4) : '—';
-    var v = units(t.total.value, t.total.decimals || (t.token && t.token.decimals) || 0, 6);
-    return (v === null ? '—' : v) + ' ' + ((t.token && t.token.symbol) || '');
+  function ethTransferRow(x) {
+    var t = x.token || {}, total = x.total || {};
+    var tokenAddr = t.address_hash || t.address;
+    var symbol = t.symbol || 'Token', amount, usd = null;
+    if (total.value === undefined) {
+      amount = total.token_id ? '#' + short(total.token_id, 8, 4) : '1';
+    } else {
+      amount = units(total.value, total.decimals || t.decimals || 0, 6) || '—';
+      if (t.exchange_rate && amount !== '—') usd = Number(amount.replace(/,/g, '')) * Number(t.exchange_rate);
+    }
+    return moveRow({
+      logo: t.icon_url, label: t.name || symbol, amount: amount,
+      symbol: tokenAddr ? link('eth', 'address', tokenAddr, symbol, 'mv-symlink') : esc(symbol),
+      name: t.name && t.name !== symbol ? t.name : (x.token_type && x.token_type !== 'ERC-20' ? x.token_type : ''),
+      usd: usd,
+      parties: [['From', ethAddr(x.from)], ['To', ethAddr(x.to)]]
+    });
   }
 
   function ethTx(hash) {
@@ -289,16 +337,18 @@
       var pending = t.result === 'pending' || !t.block_number;
       var gasPct = t.gas_limit && t.gas_used ? ' (' + (Number(t.gas_used) / Number(t.gas_limit) * 100).toFixed(1) + '%)' : '';
       var transfers = t.token_transfers || [];
-      var tt = transfers.length
-        ? '<section class="card subcard"><header><div><p class="eyebrow">Tokens moved</p><h2>Token transfers</h2></div>' +
-          '<span class="section-meta">' + num(transfers.length) + (t.token_transfers_overflow ? '+' : '') + '</span></header><div class="transaction-list">' +
-          transfers.map(function (x) {
-            return '<div class="transaction-row token-row"><div class="tx-stat"><span>Token</span><b>' +
-              (x.token ? link('eth', 'address', x.token.address_hash || x.token.address, x.token.name || x.token.symbol || short(x.token.address_hash, 8, 6)) : '—') + '</b></div>' +
-              '<div class="tx-stat"><span>From</span><b>' + ethAddr(x.from) + '</b></div>' +
-              '<div class="tx-stat"><span>To</span><b>' + ethAddr(x.to) + '</b></div>' +
-              '<div class="tx-stat"><span>Amount</span><b>' + esc(tokenAmount(x)) + '</b></div></div>';
-          }).join('') + '</div></section>'
+      var moves = [];
+      if (t.value && t.value !== '0') {
+        var ethAmt = units(t.value, 18, 6);
+        moves.push(moveRow({
+          logo: ETH_LOGO, label: 'Ether', amount: ethAmt, symbol: 'ETH', name: 'Ether',
+          usd: t.exchange_rate ? Number(ethAmt.replace(/,/g, '')) * Number(t.exchange_rate) : null,
+          parties: [['From', ethAddr(t.from)], ['To', t.to ? ethAddr(t.to) : ethAddr(t.created_contract)]]
+        }));
+      }
+      transfers.forEach(function (x) { moves.push(ethTransferRow(x)); });
+      var tt = moves.length
+        ? moveSection('What moved', 'Assets moved', num(moves.length) + (t.token_transfers_overflow ? '+' : '') + (moves.length === 1 ? ' transfer' : ' transfers'), moves)
         : '';
       var html = '<div class="detail-shell"><div class="detail-topline">' + backLink('eth') + '</div>' +
         '<section class="card detail-card"><header><div><p class="eyebrow">Ethereum transaction</p><h2>Transaction</h2></div>' +
@@ -350,8 +400,10 @@
           field('Token holders', num(a.token.holders_count))
         : '';
       var html = '<div class="detail-shell"><div class="detail-topline">' + backLink('eth') + '</div>' +
-        '<section class="card detail-card"><header><div><p class="eyebrow">Ethereum ' + esc(kind.toLowerCase()) + '</p><h2>' +
-          esc(a.ens_domain_name || a.name || 'Address') + '</h2></div>' +
+        '<section class="card detail-card"><header><div class="title-with-logo">' +
+          (a.token ? logo(a.token.icon_url, a.token.name || a.token.symbol) : '') +
+          '<div><p class="eyebrow">Ethereum ' + esc(kind.toLowerCase()) + '</p><h2>' +
+          esc(a.token ? (a.token.name || a.name || 'Token') + (a.token.symbol ? ' (' + a.token.symbol + ')' : '') : (a.ens_domain_name || a.name || 'Address')) + '</h2></div></div>' +
           (a.is_contract && a.is_verified ? '<span class="status-badge confirmed">Verified contract</span>' : '') + '</header><div class="detail-grid">' +
         field('Address', hashLine(a.hash)) + field('Type', esc(kind)) +
         field('ETH balance', esc(eth(a.coin_balance, 6))) + field('Balance value', usd === null ? '—' : esc(S.fmt.money(usd, 'USD', 2))) +
@@ -383,14 +435,17 @@
       }).filter(function (x) { return x.amt !== null && x.amt !== '0'; })
         .sort(function (a, b) { return (b.usd || 0) - (a.usd || 0); }).slice(0, 10);
       if (!rows.length) return;
-      el.innerHTML = '<header><div><p class="eyebrow">Holdings</p><h2>Tokens</h2></div><span class="section-meta">Largest ' + rows.length + ' by value</span></header>' +
-        '<div class="transaction-list">' + rows.map(function (x) {
-          return '<div class="transaction-row token-row"><div class="tx-stat"><span>Token</span><b>' +
-            link('eth', 'address', x.t.address_hash || x.t.address, x.t.name || x.t.symbol || 'Token') + '</b></div>' +
-            '<div class="tx-stat"><span>Symbol</span><b>' + esc(x.t.symbol || '—') + '</b></div>' +
-            '<div class="tx-stat"><span>Balance</span><b>' + esc(x.amt) + '</b></div>' +
-            '<div class="tx-stat"><span>Value</span><b>' + (x.usd === null ? '—' : esc(S.fmt.money(x.usd, 'USD', 2))) + '</b></div></div>';
-        }).join('') + '</div>';
+      var tmp = document.createElement('div');
+      tmp.innerHTML = moveSection('Holdings', 'Tokens', 'Largest ' + rows.length + ' by value', rows.map(function (x) {
+        var addr = x.t.address_hash || x.t.address, sym = x.t.symbol || 'Token';
+        return moveRow({
+          logo: x.t.icon_url, label: x.t.name || sym, amount: x.amt,
+          symbol: addr ? link('eth', 'address', addr, sym, 'mv-symlink') : esc(sym),
+          name: x.t.name,
+          right: '<b>' + (x.usd === null ? '—' : esc(S.fmt.money(x.usd, 'USD', 2))) + '</b><small>value</small>'
+        });
+      }));
+      el.innerHTML = tmp.firstChild.innerHTML;
       el.hidden = false;
     }).catch(function () {});
   }
@@ -439,6 +494,22 @@
     'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s': 'Metaplex Token Metadata'
   };
   function programName(id) { return PROGRAMS[id] || null; }
+  /* Token names and logos for Solana mints, from Jupiter's public token
+     list. Optional: a slow or missing answer leaves the short mint address. */
+  var WSOL = 'So11111111111111111111111111111111111111112';
+  var tokenCache = {};
+  function solTokens(mints) {
+    var need = mints.filter(function (m) { return m && !(m in tokenCache); });
+    if (!need.length) return Promise.resolve(tokenCache);
+    return withTimeout(fetch('https://lite-api.jup.ag/tokens/v2/search?query=' + need.slice(0, 50).join(','))
+      .then(function (r) { return r.ok ? r.json() : []; }), 5000)
+      .then(function (list) {
+        need.forEach(function (m) { tokenCache[m] = null; });
+        (list || []).forEach(function (t) { if (t && t.id) tokenCache[t.id] = t; });
+        return tokenCache;
+      })
+      .catch(function () { return tokenCache; });
+  }
   function solAddr(pk, cls) {
     if (!pk) return '—';
     return link('sol', 'address', pk, programName(pk) || short(pk, 6, 6), cls || 'chain-addr');
@@ -586,6 +657,30 @@
       });
       var tokChanges = Object.keys(tok).map(function (k) { return tok[k]; }).filter(function (x) { return x.post !== x.pre; });
 
+      return solTokens(tokChanges.map(function (x) { return x.mint; }).concat([WSOL])).then(function (meta2) {
+      var solPrice = meta2[WSOL] && meta2[WSOL].usdPrice;
+      var moves = [];
+      solChanges.forEach(function (x) {
+        var amt = units(String(Math.abs(x.d)), 9, 9);
+        moves.push(moveRow({
+          logo: SOL_LOGO, label: 'Solana', amount: (x.d > 0 ? '+' : '−') + amt, symbol: 'SOL', name: 'Solana',
+          usd: solPrice ? Math.abs(x.d) / 1e9 * solPrice : null, tone: x.d > 0 ? 'amount-positive' : 'amount-negative',
+          parties: [['Account', solAddr(x.pk)]]
+        }));
+      });
+      tokChanges.forEach(function (x) {
+        var d = x.post - x.pre, neg = d < BigInt(0), abs = neg ? -d : d;
+        var info = meta2[x.mint] || {}, sym = info.symbol || short(x.mint, 4, 4);
+        var amt = units(abs.toString(), x.dec, 6);
+        moves.push(moveRow({
+          logo: info.icon, label: info.name || sym, amount: (neg ? '−' : '+') + amt,
+          symbol: link('sol', 'address', x.mint, sym, 'mv-symlink'),
+          name: info.name, tone: neg ? 'amount-negative' : 'amount-positive',
+          usd: info.usdPrice ? Number(amt.replace(/,/g, '')) * info.usdPrice : null,
+          parties: [['Owner', solAddr(x.owner)]]
+        }));
+      });
+
       var ixs = (msg.instructions || []).map(function (ix) {
         var name = programName(ix.programId) || ix.program || short(ix.programId, 6, 6);
         return '<div class="transaction-row ix-row"><div class="tx-stat"><span>Program</span><b>' + solAddr(ix.programId).replace(/>[^<]*</, '>' + esc(name) + '<') + '</b></div>' +
@@ -606,19 +701,7 @@
         (meta.err ? '<dt>Error</dt><dd>' + esc(JSON.stringify(meta.err)) + '</dd>' : '') +
         '<dt>Log messages</dt><dd class="logs">' + ((meta.logMessages || []).slice(0, 40).map(esc).join('<br>') || '—') + '</dd>' +
         '</dl></details></section>' +
-        (solChanges.length ? '<section class="card subcard"><header><div><p class="eyebrow">Balance changes</p><h2>SOL moved</h2></div></header><div class="transaction-list">' +
-          solChanges.map(function (x) {
-            return '<div class="transaction-row change-row"><div class="tx-stat"><span>Account</span><b>' + solAddr(x.pk) + '</b></div>' +
-              '<div class="tx-stat"><span>Change</span><b class="' + (x.d > 0 ? 'amount-positive' : 'amount-negative') + '">' + esc(sol(x.d, true)) + '</b></div></div>';
-          }).join('') + '</div></section>' : '') +
-        (tokChanges.length ? '<section class="card subcard"><header><div><p class="eyebrow">Balance changes</p><h2>Tokens moved</h2></div></header><div class="transaction-list">' +
-          tokChanges.map(function (x) {
-            var d = x.post - x.pre, v = units(d.toString(), x.dec, 6);
-            return '<div class="transaction-row token-row"><div class="tx-stat"><span>Owner</span><b>' + solAddr(x.owner) + '</b></div>' +
-              '<div class="tx-stat"><span>Token mint</span><b>' + solAddr(x.mint) + '</b></div>' +
-              '<div class="tx-stat"><span>Change</span><b class="' + (d > 0 ? 'amount-positive' : 'amount-negative') + '">' + (d > 0 ? '+' : '') + esc(v) + '</b></div>' +
-              '<div class="tx-stat"><span>Balance after</span><b>' + esc(units(x.post.toString(), x.dec, 6)) + '</b></div></div>';
-          }).join('') + '</div></section>' : '') +
+        (moves.length ? moveSection('Balance changes', 'Assets moved', num(moves.length) + (moves.length === 1 ? ' change' : ' changes') + ' · fees included', moves) : '') +
         '<section class="card subcard"><header><div><p class="eyebrow">What it did</p><h2>Instructions</h2></div></header><div class="transaction-list">' +
           (ixs || '<div style="padding:18px">' + S.emptyState('No instructions.') + '</div>') + '</div></section>' +
         '<section class="card education ' + (ok ? '' : 'pending-card') + '">' +
@@ -626,6 +709,7 @@
             : '<h2>Transaction failed</h2><p>This transaction was included in slot ' + num(t.slot) + ' but did not execute successfully. The fee was still charged.</p>') +
         '</section></div>';
       showDetail('sol', html, short(sig, 10, 8));
+      });
     }).catch(function (e) { setError('sol', 'Transaction not found.', e.message); });
   }
 
@@ -637,6 +721,9 @@
     ]).then(function (r) {
       var info = r[0] && r[0].value, sigs = r[1] || [];
       if (!info && !sigs.length) throw new Error('This address has no balance and no recorded activity on Solana mainnet.');
+      var isMint = info && info.data && info.data.parsed && info.data.parsed.type === 'mint';
+      return (isMint ? solTokens([pk]) : Promise.resolve({})).then(function (tk) {
+      var tinfo = tk[pk] || null;
       solPager = { kind: 'address', addr: pk, before: sigs.length ? sigs[sigs.length - 1].signature : null };
       var parsed = info && info.data && info.data.parsed;
       var kind = !info ? 'Unfunded account'
@@ -655,8 +742,10 @@
           field('Token balance', esc(a.tokenAmount ? a.tokenAmount.uiAmountString : '—'));
       }
       var html = '<div class="detail-shell"><div class="detail-topline">' + backLink('sol') + '</div>' +
-        '<section class="card detail-card"><header><div><p class="eyebrow">Solana ' + esc(kind.toLowerCase()) + '</p><h2>' +
-          esc(programName(pk) || 'Address') + '</h2></div></header><div class="detail-grid">' +
+        '<section class="card detail-card"><header><div class="title-with-logo">' +
+          (tinfo ? logo(tinfo.icon, tinfo.name || tinfo.symbol) : '') +
+          '<div><p class="eyebrow">Solana ' + esc(kind.toLowerCase()) + '</p><h2>' +
+          esc(tinfo ? (tinfo.name || 'Token') + (tinfo.symbol ? ' (' + tinfo.symbol + ')' : '') : (programName(pk) || 'Address')) + '</h2></div></div></header><div class="detail-grid">' +
         field('Address', hashLine(pk)) + field('Type', esc(kind)) +
         field('SOL balance', esc(sol(info ? info.lamports : 0))) +
         field('Owner program', info ? solAddr(info.owner) : '—') +
@@ -667,7 +756,8 @@
         '<span class="section-meta">Most recent first</span></header>' +
         '<div class="transaction-list" id="sol-txlist">' + solSigRows(sigs) + '</div>' +
         (sigs.length === 25 ? moreButton('sol-more') : '') + '</section></div>';
-      showDetail('sol', html, short(pk, 12, 8));
+      showDetail('sol', html, tinfo && tinfo.symbol ? tinfo.symbol : short(pk, 12, 8));
+      });
     }).catch(function (e) { setError('sol', 'Address not found.', e.message); });
   }
 

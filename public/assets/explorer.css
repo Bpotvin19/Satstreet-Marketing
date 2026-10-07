@@ -170,3 +170,36 @@
 @media (max-width: 760px) {
   .transaction-row.token-row, .transaction-row.change-row, .transaction-row.ix-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* ---- asset movements (transfers, balance changes, holdings) ---- */
+.move-list { display: grid; }
+.move { display: grid; grid-template-columns: 40px minmax(170px, 1fr) minmax(0, 1.5fr); align-items: center; gap: 14px; padding: 14px 20px; border-bottom: 1px solid var(--border-2); }
+.move:last-child { border-bottom: 0; }
+.move:hover { background: #fafcfe; }
+.move:has(.mv-right) { grid-template-columns: 40px minmax(0, 1fr) auto; }
+.mv-logo { position: relative; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: #fff; box-shadow: 0 0 0 1px var(--border); overflow: hidden; }
+.mv-logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.mv-logo i { display: none; font-style: normal; font-size: 11.5px; font-weight: 700; color: #476177; }
+.mv-logo.fallback { background: linear-gradient(145deg, #edf3f7, #dfe8ee); }
+.mv-logo.fallback i { display: block; }
+.mv-amt { min-width: 0; }
+.mv-amt b { display: block; font-family: var(--font-data); font-size: 15px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.mv-amt .mv-sym, .mv-amt .mv-symlink { font-family: var(--font); font-weight: 650; color: var(--ink-2); text-decoration: none; }
+.mv-amt .mv-symlink:hover { color: var(--blue); text-decoration: underline; }
+.mv-amt small { display: block; margin-top: 2px; font-size: 12px; color: var(--muted); }
+.mv-path { display: flex; align-items: center; justify-content: flex-end; gap: 12px; min-width: 0; }
+.mv-party { min-width: 0; padding: 7px 11px; border: 1px solid var(--border-2); border-radius: 8px; background: #fafcfe; }
+.mv-party small { display: block; font-size: 9.5px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: var(--muted); }
+.mv-party a { display: block; color: var(--ink); font-family: var(--font-data); font-size: 12px; font-weight: 600; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mv-party a:hover { color: var(--blue); }
+.mv-arrow { color: var(--faint, #98a5b4); font-size: 16px; flex: none; }
+.mv-right { text-align: right; }
+.mv-right b { display: block; font-family: var(--font-data); font-size: 15px; font-weight: 600; }
+.mv-right small { font-size: 11px; color: var(--muted); }
+.title-with-logo { display: flex; align-items: center; gap: 14px; }
+.title-with-logo .mv-logo { width: 44px; height: 44px; }
+@media (max-width: 760px) {
+  .move, .move:has(.mv-right) { grid-template-columns: 36px minmax(0, 1fr); padding: 13px 16px; }
+  .mv-path, .mv-right { grid-column: 2; justify-content: flex-start; text-align: left; }
+  .mv-logo { width: 32px; height: 32px; }
+}
