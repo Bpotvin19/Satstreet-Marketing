@@ -76,6 +76,14 @@
     if (window.SSDash) window.SSDash.reload();
     renderList();
   }
+  api.remove = function (symbol) {
+    var list = api.watchlist();
+    if (list.length <= 1) return false;
+    var next = list.filter(function (item) { return item.symbol !== symbol; });
+    if (next.length === list.length) return false;
+    setList(next);
+    return true;
+  };
 
   /* ── helpers ─────────────────────────────────────────────────── */
   var $ = function (id) { return document.getElementById(id); };

@@ -43,8 +43,6 @@ const SERIES: Spec[] = [
   { id: 'DTWEXBGS', label: 'US dollar index', transform: 'level', unit: 'index', changeOver: 22, changeLabel: 'vs 1 month ago', frequency: 'Daily', note: 'Broad trade-weighted dollar' },
 ]
 
-const KEY = process.env.FRED_API_KEY?.trim()
-
 function since(years: number): string {
   const d = new Date()
   d.setFullYear(d.getFullYear() - years)
@@ -53,9 +51,13 @@ function since(years: number): string {
 
 async function observations(id: string): Promise<Obs[]> {
   const start = since(3)
-  if (!KEY) throw new Error('FRED_API_KEY is not set')
+  /* Read at invocation time. Netlify injects function-scoped secrets into the
+     runtime; reading once while the bundle is initialized can capture an empty
+     build environment and keep it for every warm invocation. */
+  const key = process.env.FRED_API_KEY?.trim()
+  if (!key) throw new Error('FRED_API_KEY is not set')
   {
-    const u = `https://api.stlouisfed.org/fred/series/observations?series_id=${id}&api_key=${KEY}&file_type=json&observation_start=${start}`
+    const u = `https://api.stlouisfed.org/fred/series/observations?series_id=${id}&api_key=${key}&file_type=json&observation_start=${start}`
     const r = await fetch(u, { signal: AbortSignal.timeout(8000) })
     if (!r.ok) throw new Error(`FRED ${id} http ${r.status}`)
     const d = await r.json()

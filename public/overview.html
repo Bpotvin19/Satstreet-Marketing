@@ -134,6 +134,8 @@
   .board-status i { width:6px; height:6px; border-radius:50%; background:var(--up); }
   .board-status i.session { background:#237bad; }
   .asset-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+  .asset-slot { position:relative; min-width:0; }
+  .asset-slot .asset-tile { width:100%; height:100%; }
   .asset-tile { position: relative; min-width: 0; min-height: 116px; text-align: left; cursor: pointer; font: inherit; color: var(--ink); background: #fcfdfe; border: 1px solid #d8e2eb; border-radius: 9px; padding: 13px 14px 10px; overflow: hidden; }
   .asset-tile:hover { border-color: #b9c8dc; }
   .asset-tile[aria-pressed="true"] { border-color: var(--blue); box-shadow: inset 0 0 0 1px var(--blue), 0 4px 14px rgba(0,104,255,.08); }
@@ -155,6 +157,9 @@
   .asset-tile .tile-foot { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; margin-top: 9px; }
   .asset-tile .tile-foot .ch { font-size: 12px; font-variant-numeric: tabular-nums; }
   .asset-tile .tile-spark { width: 72px; height: 28px; flex: none; }
+  .asset-remove { position:absolute; z-index:2; top:5px; right:5px; width:20px; height:20px; display:grid; place-items:center; padding:0; border:1px solid transparent; border-radius:50%; background:rgba(255,255,255,.92); color:var(--faint); font:600 15px/1 var(--font); cursor:pointer; opacity:0; transition:opacity .14s ease,color .14s ease,border-color .14s ease; }
+  .asset-slot:hover .asset-remove, .asset-remove:focus-visible { opacity:1; }
+  .asset-remove:hover { color:var(--down); border-color:#f0c3c9; background:#fff5f6; }
 
   .focus-panel { margin-top:14px; border:1px solid #d8e2eb; border-radius:9px; overflow:hidden; background:#fff; }
   .focus-head { min-height:72px; display:flex; align-items:center; gap:10px; padding:13px 17px; border-bottom:1px solid var(--border-2); }
@@ -275,7 +280,8 @@
     .intro { padding-right: 0; }
     .intro > .feedstate { position: static; }
     .asset-grid { display: flex; overflow-x: auto; margin: 0 -16px; padding: 0 16px 8px; scroll-snap-type: x mandatory; }
-    .asset-tile { min-width: 190px; scroll-snap-align: start; }
+    .asset-slot { min-width:190px; scroll-snap-align:start; }
+    .asset-remove { opacity:1; }
     .focus-head { align-items:flex-start; flex-wrap:wrap; }
     .focus-price { width:100%; margin-left:44px; text-align:left; }
     .marketboard > header { align-items: flex-start; flex-direction: column; gap: 2px; }
@@ -753,9 +759,10 @@
       var m = move(q), active = q.symbol === selectedSymbol;
       var state = q.error ? 'Unavailable' : (q.marketState === 'REGULAR' ? 'Open' : (q.marketState || 'Reference'));
       var meta = metaFor(q.symbol);
-      return '<button type="button" class="asset-tile" data-symbol="' + esc(q.symbol) + '" aria-pressed="' + active + '" title="' + esc(q.source + ' · ' + state) + '">' +
+      return '<div class="asset-slot"><button type="button" class="asset-tile" data-symbol="' + esc(q.symbol) + '" aria-pressed="' + active + '" title="' + esc(q.source + ' · ' + state) + '">' +
         '<span class="tile-top"><span class="asset-id">' + assetIcon(q.symbol) + '<span><span class="tile-name">' + esc(q.label) + '</span><span class="tile-code">' + esc(meta.code) + '</span></span></span><span class="tile-change ' + m.c + '">' + m.t + '</span></span>' +
-        '<span class="tile-px">' + fmtPrice(q, q.price) + '</span><span class="tile-foot"><span></span>' + tileSpark(q.spark, m.c) + '</span></button>';
+        '<span class="tile-px">' + fmtPrice(q, q.price) + '</span><span class="tile-foot"><span></span>' + tileSpark(q.spark, m.c) + '</span></button>' +
+        '<button type="button" class="asset-remove" data-remove-symbol="' + esc(q.symbol) + '" aria-label="Remove ' + esc(q.label) + ' from your dashboard" title="Remove ' + esc(q.label) + '">&times;</button></div>';
     }).join('');
   }
   function summarise(d) {
@@ -946,10 +953,18 @@
     loadChart();
   });
   $('asset-grid').addEventListener('click', function (e) {
+    var remove = e.target.closest('button[data-remove-symbol]');
+    if (remove) {
+      var symbol = remove.getAttribute('data-remove-symbol');
+      if (P && P.remove && P.remove(symbol)) {
+        if (selectedSymbol === symbol) selectedSymbol = P.watchlist()[0].symbol;
+      }
+      return;
+    }
     var b = e.target.closest('button[data-symbol]');
     if (!b || b.getAttribute('data-symbol') === selectedSymbol) return;
     selectedSymbol = b.getAttribute('data-symbol');
-    Array.prototype.forEach.call(this.querySelectorAll('button'), function (o) { o.setAttribute('aria-pressed', String(o === b)); });
+    Array.prototype.forEach.call(this.querySelectorAll('button[data-symbol]'), function (o) { o.setAttribute('aria-pressed', String(o === b)); });
     renderFocus(selectedQuote());
     loadChart();
   });
