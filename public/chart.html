@@ -148,11 +148,11 @@
     if (known) coinId = known[2];
   }
 
-  /* What /api/chart says about this coin: its TradingView symbol (or null
-     when no exchange TradingView carries lists it), logo and price. */
+  /* What we know about this coin: CoinGecko's price, logo and 24h change,
+     plus the exchange market TradingView will chart (null when none of the
+     exchanges below lists it). */
   var info = null;
   function cur() { return RANGES.filter(function (r) { return r.key === range; })[0] || RANGES[1]; }
-  function query() { return coinId ? 'id=' + encodeURIComponent(coinId) : 'symbol=' + encodeURIComponent(symbol); }
   function drawnByTv() { return !!(tvOverride || (info && info.tv)); }
 
   /* ── identity ────────────────────────────────────────────── */
@@ -191,29 +191,111 @@
   });
 
   /* ── reference price ─────────────────────────────────────── */
-  function loadInfo() {
-    return fetch('/api/chart?' + query())
-      .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || 'unavailable'); return d; }); })
-      .then(function (d) {
-        info = d;
-        if (d.id) coinId = d.id;
-        paintIdentity();
-        var price = d.priceUsd, pct = d.changePct24h;
-        if (price === null || !isFinite(price)) throw new Error('no price');
-        $('px').textContent = fmt.money(price, 'USD', price >= 100 ? 0 : price >= 1 ? 2 : price >= 0.01 ? 4 : 6);
-        $('mv').innerHTML = pct === null || !isFinite(pct)
-          ? '<span style="color:var(--muted)">24h change unavailable</span>'
-          : '<span class="' + fmt.dir(pct) + '">' + fmt.pct(pct) + '</span> <span style="color:var(--muted)">24h</span>';
-        $('stamp').textContent = 'Reference price';
-        return d;
-      })
-      .catch(function (e) {
-        $('px').textContent = '—';
-        $('mv').innerHTML = '<span style="color:var(--muted)">Reference price unavailable</span>';
-        $('stamp').textContent = e.message === 'Unknown asset' ? symbol + ' is not covered by the reference data source' : 'Reference price unavailable';
-        return null;
-      });
+  var CG = 'https://api.coingecko.com/api/v3/';
+  function getJSON(url, ms) {
+    var ctl = new AbortController(), t = setTimeout(function () { ctl.abort(); }, ms || 8000);
+    return fetch(url, { signal: ctl.signal }).then(function (r) {
+      clearTimeout(t);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }, function (e) { clearTimeout(t); throw e; });
   }
+
+  function resolveId() {
+    if (coinId) return Promise.resolve(coinId);
+    return getJSON(CG + 'search?query=' + encodeURIComponent(symbol)).then(function (d) {
+      var hits = (d.coins || []).filter(function (c) { return String(c.symbol).toUpperCase() === symbol; });
+      hits.sort(function (a, b) { return (a.market_cap_rank || 1e9) - (b.market_cap_rank || 1e9); });
+      if (!hits.length) throw new Error('Unknown asset');
+      coinId = hits[0].id;
+      return coinId;
+    });
+  }
+
+  function loadCoin() {
+    return resolveId().then(function (id) {
+      return getJSON(CG + 'coins/markets?vs_currency=usd&ids=' + encodeURIComponent(id) + '&price_change_percentage=24h');
+    }).then(function (rows) {
+      var c = rows && rows[0];
+      if (!c) throw new Error('Unknown asset');
+      return { id: c.id, name: c.name, image: c.image, priceUsd: c.current_price, changePct24h: c.price_change_percentage_24h };
+    });
+  }
+
+  /* Which exchange market TradingView should chart. Every venue is asked in
+     parallel for this ticker; a market only counts if its price is within
+     5% of CoinGecko's, so an unrelated token that happens to share the
+     ticker is never charted in its place. The first match in this order
+     wins, and the answer is remembered in this browser for a day. */
+  var VENUES = [
+    { tv: 'COINBASE', name: 'Coinbase', quote: 'USD', url: function (s) { return 'https://api.exchange.coinbase.com/products/' + s + '-USD/ticker'; }, px: function (d) { return d.price; } },
+    { tv: 'KRAKEN', name: 'Kraken', quote: 'USD', url: function (s) { return 'https://api.kraken.com/0/public/Ticker?pair=' + s + 'USD'; }, px: function (d) { var k = d.result && Object.keys(d.result)[0]; return k ? d.result[k].c[0] : null; } },
+    { tv: 'BINANCE', name: 'Binance', quote: 'USDT', url: function (s) { return 'https://api.binance.com/api/v3/ticker/price?symbol=' + s + 'USDT'; }, px: function (d) { return d.price; } },
+    { tv: 'OKX', name: 'OKX', quote: 'USDT', url: function (s) { return 'https://www.okx.com/api/v5/market/ticker?instId=' + s + '-USDT'; }, px: function (d) { return d.data && d.data[0] && d.data[0].last; } },
+    { tv: 'BYBIT', name: 'Bybit', quote: 'USDT', url: function (s) { return 'https://api.bybit.com/v5/market/tickers?category=spot&symbol=' + s + 'USDT'; }, px: function (d) { return d.result && d.result.list && d.result.list[0] && d.result.list[0].lastPrice; } },
+    { tv: 'BITGET', name: 'Bitget', quote: 'USDT', url: function (s) { return 'https://api.bitget.com/api/v2/spot/market/tickers?symbol=' + s + 'USDT'; }, px: function (d) { return d.data && d.data[0] && d.data[0].lastPr; } },
+    { tv: 'GATEIO', name: 'Gate', quote: 'USDT', url: function (s) { return 'https://api.gateio.ws/api/v4/spot/tickers?currency_pair=' + s + '_USDT'; }, px: function (d) { return d[0] && d[0].last; } }
+  ];
+  var DAY = 86400000;
+  function remembered(key) {
+    try { var v = JSON.parse(localStorage.getItem(key) || 'null'); return v && Date.now() - v.t < DAY ? v : null; } catch (e) { return null; }
+  }
+  function remember(key, v) { try { v.t = Date.now(); localStorage.setItem(key, JSON.stringify(v)); } catch (e) {} }
+
+  function findVenue(ref) {
+    var key = 'satstreet.chart.venue.' + (coinId || symbol);
+    var known = remembered(key);
+    if (known) return Promise.resolve(known);
+    return Promise.all(VENUES.map(function (v) {
+      return getJSON(v.url(symbol), 6000).then(function (d) {
+        var p = parseFloat(v.px(d));
+        return isFinite(p) && p > 0 ? p : null;
+      }).catch(function () { return null; });
+    })).then(function (prices) {
+      var pick = null;
+      for (var i = 0; i < VENUES.length && !pick; i++) {
+        var p = prices[i];
+        if (p === null) continue;
+        /* Without a reference price only the two USD venues are trusted. */
+        var ok = ref ? Math.abs(p - ref) / ref < 0.05 : VENUES[i].quote === 'USD';
+        if (ok) pick = { tv: VENUES[i].tv + ':' + symbol + VENUES[i].quote, venue: VENUES[i].name };
+      }
+      var out = pick || { tv: null, venue: null };
+      remember(key, out);
+      return out;
+    });
+  }
+
+  function paintPrice(c) {
+    var price = c && c.priceUsd, pct = c && c.changePct24h;
+    if (price === null || price === undefined || !isFinite(price)) {
+      $('px').textContent = '—';
+      $('mv').innerHTML = '<span style="color:var(--muted)">Reference price unavailable</span>';
+      $('stamp').textContent = 'Reference price unavailable';
+      return;
+    }
+    $('px').textContent = fmt.money(price, 'USD', price >= 100 ? 0 : price >= 1 ? 2 : price >= 0.01 ? 4 : 6);
+    $('mv').innerHTML = pct === null || pct === undefined || !isFinite(pct)
+      ? '<span style="color:var(--muted)">24h change unavailable</span>'
+      : '<span class="' + fmt.dir(pct) + '">' + fmt.pct(pct) + '</span> <span style="color:var(--muted)">24h</span>';
+    $('stamp').textContent = 'Reference price';
+  }
+
+  function loadInfo() {
+    return loadCoin().catch(function (e) { return { error: e.message }; }).then(function (c) {
+      var coin = c && !c.error ? c : null;
+      if (coin) { coinId = coin.id; }
+      paintPrice(coin);
+      if (!coin && c && c.error === 'Unknown asset') $('stamp').textContent = symbol + ' is not covered by the reference data source';
+      var venue = info ? Promise.resolve({ tv: info.tv, venue: info.venue }) : findVenue(coin && coin.priceUsd);
+      return venue.then(function (v) {
+        info = { id: coinId, image: coin ? coin.image : (info && info.image), tv: v.tv, venue: v.venue };
+        paintIdentity();
+        return info;
+      });
+    });
+  }
+  function refreshPrice() { loadCoin().then(paintPrice).catch(function () {}); }
 
   /* ── ranges ──────────────────────────────────────────────── */
   function paintRanges() {
@@ -324,11 +406,11 @@
     if (!coinId) { unavailable('No price history is available for ' + symbol + '.'); return; }
     Promise.all([
       library(),
-      fetch('/api/chart?id=' + encodeURIComponent(coinId) + '&days=' + r.days)
-        .then(function (x) { if (!x.ok) throw new Error('Price history is temporarily unavailable.'); return x.json(); })
+      getJSON(CG + 'coins/' + encodeURIComponent(coinId) + '/ohlc?vs_currency=usd&days=' + r.days)
+        .catch(function () { throw new Error('Price history is temporarily unavailable.'); })
     ]).then(function (res) {
       if (r !== cur()) return;   // the range changed while this was loading
-      var LC = res[0], rows = (res[1].candles || []).filter(function (c) { return c && c.length >= 5; });
+      var LC = res[0], rows = (res[1] || []).filter(function (c) { return c && c.length >= 5; });
       if (rows.length < 2) throw new Error('Not enough price history to draw a chart.');
       var dp = rows[rows.length - 1][4] >= 100 ? 2 : rows[rows.length - 1][4] >= 1 ? 4 : 6;
       lw = LC.createChart(host, {
@@ -355,15 +437,15 @@
 
   function start() {
     loading();
-    loadInfo().then(function (d) {
+    loadInfo().then(function () {
       paintRanges();
-      if (!d && !tvOverride) { unavailable('This asset is not covered by the reference data source.'); return; }
+      if (!drawnByTv() && !coinId) { unavailable('This asset is not covered by the reference data source.'); return; }
       mount();
     });
   }
 
   fillSelect(); paintRanges(); start();
-  setInterval(loadInfo, 60000);
+  setInterval(refreshPrice, 60000);
 })();
 </script>
 </body>
