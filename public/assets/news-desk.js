@@ -118,6 +118,12 @@
         renderFilters();
         renderGrid();
         stamp();
+        /* Arrived via a #read= link before the feed loaded: name the story. */
+        var rd = $('reader');
+        if (rd && !rd.hidden) {
+          var open = items.filter(function (n) { return n.link === $('reader-out').href; })[0];
+          if (open) $('reader-title').textContent = open.title;
+        }
       })
       .catch(function (e) {
         var grid = $('news-grid');
