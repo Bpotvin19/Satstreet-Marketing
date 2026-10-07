@@ -1,22 +1,23 @@
 /* ──────────────────────────────────────────────────────────────────────────
-   Latest crypto news, from CoinDesk's public RSS feed.
+   Latest crypto news, from Decrypt's public RSS feed.
+
+   Decrypt is used because its articles open freely, where the previous
+   source asked readers to sign up first. Clients should not have to create
+   an account with a third party to read the news on this site.
 
    Server-side for the ordinary reason: the feed sends no CORS header, so a
-   browser on satstreet.netlify.app is refused before it sees a byte. The
-   endpoint fetches it, parses it and hands the page clean JSON.
+   browser is refused before it sees a byte. The endpoint fetches it, parses
+   it and hands the page clean JSON.
 
    What is shown is what a feed is published for: headline, the feed's own
-   one-line summary, the section CoinDesk filed it under, and a link back to
-   the article on coindesk.com. The article body is never fetched or
-   reproduced — a client who wants to read it goes to CoinDesk, which is the
-   arrangement syndication assumes.
+   one-line summary, the section Decrypt filed it under, and a link to the
+   article on decrypt.co. The article body is never fetched or copied. The
+   page opens Decrypt's own article page in a reader panel, so the reader is
+   on Decrypt's page, under Decrypt's name.
 
-   No sentiment. Other terminals stamp a Positive or Negative badge on each
-   headline, but that is their scoring, not CoinDesk's, and there is nothing
-   in this feed to support it. Putting a directional label on a news item
-   would make Satstreet the author of a market judgment it did not make and
-   cannot defend, so the badge slot carries the section CoinDesk filed the
-   piece under instead. That is a fact the source published.
+   No sentiment. A directional label on a news item would make Satstreet the
+   author of a market judgment it did not make, so the badge slot carries
+   the section the publisher filed the piece under instead.
 
    There is no XML parser in this project's dependencies and one publisher's
    feed does not justify adding one, so the parsing below is deliberately
@@ -24,28 +25,21 @@
    rest. Anything it cannot parse is skipped rather than guessed at.
    ────────────────────────────────────────────────────────────────────────── */
 
-const FEED = process.env.NEWS_FEED_URL?.trim() || 'https://www.coindesk.com/arc/outboundfeeds/rss/'
+const FEED = process.env.NEWS_FEED_URL?.trim() || 'https://decrypt.co/feed'
 
 /** Links are rendered on a client-facing page, so only the publisher's own
     host is allowed through. A feed that started serving links somewhere else
     would be a compromised feed, and the page should not carry it. */
-const ALLOWED_HOST = /(^|\.)coindesk\.com$/i
+const ALLOWED_HOST = /(^|\.)decrypt\.co$/i
 
 const MAX_ITEMS = 40
 
-/* Sections whose name carries the publisher's own brand.
+/* Sections left off a client-facing market page.
 
-   CoinDesk files some coverage under "CoinDesk Indices" — promotion for
-   their index products rather than market news. It arrives with the brand
-   in the section name, so it would surface as a filter chip and a label on
-   every one of its cards, putting the publisher's name back on exactly the
-   surfaces this page deliberately keeps it off. The name is credited once,
-   in the disclosure at the foot of each page, and that is the whole of it.
-
-   Matched case-insensitively as a substring, so a future "CoinDesk Studio"
-   needs no code change. Override with NEWS_EXCLUDED_SECTIONS, a comma list;
-   set it empty to carry everything. */
-const EXCLUDED_SECTIONS = (process.env.NEWS_EXCLUDED_SECTIONS ?? 'CoinDesk')
+   Decrypt also covers health and wellness, which is not market news. Matched
+   case-insensitively as a substring. Override with NEWS_EXCLUDED_SECTIONS, a
+   comma list; set it empty to carry everything. */
+const EXCLUDED_SECTIONS = (process.env.NEWS_EXCLUDED_SECTIONS ?? 'Health')
   .split(',')
   .map((x) => x.trim().toLowerCase())
   .filter(Boolean)
@@ -60,7 +54,7 @@ interface Item {
   title: string
   link: string
   summary: string
-  /** The section CoinDesk filed it under — Markets, Business, Policy, Tech. */
+  /** The section Decrypt filed it under — Markets, Business, Technology… */
   section: string
   author: string
   image: string
@@ -109,18 +103,15 @@ function unescapeAttr(s: string): string {
     .trim()
 }
 
-/* CoinDesk files each item under one section and any number of free tags.
-   The section carries the site path as its domain; tags carry domain="tag".
-   The bare site root is the catch-all "News" and says nothing useful, so it
-   is skipped in favour of the specific one. */
+/* Decrypt lists the section first (Markets, Business, Technology…), then
+   lowercase coin tags such as "zcash". The first capitalised, non-empty
+   category is the section. */
 function sectionOf(chunk: string): string {
-  const re = /<category\s+domain="([^"]*)"[^>]*>([\s\S]*?)<\/category>/gi
+  const re = /<category(?:\s[^>]*)?>([\s\S]*?)<\/category>/gi
   let m: RegExpExecArray | null
   while ((m = re.exec(chunk)) !== null) {
-    const domain = m[1]
-    if (!/^https?:\/\/(www\.)?coindesk\.com\/.+/i.test(domain)) continue
-    const name = decode(m[2])
-    if (name && name.toLowerCase() !== 'news') return name
+    const name = decode(m[1])
+    if (name && /^[A-Z]/.test(name) && name.toLowerCase() !== 'news') return name
   }
   return ''
 }
@@ -152,7 +143,10 @@ function parse(xml: string): Item[] {
 
     const pub = tagOf(chunk, 'pubDate')
     const when = pub ? new Date(pub) : null
-    const rawImg = /<media:content[^>]*\surl="([^"]+)"/i.exec(chunk)?.[1] ?? ''
+    /* The enclosure is Decrypt's own 1024×512 crop, the right size for a
+       card; the full-size thumbnail is the fallback. */
+    const rawImg = /<enclosure[^>]*\surl="([^"]+)"/i.exec(chunk)?.[1] ??
+      /<media:(?:thumbnail|content)[^>]*\surl="([^"]+)"/i.exec(chunk)?.[1] ?? ''
     const img = rawImg ? unescapeAttr(rawImg) : ''
 
     out.push({
@@ -177,7 +171,7 @@ export default async function handler(req: Request): Promise<Response> {
         'content-type': 'application/json',
         'access-control-allow-origin': '*',
         /* The feed declares a five-minute TTL and rebuilds hourly. Two
-           minutes of shared cache keeps a busy morning off CoinDesk's
+           minutes of shared cache keeps a busy morning off Decrypt's
            origin without the page ever feeling stale. */
         'cache-control': 'public, max-age=120, stale-while-revalidate=600',
       },
@@ -200,8 +194,8 @@ export default async function handler(req: Request): Promise<Response> {
 
     return json({
       asOf: new Date().toISOString(),
-      source: 'CoinDesk',
-      sourceUrl: 'https://www.coindesk.com/latest-crypto-news',
+      source: 'Decrypt',
+      sourceUrl: 'https://decrypt.co/news',
       items: items.slice(0, limit),
       error: null,
     })
@@ -211,8 +205,8 @@ export default async function handler(req: Request): Promise<Response> {
        outage never renders as a broken terminal. */
     return json({
       asOf: new Date().toISOString(),
-      source: 'CoinDesk',
-      sourceUrl: 'https://www.coindesk.com/latest-crypto-news',
+      source: 'Decrypt',
+      sourceUrl: 'https://decrypt.co/news',
       items: [],
       error: e instanceof Error ? e.message : 'feed unavailable',
     })

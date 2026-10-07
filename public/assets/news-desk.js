@@ -2,10 +2,10 @@
 
    Renders whatever /api/news returns. The endpoint has already dropped any
    item without a headline or a link, and any link pointing somewhere other
-   than coindesk.com, so this file's job is presentation: group the sections
-   into filters, format the clock, and link out.
+   than decrypt.co, so this file's job is presentation: group the sections
+   into filters, format the clock, and open stories in the reader panel.
 
-   No item is scored, ranked or reordered. The feed's order is CoinDesk's
+   No item is scored, ranked or reordered. The feed's order is Decrypt's
    order and it stays that way, because the moment this page decided which
    story mattered most it would be publishing a view rather than a feed. */
 (function () {
@@ -158,6 +158,66 @@
     if (lastAt && Date.now() - lastAt > 60000) load(); else renderGrid();
   });
 
+  /* ── reader panel ─────────────────────────────────────────────
+     A story opens Decrypt's own article page in a frame on this page. Only
+     decrypt.co is ever framed. Cmd/Ctrl-click still opens a new tab, and a
+     link here (news.html#read=…) opens straight into the reader, which is
+     how the Overview card's headlines arrive. */
+  var reader = $('reader'), lastFocus = null;
+  function allowed(url) {
+    try { var u = new URL(url); return u.protocol === 'https:' && /(^|\.)decrypt\.co$/i.test(u.hostname); }
+    catch (e) { return false; }
+  }
+  function openReader(url, title, push) {
+    if (!reader || !allowed(url)) return false;
+    lastFocus = document.activeElement;
+    $('reader-title').textContent = title || 'Decrypt';
+    $('reader-out').href = url;
+    $('reader-body').innerHTML = '<div class="reader-loading">Loading article from Decrypt…</div>';
+    var f = document.createElement('iframe');
+    f.title = title || 'Article from Decrypt';
+    f.onload = function () { var l = $('reader-body').querySelector('.reader-loading'); if (l) l.remove(); };
+    f.src = url;
+    $('reader-body').appendChild(f);
+    reader.hidden = false;
+    document.body.classList.add('reading');
+    $('reader-close').focus();
+    if (push) history.pushState({ read: url }, '', '#read=' + encodeURIComponent(url));
+    return true;
+  }
+  function closeReader(fromHistory) {
+    if (!reader || reader.hidden) return;
+    reader.hidden = true;
+    $('reader-body').innerHTML = '';
+    document.body.classList.remove('reading');
+    if (!fromHistory && /^#read=/.test(location.hash)) {
+      if (history.state && history.state.read) history.back();
+      else history.replaceState(null, '', location.pathname + location.search);
+    }
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+  function fromHash() {
+    var m = /^#read=(.+)$/.exec(location.hash);
+    if (!m) { closeReader(true); return; }
+    var url = decodeURIComponent(m[1]);
+    var hit = items.filter(function (n) { return n.link === url; })[0];
+    if (reader.hidden || $('reader-out').href !== url) openReader(url, hit ? hit.title : '', false);
+  }
+
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest('#news-grid a[href]');
+    if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+    var card = a.closest('.story'), h = card && card.querySelector('h3');
+    if (openReader(a.href, h ? h.textContent : '', true)) e.preventDefault();
+  });
+  if (reader) {
+    $('reader-close').addEventListener('click', function () { closeReader(false); });
+    reader.addEventListener('click', function (e) { if (e.target === reader) closeReader(false); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeReader(false); });
+    window.addEventListener('popstate', fromHash);
+  }
+
   load();
   startTimer();
+  if (/^#read=/.test(location.hash)) fromHash();
 })();

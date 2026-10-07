@@ -22,8 +22,8 @@
   says so rather than filling itself in.
 
   Every figure carries its provenance. Prices are indicative references, the
-  news is CoinDesk's own feed carried unranked and unscored with a link back
-  to the source, and the catalysts are dates verified against the institutions
+  news is Decrypt's own feed carried unranked and unscored, opening the
+  publisher's article, and the catalysts are dates verified against the institutions
   that set them.
 
   Cross-asset context is the focal point: every covered market is visible at a
@@ -431,7 +431,7 @@
   <footer class="legal">
     <p><strong>Indicative reference prices only.</strong> Figures shown are indicative references drawn from third-party venues. They are not executable prices or an offer. Exchange-traded and macro feeds may be delayed.</p>
     <p>Market data is provided for information only and may be delayed or unavailable. Nothing on this page is investment advice or a recommendation to transact in any asset. Digital asset values can fall as well as rise.</p>
-    <p><strong>News is published by CoinDesk</strong> and carried here through their public feed. Satstreet does not originate, edit, endorse or verify it, receives nothing for carrying it, and applies no sentiment or directional label to any item. Headlines link to the full article at the source.</p>
+    <p><strong>News is published by Decrypt</strong> and carried here through their public feed. Satstreet does not originate, edit, endorse or verify it, receives nothing for carrying it, and applies no sentiment or directional label to any item. Headlines link to the full article at the source.</p>
   </footer>
 
 </main>
@@ -731,12 +731,12 @@
   var rz;
   window.addEventListener('resize', function () { clearTimeout(rz); rz = setTimeout(drawChart, 140); });
 
-  /* The five most recent CoinDesk headlines. The full feed, with section
+  /* The five most recent Decrypt headlines. The full feed, with section
      filters, is on the News page; this card is the glance version.
 
      No sentiment badge. Other terminals stamp Positive or Negative on each
-     headline, but that is their scoring and there is nothing in CoinDesk's
-     feed behind it — the chip here is the section CoinDesk filed the piece
+     headline, but that is their scoring and there is nothing in Decrypt's
+     feed behind it — the chip here is the section Decrypt filed the piece
      under, which is something the source actually published. */
   function loadNews() {
     $('news').innerHTML = '<div class="skel" style="height:13px;width:34%;margin-bottom:9px"></div>' +
@@ -778,7 +778,7 @@
               (when ? '<span class="nago">' + esc(when) + '</span>' : '') +
               (n.section ? '<span class="nchip">' + esc(n.section) + '</span>' : '') +
             '</div>' +
-            '<h3><a href="' + escA(n.link) + '" target="_blank" rel="noopener noreferrer">' +
+            '<h3><a href="./news.html#read=' + escA(encodeURIComponent(n.link)) + '">' +
               esc(n.title) + '</a></h3>' +
             (n.summary ? '<p>' + esc(n.summary) + '</p>' : '') +
             '</article>';

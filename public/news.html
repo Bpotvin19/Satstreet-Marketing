@@ -10,16 +10,16 @@
   News.
 
   A reading list, not a view. Every headline, summary and section on this page
-  is CoinDesk's, pulled from their public RSS feed and linked back to the
-  article on coindesk.com. Satstreet writes none of it, ranks none of it and
-  takes no position on any of it, which is why nothing here carries a
-  sentiment badge: the chip on each item is the section CoinDesk filed the
-  piece under, which is a fact they published, rather than a judgment this
-  desk would be authoring.
+  is Decrypt's, pulled from their public RSS feed. Satstreet writes none of
+  it, ranks none of it and takes no position on any of it, which is why
+  nothing here carries a sentiment badge: the chip on each item is the section
+  Decrypt filed the piece under.
 
-  The feed is fetched server-side at /api/news because it sends no CORS
-  header. That endpoint also refuses any item whose link points somewhere
-  other than coindesk.com.
+  Opening a story shows Decrypt's own article page in a reader panel on this
+  page, credited to Decrypt, with a link to open it on decrypt.co. Nothing is
+  copied; the panel only frames their page. The feed is fetched server-side at
+  /api/news, which refuses any item whose link is not on decrypt.co, and the
+  reader refuses to frame any other host.
 -->
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -55,6 +55,27 @@
   .news-disclosure strong { color: var(--ink); }
 
   .skelcard { height: 250px; border-radius: 11px; background: linear-gradient(90deg, var(--border-2) 25%, #e6ecf5 37%, var(--border-2) 63%); background-size: 400% 100%; animation: nsh 1.3s ease-in-out infinite; }
+
+  /* ---- reader panel: the publisher's article, framed on this page ---- */
+  .reader { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 3vh 16px; background: rgba(13,27,46,.55); backdrop-filter: blur(2px); }
+  .reader[hidden] { display: none; }
+  .reader-panel { width: min(1040px, 100%); height: 100%; display: flex; flex-direction: column; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 24px 60px rgba(13,27,46,.35); }
+  .reader-bar { display: flex; align-items: center; gap: 14px; padding: 11px 14px 11px 18px; border-bottom: 1px solid var(--border); background: #fafcfe; }
+  .reader-src { flex: none; font-size: 10.5px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; color: #087fac; background: #e3f3f8; padding: 4px 9px; border-radius: 20px; }
+  .reader-title { flex: 1; min-width: 0; margin: 0; font-size: 14px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .reader-out { flex: none; font-size: 12.5px; font-weight: 600; color: var(--muted); text-decoration: none; white-space: nowrap; }
+  .reader-out:hover { color: var(--blue); }
+  .reader-close { flex: none; width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid var(--border); border-radius: 8px; background: #fff; color: var(--ink); font-size: 18px; line-height: 1; cursor: pointer; }
+  .reader-close:hover { background: var(--border-2); }
+  .reader-body { position: relative; flex: 1; background: #fff; }
+  .reader-body iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .reader-loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 13px; background: #fff; }
+  body.reading { overflow: hidden; }
+  @media (max-width: 620px) {
+    .reader { padding: 0; }
+    .reader-panel { border-radius: 0; }
+    .reader-out span { display: none; }
+  }
   @keyframes nsh { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
 </style>
 </head>
@@ -73,15 +94,27 @@
     </div>
   </div>
 
-  <p class="news-lede">Headlines and summaries are the original publisher&rsquo;s, reproduced from their public feed and linked back to the full article. Satstreet does not write, select or rank this coverage, and nothing on this page is a Satstreet view on the market. Full attribution is at the foot of the page.</p>
+  <p class="news-lede">Headlines and summaries are Decrypt&rsquo;s, from their public feed. Select a story to read the full article from Decrypt here, with no sign-up. Satstreet does not write, select or rank this coverage, and nothing on this page is a Satstreet view on the market.</p>
 
   <div class="newsfilters" id="news-filters" role="group" aria-label="Filter by section"></div>
 
   <div class="newsgrid" id="news-grid" aria-live="polite"><div class="skelcard"></div><div class="skelcard"></div><div class="skelcard"></div><div class="skelcard"></div><div class="skelcard"></div><div class="skelcard"></div></div>
 
-  <footer class="news-disclosure"><strong>Not a Satstreet view.</strong> News on this page is published by CoinDesk and syndicated through their public feed. Satstreet does not originate, edit, endorse or verify it, receives nothing for carrying it, and applies no sentiment or directional label to any item. Coverage of an asset, venue or company is not a recommendation to buy, sell or hold it, and nothing here is an offer or an executable price. Read the full article at the source before relying on anything in it.</footer>
+  <footer class="news-disclosure"><strong>Not a Satstreet view.</strong> News on this page is published by Decrypt and carried through their public feed; articles open from decrypt.co. Satstreet does not originate, edit, endorse or verify it, receives nothing for carrying it, and applies no sentiment or directional label to any item. Coverage of an asset, venue or company is not a recommendation to buy, sell or hold it, and nothing here is an offer or an executable price. Read the full article at the source before relying on anything in it.</footer>
 
 </main>
+<div class="reader" id="reader" role="dialog" aria-modal="true" aria-labelledby="reader-title" hidden>
+  <div class="reader-panel">
+    <div class="reader-bar">
+      <span class="reader-src">Decrypt</span>
+      <p class="reader-title" id="reader-title"></p>
+      <a class="reader-out" id="reader-out" href="https://decrypt.co/" target="_blank" rel="noopener noreferrer"><span>Open on decrypt.co </span>&#8599;</a>
+      <button class="reader-close" id="reader-close" type="button" aria-label="Close article">&times;</button>
+    </div>
+    <div class="reader-body" id="reader-body"></div>
+  </div>
+</div>
+
 <script src="./assets/terminal.js"></script>
 <script src="./assets/news-desk.js"></script>
 </body>
