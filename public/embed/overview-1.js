@@ -441,8 +441,10 @@
             '<span class="m-foot">' + esc(fmtD(x.date, x.frequency)) + ' · ' + esc(x.frequency) + '</span></a>';
         }).join('');
       })
-      .catch(function (e) {
-        box.innerHTML = '<p class="errbox" style="grid-column:1/-1"><b>Macro data unavailable</b>' + esc(e.message) + '</p>';
+      .catch(function () {
+        /* Not configured or FRED unreachable: leave the section out rather
+           than show clients an error. */
+        var card = box.closest('.macro'); if (card) card.hidden = true;
       });
   }
 

@@ -9,10 +9,12 @@
    which FRED publishes without copyright restriction; the page credits FRED
    and links each indicator to its series page.
 
-   Data comes from FRED's API when FRED_API_KEY is set in Netlify (free from
-   fredaccount.stlouisfed.org), otherwise from the public graph CSV that
-   needs no key. Most of these update daily to monthly, so the answer is
-   cached at the edge for six hours.
+   Data comes from FRED's official API, which needs FRED_API_KEY set in the
+   Netlify environment (a free key from fredaccount.stlouisfed.org). FRED's
+   keyless CSV download is not used: it times out from cloud hosts. Without
+   a key every indicator reports itself unavailable and the Overview hides
+   the section. Most series update daily to monthly, so the answer is cached
+   at the edge for six hours.
    ────────────────────────────────────────────────────────────────────────── */
 
 type Obs = { date: string; value: number }
@@ -51,7 +53,8 @@ function since(years: number): string {
 
 async function observations(id: string): Promise<Obs[]> {
   const start = since(3)
-  if (KEY) {
+  if (!KEY) throw new Error('FRED_API_KEY is not set')
+  {
     const u = `https://api.stlouisfed.org/fred/series/observations?series_id=${id}&api_key=${KEY}&file_type=json&observation_start=${start}`
     const r = await fetch(u, { signal: AbortSignal.timeout(8000) })
     if (!r.ok) throw new Error(`FRED ${id} http ${r.status}`)
@@ -60,16 +63,6 @@ async function observations(id: string): Promise<Obs[]> {
       .map((o: any) => ({ date: o.date, value: Number(o.value) }))
       .filter((o: Obs) => isFinite(o.value))
   }
-  const r = await fetch(`https://fred.stlouisfed.org/graph/fredgraph.csv?id=${id}&cosd=${start}`, {
-    headers: { 'user-agent': 'Mozilla/5.0 (compatible; SatstreetDashboard/1.0)', accept: 'text/csv' },
-    signal: AbortSignal.timeout(8000),
-  })
-  if (!r.ok) throw new Error(`FRED ${id} http ${r.status}`)
-  const text = await r.text()
-  return text.trim().split(/\r?\n/).slice(1).map((line) => {
-    const [date, raw] = line.split(',')
-    return { date, value: Number(raw) }
-  }).filter((o) => /^\d{4}-\d{2}-\d{2}$/.test(o.date) && isFinite(o.value))
 }
 
 /* Year-over-year percent change, for index series such as CPI and M2. */
@@ -106,21 +99,7 @@ async function indicator(s: Spec) {
   }
 }
 
-export default async (req: Request) => {
-  /* Temporary reachability probe for setup: /api/fred?probe=1 */
-  if (new URL(req.url).searchParams.get('probe')) {
-    const t0 = Date.now()
-    const tryUrl = async (u: string, ms: number) => {
-      const s = Date.now()
-      try { const r = await fetch(u, { headers: { 'user-agent': 'Mozilla/5.0 (compatible; SatstreetDashboard/1.0)' }, signal: AbortSignal.timeout(ms) }); return { status: r.status, ms: Date.now() - s, body: (await r.text()).slice(0, 160) } }
-      catch (e) { return { error: e instanceof Error ? e.message : String(e), ms: Date.now() - s } }
-    }
-    const [api, csv] = await Promise.all([
-      tryUrl('https://api.stlouisfed.org/fred/series/observations?series_id=DFF&file_type=json&limit=1', 9000),
-      tryUrl('https://fred.stlouisfed.org/graph/fredgraph.csv?id=DFF&cosd=2026-09-01', 9500),
-    ])
-    return new Response(JSON.stringify({ api, csv, keySet: !!KEY, total: Date.now() - t0 }), { headers: { 'content-type': 'application/json', 'cache-control': 'no-store' } })
-  }
+export default async () => {
   const indicators = await Promise.all(SERIES.map(indicator))
   const ok = indicators.filter((i: any) => !i.error).length
   return new Response(JSON.stringify({

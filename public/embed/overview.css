@@ -255,6 +255,7 @@
 .ss-app .macro-tile svg{width:100%; height:30px; display:block; margin-top:4px;}
 .ss-app .macro-tile .m-foot{font-size:10.5px; color:var(--muted); margin-top:2px;}
 .ss-app .macro-note{font-size:12px; color:var(--muted); margin:12px 0 0;}
+.ss-app .macro[hidden]{display:none;}
 @media (max-width: 900px){.ss-app .macro-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
 .ss-app .ss-ic{position:relative; display:grid; place-items:center; flex:none; overflow:hidden; border-radius:50%; background:#fff; box-shadow:0 0 0 1px #d6e0e9; color:#fff;}
 .ss-app .ss-ic img{width:100%; height:100%; display:block; object-fit:contain;}

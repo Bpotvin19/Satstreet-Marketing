@@ -330,6 +330,7 @@
   .macro-tile svg { width:100%; height:30px; display:block; margin-top:4px; }
   .macro-tile .m-foot { font-size:10.5px; color:var(--muted); margin-top:2px; }
   .macro-note { font-size:12px; color:var(--muted); margin:12px 0 0; }
+  .macro[hidden] { display:none; }
   @media (max-width: 900px) { .macro-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 
   /* ---- market icons (assets/symbol-icons.js) ---- */
@@ -1064,8 +1065,10 @@
             '<span class="m-foot">' + esc(fmtD(x.date, x.frequency)) + ' · ' + esc(x.frequency) + '</span></a>';
         }).join('');
       })
-      .catch(function (e) {
-        box.innerHTML = '<p class="errbox" style="grid-column:1/-1"><b>Macro data unavailable</b>' + esc(e.message) + '</p>';
+      .catch(function () {
+        /* Not configured or FRED unreachable: leave the section out rather
+           than show clients an error. */
+        var card = box.closest('.macro'); if (card) card.hidden = true;
       });
   }
 
