@@ -160,6 +160,13 @@
 .chain-addr { color:var(--ink-2, #465463); font-family:var(--font-data); font-size:12px; text-decoration:none; }
 .chain-addr:hover { color:var(--blue); text-decoration:underline; }
 .chain-hash { color:var(--muted); font-family:var(--font-data); font-size:12px; }
-.chain-out { text-decoration:none; font-weight:600; }
-.chain-out:hover { color:var(--blue); }
-.search-help a { color:inherit; font-weight:600; }
+.status-badge.failed { color: var(--down); background: rgba(195,58,73,.09); }
+.transaction-row.token-row { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.transaction-row.change-row, .transaction-row.ix-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.transaction-row.sig-row { grid-template-columns: 1fr; }
+.transaction-row .tx-stat b a { color: inherit; font-family: inherit; font-size: inherit; font-weight: inherit; }
+.transaction-row .tx-stat b a:hover { color: var(--blue); text-decoration: underline; }
+.technical dd.logs { font-size: 11.5px; line-height: 1.55; max-height: 280px; overflow: auto; }
+@media (max-width: 760px) {
+  .transaction-row.token-row, .transaction-row.change-row, .transaction-row.ix-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

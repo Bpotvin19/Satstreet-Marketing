@@ -82,62 +82,74 @@
 
   <div id="chain-eth" role="tabpanel" aria-labelledby="chain-tab-eth" hidden>
     <section class="explorer-search" aria-labelledby="eth-search-heading">
-      <h2 class="sr" id="eth-search-heading">Search Ethereum on Etherscan</h2>
+      <h2 class="sr" id="eth-search-heading">Search the Ethereum network</h2>
       <form id="eth-search-form" novalidate>
-        <label class="sr" for="eth-query">Search an Ethereum address, transaction hash, block number or ENS name</label>
+        <label class="sr" for="eth-query">Search an Ethereum address, ENS name, transaction hash or block number</label>
         <span class="search-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg></span>
-        <input id="eth-query" type="search" autocomplete="off" spellcheck="false" placeholder="Search address, transaction hash, block number or ENS name" />
-        <button class="btn" type="submit">Search Etherscan</button>
+        <input id="eth-query" type="search" autocomplete="off" spellcheck="false" placeholder="Search address, ENS name, transaction hash or block number" />
+        <button class="btn" id="eth-search-button" type="submit">Search</button>
       </form>
-      <p class="search-help">Results open on <a href="https://etherscan.io/" target="_blank" rel="noopener noreferrer">etherscan.io</a> in a new tab. Supports 0x addresses, transaction hashes, block numbers and .eth names.</p>
+      <p class="search-help">Supports 0x addresses, .eth names, transaction hashes, block numbers and block hashes.</p>
       <p class="search-error" id="eth-search-error" role="alert" hidden></p>
     </section>
 
-    <div class="section-heading">
-      <div><p class="eyebrow">Network overview</p><h2>Ethereum network</h2></div>
-      <a class="section-meta chain-out" href="https://etherscan.io/" target="_blank" rel="noopener noreferrer">Open Etherscan &#8599;</a>
-    </div>
-    <div class="metrics explorer-metrics" id="eth-metrics" aria-live="polite"></div>
-    <section class="card blocks-card" aria-labelledby="eth-blocks-heading">
-      <header>
-        <div><p class="eyebrow">Most recent</p><h2 id="eth-blocks-heading">Latest blocks</h2></div>
-        <button class="retry" id="eth-refresh" type="button">Refresh</button>
-      </header>
-      <div id="eth-blocks" aria-live="polite"></div>
+    <div id="eth-route-loading" class="card route-state" role="status" aria-live="polite" hidden></div>
+    <div id="eth-route-error" class="card route-state" role="alert" hidden></div>
+    <section id="eth-detail" aria-live="polite" hidden></section>
+
+    <section id="eth-overview">
+      <div class="section-heading">
+        <div><p class="eyebrow">Network overview</p><h2>Ethereum network</h2></div>
+      </div>
+      <div class="metrics explorer-metrics" id="eth-metrics" aria-live="polite"></div>
+      <section class="card blocks-card" aria-labelledby="eth-blocks-heading">
+        <header>
+          <div><p class="eyebrow">Most recent</p><h2 id="eth-blocks-heading">Latest blocks</h2></div>
+          <button class="retry" id="eth-refresh" type="button">Refresh</button>
+        </header>
+        <div id="eth-blocks" aria-live="polite"></div>
+      </section>
     </section>
+
     <div class="disclosure explorer-disclosure">
-      <p><strong>Public network data.</strong> Ethereum figures are read from a public RPC node and may be delayed or temporarily unavailable. Searches and block links open on Etherscan, an independent third-party block explorer not operated by Satstreet.</p>
-      <p>Gas prices are network references, not guarantees that a transaction will confirm within a particular period.</p>
+      <p><strong>Public network data.</strong> Ethereum information is retrieved from Blockscout&rsquo;s public indexer and may be delayed or temporarily unavailable. Satstreet does not independently verify this data.</p>
+      <p>Gas prices are network references, not guarantees that a transaction will confirm within a particular period. USD values use the indexer&rsquo;s reference rate and are indicative only.</p>
     </div>
   </div>
 
   <div id="chain-sol" role="tabpanel" aria-labelledby="chain-tab-sol" hidden>
     <section class="explorer-search" aria-labelledby="sol-search-heading">
-      <h2 class="sr" id="sol-search-heading">Search Solana on Solana Explorer</h2>
+      <h2 class="sr" id="sol-search-heading">Search the Solana network</h2>
       <form id="sol-search-form" novalidate>
         <label class="sr" for="sol-query">Search a Solana address, transaction signature or slot number</label>
         <span class="search-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg></span>
         <input id="sol-query" type="search" autocomplete="off" spellcheck="false" placeholder="Search address, transaction signature or slot number" />
-        <button class="btn" type="submit">Search Solana Explorer</button>
+        <button class="btn" id="sol-search-button" type="submit">Search</button>
       </form>
-      <p class="search-help">Results open on <a href="https://explorer.solana.com/" target="_blank" rel="noopener noreferrer">explorer.solana.com</a> in a new tab. Supports account and token addresses, transaction signatures and slot numbers.</p>
+      <p class="search-help">Supports wallet, token and program addresses, transaction signatures and slot numbers.</p>
       <p class="search-error" id="sol-search-error" role="alert" hidden></p>
     </section>
 
-    <div class="section-heading">
-      <div><p class="eyebrow">Network overview</p><h2>Solana network</h2></div>
-      <a class="section-meta chain-out" href="https://explorer.solana.com/" target="_blank" rel="noopener noreferrer">Open Solana Explorer &#8599;</a>
-    </div>
-    <div class="metrics explorer-metrics" id="sol-metrics" aria-live="polite"></div>
-    <section class="card blocks-card" aria-labelledby="sol-blocks-heading">
-      <header>
-        <div><p class="eyebrow">Most recent</p><h2 id="sol-blocks-heading">Latest blocks</h2></div>
-        <button class="retry" id="sol-refresh" type="button">Refresh</button>
-      </header>
-      <div id="sol-blocks" aria-live="polite"></div>
+    <div id="sol-route-loading" class="card route-state" role="status" aria-live="polite" hidden></div>
+    <div id="sol-route-error" class="card route-state" role="alert" hidden></div>
+    <section id="sol-detail" aria-live="polite" hidden></section>
+
+    <section id="sol-overview">
+      <div class="section-heading">
+        <div><p class="eyebrow">Network overview</p><h2>Solana network</h2></div>
+      </div>
+      <div class="metrics explorer-metrics" id="sol-metrics" aria-live="polite"></div>
+      <section class="card blocks-card" aria-labelledby="sol-blocks-heading">
+        <header>
+          <div><p class="eyebrow">Most recent</p><h2 id="sol-blocks-heading">Latest blocks</h2></div>
+          <button class="retry" id="sol-refresh" type="button">Refresh</button>
+        </header>
+        <div id="sol-blocks" aria-live="polite"></div>
+      </section>
     </section>
+
     <div class="disclosure explorer-disclosure">
-      <p><strong>Public network data.</strong> Solana figures are read from a public RPC node and may be delayed or temporarily unavailable. Throughput is averaged over the node&rsquo;s most recent one-minute samples. Searches and block links open on Solana Explorer, a third-party block explorer not operated by Satstreet.</p>
+      <p><strong>Public network data.</strong> Solana information is retrieved from a public RPC node and may be delayed or temporarily unavailable. Satstreet does not independently verify this data. Throughput is averaged over the node&rsquo;s most recent one-minute samples.</p>
     </div>
   </div>
 </main>
