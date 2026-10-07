@@ -118,12 +118,19 @@
   }
 
   /* ── 2. customize ────────────────────────────────────────────── */
+  /* Same icon as the board: assets/symbol-icons.js. */
   function icon(item) {
-    var crypto = /-USD$/.test(item.symbol);
-    var base = item.symbol.replace('-USD', '').replace(/^\^/, '').replace(/=.*/, '');
-    return '<span class="dash-ic' + (crypto ? '' : ' plain') + '">' +
-      (crypto ? '<img src="https://assets.coincap.io/assets/icons/' + esc(base.toLowerCase()) + '@2x.png" alt="" loading="lazy" onerror="this.remove()">' : '') +
-      '<i>' + esc(base.slice(0, 3)) + '</i></span>';
+    return window.SSIcons ? window.SSIcons.html(item.symbol, { cls: 'dash-ic', label: item.label }) : '';
+  }
+  /* A plain-language line under each name instead of a Yahoo code. */
+  function describe(sym) {
+    var fx = /^([A-Z]{3})?([A-Z]{3})=X$/.exec(sym);
+    if (/-USD$/.test(sym)) return sym.replace('-USD', ' / USD');
+    if (fx) return (fx[1] || 'USD') + ' / ' + fx[2];
+    if (sym === '^TNX' || sym === '^TYX' || sym === '^FVX' || sym === '^IRX') return 'Treasury yield';
+    if (sym.charAt(0) === '^') return 'Index · ' + sym.slice(1);
+    if (/=F$/.test(sym)) return 'Futures · ' + sym.replace('=F', '');
+    return sym;
   }
   function renderList() {
     var box = $('dash-list');
@@ -132,7 +139,7 @@
     $('dash-count').textContent = list.length + ' of ' + MAX;
     box.innerHTML = list.map(function (x, i) {
       return '<li class="dash-row">' + icon(x) +
-        '<span class="dash-name"><b>' + esc(x.label) + '</b><small>' + esc(x.symbol.replace('-USD', ' / USD')) + '</small></span>' +
+        '<span class="dash-name"><b>' + esc(x.label) + '</b><small>' + esc(describe(x.symbol)) + '</small></span>' +
         '<span class="dash-row-actions">' +
           '<button type="button" data-move="' + i + '" data-dir="-1" aria-label="Move ' + esc(x.label) + ' up"' + (i === 0 ? ' disabled' : '') + '>↑</button>' +
           '<button type="button" data-move="' + i + '" data-dir="1" aria-label="Move ' + esc(x.label) + ' down"' + (i === list.length - 1 ? ' disabled' : '') + '>↓</button>' +

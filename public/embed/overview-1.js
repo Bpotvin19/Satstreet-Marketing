@@ -67,25 +67,27 @@
   /* Anything a client added that the desk's default board does not cover:
      a coin gets its logo (initials if none loads), anything else initials. */
   function customMeta(symbol) {
-    var crypto = /-USD$/.test(symbol), base = symbol.replace('-USD', '').replace(/^\^/, '').replace(/=.*/, '');
+    var crypto = /-USD$/.test(symbol), fx = /^([A-Z]{3})?([A-Z]{3})=X$/.exec(symbol);
     return {
-      cls: 'custom' + (crypto ? ' crypto-logo' : ''),
-      code: crypto ? base + ' / USD' : symbol,
-      image: crypto ? 'https://assets.coincap.io/assets/icons/' + base.toLowerCase() + '@2x.png' : null,
-      text: base.slice(0, 4)
+      custom: true,
+      code: crypto ? symbol.replace('-USD', ' / USD') : fx ? (fx[1] || 'USD') + ' / ' + fx[2] : symbol
     };
   }
-  function metaFor(symbol) { return ASSETS[symbol] || customMeta(symbol); }
+  function metaFor(symbol) { return (ASSETS[symbol] && symbol !== 'CAD=X') ? ASSETS[symbol] : customMeta(symbol); }
+  /* The default board keeps its own marks (Nasdaq's logo, the gold bar…);
+     anything else, including USD/CAD's two flags, comes from SSIcons so a
+     ticker looks the same on the board, in Customize and in search. */
   function assetIcon(symbol) {
-    if (!ASSETS[symbol]) {
-      var c = customMeta(symbol);
-      return '<span class="asset-mark ' + c.cls + '" aria-hidden="true">' +
-        (c.image ? '<img src="' + c.image + '" alt="" loading="lazy" onerror="this.parentNode.textContent=\'' + esc(c.text) + '\'" />' : esc(c.text)) + '</span>';
-    }
+    if (!ASSETS[symbol] || symbol === 'CAD=X') return window.SSIcons ? SSIcons.html(symbol, { cls: 'asset-mark' }) : '';
     var a = ASSETS[symbol] || { cls:'bond', icon:'<circle cx="12" cy="12" r="3"/>' };
     var body = a.image ? '<img src="' + a.image + '" alt="" loading="lazy" />' : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' + a.icon + '</svg>';
     return '<span class="asset-mark ' + a.cls + '" aria-hidden="true">' + body + '</span>';
   }
+
+  if (window.SSIcons) Object.keys(ASSETS).forEach(function (sym) {
+    if (sym === 'CAD=X') return;
+    SSIcons.register(sym, function (cls) { return assetIcon(sym).replace('class="asset-mark ', 'class="asset-mark ' + cls + ' '); });
+  });
 
   function skeletonTicker() {
     var t = $('ticker');
@@ -201,11 +203,14 @@
     var meta = metaFor(q.symbol);
     $('focus-name').textContent = q.label;
     $('focus-label').textContent = meta.code;
-    $('focus-icon').innerHTML = meta.image
-      ? '<img src="' + meta.image + '" alt="" ' + (meta.text ? 'onerror="this.parentNode.textContent=\'' + esc(meta.text) + '\'" ' : '') + '/>'
-      : meta.icon ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' + meta.icon + '</svg>'
-      : esc(meta.text || '');
-    $('focus-icon').className = 'coin asset-mark ' + meta.cls;
+    if (meta.custom) {
+      $('focus-icon').className = 'coin focus-ic';
+      $('focus-icon').innerHTML = window.SSIcons ? SSIcons.html(q.symbol, { cls: 'ss-ic-fill', label: q.label }) : '';
+    } else {
+      $('focus-icon').innerHTML = meta.image ? '<img src="' + meta.image + '" alt="" />'
+        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' + meta.icon + '</svg>';
+      $('focus-icon').className = 'coin asset-mark ' + meta.cls;
+    }
     $('chart').setAttribute('aria-label', q.label + ' reference price chart');
     if (q.price === null) {
       $('focus-px').textContent = '—';
@@ -390,6 +395,57 @@
       });
   }
 
+  /* US macro backdrop from FRED. Colour is deliberately neutral: a rising
+     rate or a falling dollar is not good or bad news by itself. */
+  function loadMacro() {
+    var box = $('macro-grid');
+    if (!box) return;
+    box.innerHTML = Array(9).join('x').split('x').map(function () {
+      return '<div class="macro-tile"><span class="skel" style="display:block;width:60%;height:11px"></span><span class="skel" style="display:block;width:45%;height:19px;margin-top:8px"></span><span class="skel" style="display:block;width:100%;height:30px;margin-top:8px"></span></div>';
+    }).join('');
+    var fmtV = function (u, v) {
+      if (u === 'pct') return v.toFixed(2) + '%';
+      if (u === 'bps') return (v > 0 ? '+' : '') + Math.round(v) + ' bps';
+      if (u === 'trillions') return '$' + v.toFixed(2) + 'T';
+      return v.toFixed(2);
+    };
+    var fmtC = function (u, d, v) {
+      var sign = d > 0 ? '+' : d < 0 ? '−' : '±', a = Math.abs(d);
+      if (u === 'pct') return sign + a.toFixed(2) + ' pts';
+      if (u === 'bps') return sign + Math.round(a) + ' bps';
+      if (u === 'trillions') return sign + '$' + a.toFixed(2) + 'T';
+      return sign + a.toFixed(2) + (v ? ' (' + sign + (a / (v - d) * 100).toFixed(1) + '%)' : '');
+    };
+    var fmtD = function (iso, freq) {
+      var d = new Date(iso + 'T12:00:00');
+      return freq === 'Monthly' ? d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+        : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    };
+    var line = function (pts) {
+      if (!pts || pts.length < 3) return '';
+      var w = 120, h = 30, lo = Math.min.apply(null, pts), hi = Math.max.apply(null, pts), span = hi - lo || 1;
+      var d = pts.map(function (p, i) { return (i ? 'L' : 'M') + (i / (pts.length - 1) * w).toFixed(1) + ' ' + (h - 2 - ((p - lo) / span) * (h - 4)).toFixed(1); }).join(' ');
+      return '<svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none" aria-hidden="true"><path d="' + d + '" fill="none" stroke="#2f6fb0" stroke-width="1.6" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+    };
+    fetch('/api/fred')
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (d) {
+        var list = (d.indicators || []).filter(function (x) { return !x.error; });
+        if (!list.length) throw new Error('FRED did not respond');
+        box.innerHTML = list.map(function (x) {
+          return '<a class="macro-tile" href="' + x.url + '" target="_blank" rel="noopener noreferrer" title="' + esc(x.note) + '">' +
+            '<span class="m-k">' + esc(x.label) + '</span><span class="m-note">' + esc(x.note) + '</span>' +
+            '<span class="m-v">' + fmtV(x.unit, x.value) + '</span>' +
+            '<span class="m-ch"><b>' + fmtC(x.unit, x.change, x.value) + '</b> ' + esc(x.changeLabel) + '</span>' +
+            line(x.spark) +
+            '<span class="m-foot">' + esc(fmtD(x.date, x.frequency)) + ' · ' + esc(x.frequency) + '</span></a>';
+        }).join('');
+      })
+      .catch(function (e) {
+        box.innerHTML = '<p class="errbox" style="grid-column:1/-1"><b>Macro data unavailable</b>' + esc(e.message) + '</p>';
+      });
+  }
+
   function loadCats() {
     fetch('/data/calendar.json', { cache: 'no-store' })
       .then(function (r) { return r.ok ? r.json() : null; })
@@ -510,7 +566,7 @@
   }
 
   loadMarket();
-  loadChart(); loadNews(); loadCats(); loadAssets();
+  loadChart(); loadNews(); loadCats(); loadAssets(); loadMacro();
   setInterval(loadMarket, 60000);
   setInterval(function () { if (!document.hidden) loadAssets(); }, 300000);
 
