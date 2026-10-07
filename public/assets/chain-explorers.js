@@ -708,6 +708,7 @@
     }
     setTab(chain);
     if (chain === 'btc') return;
+    $(chain + '-search-error').hidden = true;
     var v = VIEWS[chain];
     if (view && id && v[view]) return v[view](id);
     showOverviewPanel(chain);
