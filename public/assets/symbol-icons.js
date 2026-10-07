@@ -94,7 +94,8 @@
       var c = symbol.replace('-USD', '').toLowerCase();
       body = chain([
         'https://assets.coincap.io/assets/icons/' + c + '@2x.png',
-        'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/' + c + '.png'
+        'https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/128/color/' + c + '.png',
+        'https://static.okx.com/cdn/oksupport/asset/currency/icon/' + c + '.png'
       ]);
       extra = 'ss-ic-logo';
     } else if (k === 'stock') {
