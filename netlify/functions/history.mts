@@ -6,7 +6,7 @@
    presents an anonymous line as real-time market data. */
 
 type Point = { t: number; v: number }
-type RangeKey = '1D' | '1W' | '1M' | '3M' | '1Y'
+type RangeKey = '1D' | '1W' | '1M' | '3M' | '1Y' | '5Y' | 'ALL'
 
 const RANGE: Record<RangeKey, { days: number; yahooRange: string; yahooInterval: string; coinbase: number }> = {
   '1D': { days: 1, yahooRange: '1d', yahooInterval: '5m', coinbase: 300 },
@@ -14,6 +14,8 @@ const RANGE: Record<RangeKey, { days: number; yahooRange: string; yahooInterval:
   '1M': { days: 30, yahooRange: '1mo', yahooInterval: '1h', coinbase: 21600 },
   '3M': { days: 90, yahooRange: '3mo', yahooInterval: '1d', coinbase: 86400 },
   '1Y': { days: 365, yahooRange: '1y', yahooInterval: '1d', coinbase: 86400 },
+  '5Y': { days: 365 * 5, yahooRange: '5y', yahooInterval: '1wk', coinbase: 86400 },
+  'ALL': { days: 365 * 30, yahooRange: 'max', yahooInterval: '1mo', coinbase: 86400 },
 }
 
 const INSTRUMENTS: Record<string, { provider: 'coinbase' | 'yahoo'; symbol: string; source: string }> = {
@@ -80,11 +82,16 @@ export default async function handler(request: Request): Promise<Response> {
   if (!instrument) return json({ error: 'unsupported instrument' }, 400)
 
   try {
-    const points = instrument.provider === 'coinbase'
+    /* Coinbase's candle API is intentionally used for the detailed shorter
+       windows. Its 300-candle paging becomes wasteful for multi-year history,
+       so 5Y and All use Yahoo's weekly/monthly series for every supported
+       ticker, including crypto. */
+    const longRange = range === '5Y' || range === 'ALL'
+    const points = instrument.provider === 'coinbase' && !longRange
       ? await coinbase(instrument.symbol, range)
       : await yahoo(instrument.symbol, range)
     if (points.length < 2) throw new Error('not enough data returned')
-    return json({ symbol, range, source: instrument.source, asOf: new Date().toISOString(), points })
+    return json({ symbol, range, source: longRange ? 'Yahoo Finance' : instrument.source, asOf: new Date().toISOString(), points })
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : 'history unavailable', symbol, range }, 502)
   }
