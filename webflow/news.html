@@ -1,0 +1,37 @@
+<!-- Satstreet terminal · News page. Paste into one Webflow Embed element. Generated; do not edit by hand. -->
+<script>window.SATSTREET_EMBED={host:"https://client-facing--satstreet.netlify.app",header:true,pages:{overview:"/overview",news:"/news",ticker:"/markets",chart:"/chart",explorer:"/explorer"}};</script>
+<script src="https://client-facing--satstreet.netlify.app/embed/shim.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://client-facing--satstreet.netlify.app/embed/news.css">
+<div class="ss-app ss-page-news">
+<div id="shell-header"></div>
+<main class="shell wide">
+<div class="pagehead">
+<div>
+<p class="eyebrow">Market news</p>
+<div class="page-title-row">
+<span class="page-emblem" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5h11v14H4zM15 9h4a1 1 0 0 1 1 1v7a2 2 0 0 1-4 0V5"/><path d="M7 9h5M7 12h5M7 15h3"/></svg></span>
+<h1>News</h1>
+</div>
+<p>Market coverage from the wires, updated continuously.</p>
+</div>
+</div>
+<p class="news-lede">Headlines and summaries are Decrypt&rsquo;s, from their public feed. Select a story to read the full article from Decrypt here, with no sign-up. Satstreet does not write, select or rank this coverage, and nothing on this page is a Satstreet view on the market.</p>
+<div class="newsfilters" id="news-filters" role="group" aria-label="Filter by section"></div>
+<div class="newsgrid" id="news-grid" aria-live="polite"><div class="skelcard"></div><div class="skelcard"></div><div class="skelcard"></div><div class="skelcard"></div><div class="skelcard"></div><div class="skelcard"></div></div>
+<footer class="news-disclosure"><strong>Not a Satstreet view.</strong> News on this page is published by Decrypt and carried through their public feed; articles open from decrypt.co. Satstreet does not originate, edit, endorse or verify it, receives nothing for carrying it, and applies no sentiment or directional label to any item. Coverage of an asset, venue or company is not a recommendation to buy, sell or hold it, and nothing here is an offer or an executable price. Read the full article at the source before relying on anything in it.</footer>
+</main>
+<div class="reader" id="reader" role="dialog" aria-modal="true" aria-labelledby="reader-title" hidden>
+<div class="reader-panel">
+<div class="reader-bar">
+<span class="reader-src">Decrypt</span>
+<p class="reader-title" id="reader-title"></p>
+<a class="reader-out" id="reader-out" href="https://decrypt.co/" target="_blank" rel="noopener noreferrer"><span>Open on decrypt.co </span>&#8599;</a>
+<button class="reader-close" id="reader-close" type="button" aria-label="Close article">&times;</button>
+</div>
+<div class="reader-body" id="reader-body"></div>
+</div>
+</div>
+</div>
+<script src="https://client-facing--satstreet.netlify.app/assets/terminal.js"></script>
+<script src="https://client-facing--satstreet.netlify.app/assets/news-desk.js"></script>

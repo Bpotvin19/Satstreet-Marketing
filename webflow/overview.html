@@ -1,0 +1,171 @@
+<!-- Satstreet terminal · Overview page. Paste into one Webflow Embed element. Generated; do not edit by hand. -->
+<script>window.SATSTREET_EMBED={host:"https://client-facing--satstreet.netlify.app",header:true,pages:{overview:"/overview",news:"/news",ticker:"/markets",chart:"/chart",explorer:"/explorer"}};</script>
+<script src="https://client-facing--satstreet.netlify.app/embed/shim.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&amp;family=Manrope:wght@400;500;600;700&amp;family=Newsreader:opsz,wght@6..72,500;6..72,600&amp;display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://client-facing--satstreet.netlify.app/embed/overview.css">
+<div class="ss-app ss-page-overview">
+<header class="topbar navy">
+<div class="topbar-in">
+<a class="brand" href="./overview.html" aria-label="Satstreet — Overview"><img id="logo" alt="Satstreet" /></a>
+<button class="navtoggle" id="navtoggle" aria-expanded="false" aria-controls="mainnav">Menu</button>
+<nav class="mainnav" id="mainnav" aria-label="Primary">
+<a href="./overview.html" aria-current="page">Overview</a>
+<a href="./news.html">News</a>
+<a href="./ticker.html">Markets</a>
+<a href="./chart.html">Chart</a>
+<a href="./explorer.html">Explorer</a>
+</nav>
+<span class="spacer"></span>
+</div>
+</header>
+<main class="shell">
+<section class="intro" aria-labelledby="greeting">
+<p class="datestamp" id="datestamp"></p>
+<h1 id="greeting" data-personal>Good morning.</h1>
+<p class="summary" id="summary"></p>
+</section>
+<section class="marketboard" aria-labelledby="board-h">
+<header>
+<div><p class="eyebrow">Cross-asset monitor</p><h2 id="board-h">Markets at a glance</h2></div>
+<div class="board-actions">
+<button type="button" class="btn ghost small" id="tour-btn" aria-label="Take a quick tour of the dashboard">Tour</button>
+<button type="button" class="btn ghost small" id="customize-btn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Customize</button>
+</div>
+</header>
+<div class="asset-grid" id="asset-grid" aria-label="Covered markets"></div>
+<section class="focus-panel" aria-labelledby="focus-h">
+<h2 id="focus-h" class="sr">Selected market panel</h2>
+<div class="focus-head">
+<div class="coin" id="focus-icon" aria-hidden="true">&#8383;</div>
+<div class="focus-title">
+<strong id="focus-name">Bitcoin</strong>
+<p class="eyebrow" id="focus-label">BTC / USD · Digital asset venue</p>
+</div>
+<div class="focus-price">
+<p class="heroPx" id="focus-px">—</p>
+<p class="heroMove" id="focus-move">&nbsp;</p>
+</div>
+</div>
+<div class="focus-body">
+<div class="focus-chart">
+<div class="chartbox">
+<canvas id="chart" role="img" aria-label="Selected market reference price chart"></canvas>
+<div class="chartmsg" id="chartmsg">Loading chart…</div>
+</div>
+<div class="segmented" role="group" aria-label="Chart timeframe" id="ranges">
+<button type="button" data-r="1D" aria-pressed="false">1D</button>
+<button type="button" data-r="1W" aria-pressed="true">1W</button>
+<button type="button" data-r="1M" aria-pressed="false">1M</button>
+<button type="button" data-r="3M" aria-pressed="false">3M</button>
+<button type="button" data-r="1Y" aria-pressed="false">1Y</button>
+</div>
+</div>
+<aside class="focus-aside" aria-label="Selected market statistics">
+<div class="stats">
+<div class="stat"><div class="k">Open</div><div class="v" id="focus-open">—</div></div>
+<div class="stat"><div class="k">Session high</div><div class="v" id="focus-hi">—</div></div>
+<div class="stat"><div class="k">Session low</div><div class="v" id="focus-lo">—</div></div>
+<div class="stat"><div class="k">Source</div><div class="v" id="focus-src">—</div></div>
+</div>
+<div class="source-note"><b>Normalized market data</b>One timestamp, one currency convention and one source label for every instrument.</div>
+</aside>
+</div>
+</section>
+</section>
+<div class="grid cols-2" style="margin-top:16px;align-items:start">
+<section class="card" aria-labelledby="news-h">
+<header>
+<div><p class="eyebrow">Latest crypto news</p><h2 id="news-h" class="sr">Latest crypto news</h2></div>
+<a class="seeall" href="./news.html">All news<span aria-hidden="true">&rsaquo;</span></a>
+</header>
+<div id="news"></div>
+</section>
+<section class="card" aria-labelledby="cat-h">
+<header><p class="eyebrow" id="cat-h">Upcoming catalysts</p></header>
+<div id="cats"></div>
+</section>
+</div>
+<div style="margin-top:28px">
+<p class="eyebrow">Market context</p>
+<section class="card" aria-labelledby="amc-h" style="margin-top:7px">
+<header class="amc-head">
+<h2 id="amc-h">Largest assets by market cap</h2>
+<span class="amc-btcline" id="amc-btc"></span>
+</header>
+<p class="amc-lede">Where Bitcoin sits against the metals and the largest listed companies. Market capitalisation is computed from a live price and a share or unit count rather than quoted, so every figure moves with the market. This is a selected list, not every listed company.</p>
+<div class="amc-scroll">
+<table class="amc-table">
+<thead><tr><th>#</th><th>Asset</th><th class="num">Market cap</th><th class="num">Price</th><th class="num">Today</th><th class="spk">Price (30 days)</th><th>Country</th></tr></thead>
+<tbody id="amc-rows"></tbody>
+</table>
+</div>
+<div class="srcnote" style="margin-top:14px">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+<span id="amc-note">Prices are live. Company share counts come from each company&rsquo;s own SEC filing and are refreshed quarterly; hover any market cap to see the count and filing date behind it. Metal market caps use published above-ground stock estimates. Bitcoin and Ethereum are circulating supply times price.</span>
+</div>
+</section>
+</div>
+<footer class="legal">
+<p><strong>Indicative reference prices only.</strong> Figures shown are indicative references drawn from third-party venues. They are not executable prices or an offer. Exchange-traded and macro feeds may be delayed.</p>
+<p>Market data is provided for information only and may be delayed or unavailable. Nothing on this page is investment advice or a recommendation to transact in any asset. Digital asset values can fall as well as rise.</p>
+<p><strong>News is published by Decrypt</strong> and carried here through their public feed. Satstreet does not originate, edit, endorse or verify it, receives nothing for carrying it, and applies no sentiment or directional label to any item. Headlines link to the full article at the source.</p>
+</footer>
+</main>
+<div class="dash-layer dash-backdrop" id="dash-welcome" role="dialog" aria-modal="true" aria-labelledby="welcome-h" hidden>
+<form class="dash-card" id="welcome-form" autocomplete="off">
+<p class="eyebrow">Welcome to Satstreet</p>
+<h2 id="welcome-h">What should we call you?</h2>
+<p>We&rsquo;ll use it to greet you each time you open your dashboard.</p>
+<label for="welcome-name">Your name</label>
+<input class="dash-input" id="welcome-name" maxlength="40" placeholder="First name" />
+<div class="dash-actions">
+<button type="button" class="linkbtn" id="welcome-skip">Skip for now</button>
+<button type="submit" class="btn">Continue</button>
+</div>
+<p class="dash-note">Saved on this device only. Satstreet does not receive it.</p>
+</form>
+</div>
+<div class="dash-layer dash-drawer" id="dash-customize" role="dialog" aria-modal="true" aria-labelledby="dash-h" hidden>
+<div class="dash-panel">
+<div class="dash-panel-head">
+<div><p class="eyebrow">Your dashboard</p><h2 id="dash-h">Customize</h2></div>
+<button type="button" class="dash-x" id="dash-close" aria-label="Close">&times;</button>
+</div>
+<div class="dash-panel-body">
+<div class="dash-section">
+<div class="k"><span>Your name</span></div>
+<input class="dash-input" id="dash-name-input" maxlength="40" placeholder="First name" autocomplete="off" />
+</div>
+<div class="dash-section">
+<div class="k"><span>Add a market</span></div>
+<input class="dash-input" id="dash-search" type="search" placeholder="Search a coin, stock, ETF, index or currency" autocomplete="off" spellcheck="false" />
+<ul class="dash-results" id="dash-results" aria-live="polite"></ul>
+<div class="dash-chips" id="dash-popular" aria-label="Popular markets"></div>
+<p class="dash-msg" id="dash-msg" role="status"></p>
+</div>
+<div class="dash-section">
+<div class="k"><span>On your board</span><span id="dash-count"></span></div>
+<ul class="dash-list" id="dash-list"></ul>
+</div>
+</div>
+<div class="dash-panel-foot">
+<div><button type="button" class="linkbtn" id="dash-reset">Reset to default</button> &nbsp;·&nbsp; <button type="button" class="linkbtn" id="dash-tour">Replay tour</button></div>
+<button type="button" class="btn small" id="dash-done">Done</button>
+</div>
+</div>
+</div>
+<div class="dash-layer" id="dash-tour-layer" hidden>
+<div class="tour-spot" id="tour-spot"></div>
+<div class="tour-card" role="dialog" aria-modal="true" aria-labelledby="tour-title">
+<p class="eyebrow" id="tour-step"></p>
+<h3 id="tour-title"></h3>
+<p id="tour-body"></p>
+<div class="tour-nav">
+<button type="button" class="linkbtn" id="tour-skip">Skip tour</button>
+<div><button type="button" class="btn ghost small" id="tour-back">Back</button><button type="button" class="btn small" id="tour-next">Next</button></div>
+</div>
+</div>
+</div>
+</div>
+<script src="https://client-facing--satstreet.netlify.app/assets/dashboard.js"></script>
+<script src="https://client-facing--satstreet.netlify.app/embed/overview-1.js"></script>

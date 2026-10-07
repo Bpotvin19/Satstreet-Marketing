@@ -63,6 +63,7 @@ export default async (req: Request) => {
   const json = (body: unknown) => new Response(JSON.stringify(body), {
     headers: {
       'content-type': 'application/json',
+      'access-control-allow-origin': '*',
       'cache-control': 'public, max-age=300',
       'netlify-cdn-cache-control': 'public, durable, s-maxage=900',
     },

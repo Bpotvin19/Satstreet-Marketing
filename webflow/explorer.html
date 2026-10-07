@@ -1,0 +1,136 @@
+<!-- Satstreet terminal · Explorer page. Paste into one Webflow Embed element. Generated; do not edit by hand. -->
+<script>window.SATSTREET_EMBED={host:"https://client-facing--satstreet.netlify.app",header:true,pages:{overview:"/overview",news:"/news",ticker:"/markets",chart:"/chart",explorer:"/explorer"}};</script>
+<script src="https://client-facing--satstreet.netlify.app/embed/shim.js"></script>
+<link rel="stylesheet" href="https://client-facing--satstreet.netlify.app/embed/explorer.css">
+<div class="ss-app ss-page-explorer">
+<div id="shell-header"></div>
+<main class="shell wide">
+<div class="pagehead explorer-head">
+<div>
+<p class="eyebrow">Public blockchain reference</p>
+<div class="page-title-row">
+<span class="page-emblem" aria-hidden="true">
+<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 12h8M8 15h5"/></svg>
+</span>
+<h1>Block Explorer</h1>
+</div>
+<p>Look up blocks, transactions and addresses on Bitcoin, Ethereum and Solana.</p>
+</div>
+</div>
+<div class="chain-tabs" id="chain-tabs" role="tablist" aria-label="Blockchain">
+<button type="button" role="tab" id="chain-tab-btc" data-chain="btc" aria-selected="true" aria-controls="chain-btc"><span class="chain-dot btc" aria-hidden="true">&#8383;</span>Bitcoin</button>
+<button type="button" role="tab" id="chain-tab-eth" data-chain="eth" aria-selected="false" aria-controls="chain-eth" tabindex="-1"><span class="chain-dot eth" aria-hidden="true">&Xi;</span>Ethereum</button>
+<button type="button" role="tab" id="chain-tab-sol" data-chain="sol" aria-selected="false" aria-controls="chain-sol" tabindex="-1"><span class="chain-dot sol" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 6h13l-2 3H4zM4 10.5h13l2 3H6zM6 15h13l-2 3H4z"/></svg></span>Solana</button>
+</div>
+<div id="chain-btc" role="tabpanel" aria-labelledby="chain-tab-btc">
+<section class="explorer-search" aria-labelledby="search-heading">
+<h2 class="sr" id="search-heading">Search the Bitcoin network</h2>
+<form id="explorer-search-form" novalidate>
+<label class="sr" for="explorer-query">Search block height, block hash, transaction ID or Bitcoin address</label>
+<span class="search-icon" aria-hidden="true">
+<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
+</span>
+<input id="explorer-query" type="search" autocomplete="off" spellcheck="false"
+placeholder="Search block height, block hash, transaction ID or Bitcoin address" />
+<button class="btn" id="search-button" type="submit">Search</button>
+</form>
+<p class="search-help">Supports block heights, hashes, transaction IDs and Bitcoin addresses beginning with bc1, 1 or 3.</p>
+<p class="search-error" id="search-error" role="alert" hidden></p>
+</section>
+<div id="route-loading" class="card route-state" role="status" aria-live="polite" hidden></div>
+<div id="route-error" class="card route-state" role="alert" hidden></div>
+<section id="detail-view" aria-live="polite" hidden></section>
+<section id="overview-view">
+<div class="section-heading">
+<div>
+<p class="eyebrow">Network overview</p>
+<h2>Bitcoin network</h2>
+</div>
+</div>
+<div class="metrics explorer-metrics" id="network-metrics" aria-live="polite"></div>
+<section class="card blocks-card" aria-labelledby="blocks-heading">
+<header>
+<div>
+<p class="eyebrow">Most recent</p>
+<h2 id="blocks-heading">Latest blocks</h2>
+</div>
+<button class="retry" id="refresh-blocks" type="button">Refresh</button>
+</header>
+<div id="blocks-content" aria-live="polite"></div>
+</section>
+</section>
+<div class="disclosure explorer-disclosure">
+<p><strong>Public network data.</strong> Blockchain information is retrieved from a third-party Esplora-compatible data provider and may be delayed or temporarily unavailable. Satstreet does not independently verify this data in this version.</p>
+<p>Fee estimates are network references, not guarantees that a transaction will confirm within a particular period.</p>
+</div>
+</div>
+<div id="chain-eth" role="tabpanel" aria-labelledby="chain-tab-eth" hidden>
+<section class="explorer-search" aria-labelledby="eth-search-heading">
+<h2 class="sr" id="eth-search-heading">Search the Ethereum network</h2>
+<form id="eth-search-form" novalidate>
+<label class="sr" for="eth-query">Search an Ethereum address, ENS name, transaction hash or block number</label>
+<span class="search-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg></span>
+<input id="eth-query" type="search" autocomplete="off" spellcheck="false" placeholder="Search address, ENS name, transaction hash or block number" />
+<button class="btn" id="eth-search-button" type="submit">Search</button>
+</form>
+<p class="search-help">Supports 0x addresses, .eth names, transaction hashes, block numbers and block hashes.</p>
+<p class="search-error" id="eth-search-error" role="alert" hidden></p>
+</section>
+<div id="eth-route-loading" class="card route-state" role="status" aria-live="polite" hidden></div>
+<div id="eth-route-error" class="card route-state" role="alert" hidden></div>
+<section id="eth-detail" aria-live="polite" hidden></section>
+<section id="eth-overview">
+<div class="section-heading">
+<div><p class="eyebrow">Network overview</p><h2>Ethereum network</h2></div>
+</div>
+<div class="metrics explorer-metrics" id="eth-metrics" aria-live="polite"></div>
+<section class="card blocks-card" aria-labelledby="eth-blocks-heading">
+<header>
+<div><p class="eyebrow">Most recent</p><h2 id="eth-blocks-heading">Latest blocks</h2></div>
+<button class="retry" id="eth-refresh" type="button">Refresh</button>
+</header>
+<div id="eth-blocks" aria-live="polite"></div>
+</section>
+</section>
+<div class="disclosure explorer-disclosure">
+<p><strong>Public network data.</strong> Ethereum information is retrieved from Blockscout&rsquo;s public indexer and may be delayed or temporarily unavailable. Satstreet does not independently verify this data.</p>
+<p>Gas prices are network references, not guarantees that a transaction will confirm within a particular period. USD values use the indexer&rsquo;s reference rate and are indicative only.</p>
+</div>
+</div>
+<div id="chain-sol" role="tabpanel" aria-labelledby="chain-tab-sol" hidden>
+<section class="explorer-search" aria-labelledby="sol-search-heading">
+<h2 class="sr" id="sol-search-heading">Search the Solana network</h2>
+<form id="sol-search-form" novalidate>
+<label class="sr" for="sol-query">Search a Solana address, transaction signature or slot number</label>
+<span class="search-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg></span>
+<input id="sol-query" type="search" autocomplete="off" spellcheck="false" placeholder="Search address, transaction signature or slot number" />
+<button class="btn" id="sol-search-button" type="submit">Search</button>
+</form>
+<p class="search-help">Supports wallet, token and program addresses, transaction signatures and slot numbers.</p>
+<p class="search-error" id="sol-search-error" role="alert" hidden></p>
+</section>
+<div id="sol-route-loading" class="card route-state" role="status" aria-live="polite" hidden></div>
+<div id="sol-route-error" class="card route-state" role="alert" hidden></div>
+<section id="sol-detail" aria-live="polite" hidden></section>
+<section id="sol-overview">
+<div class="section-heading">
+<div><p class="eyebrow">Network overview</p><h2>Solana network</h2></div>
+</div>
+<div class="metrics explorer-metrics" id="sol-metrics" aria-live="polite"></div>
+<section class="card blocks-card" aria-labelledby="sol-blocks-heading">
+<header>
+<div><p class="eyebrow">Most recent</p><h2 id="sol-blocks-heading">Latest blocks</h2></div>
+<button class="retry" id="sol-refresh" type="button">Refresh</button>
+</header>
+<div id="sol-blocks" aria-live="polite"></div>
+</section>
+</section>
+<div class="disclosure explorer-disclosure">
+<p><strong>Public network data.</strong> Solana information is retrieved from a public RPC node and may be delayed or temporarily unavailable. Satstreet does not independently verify this data. Throughput is averaged over the node&rsquo;s most recent one-minute samples.</p>
+</div>
+</div>
+</main>
+</div>
+<script src="https://client-facing--satstreet.netlify.app/assets/terminal.js"></script>
+<script src="https://client-facing--satstreet.netlify.app/assets/explorer.js"></script>
+<script src="https://client-facing--satstreet.netlify.app/assets/chain-explorers.js"></script>

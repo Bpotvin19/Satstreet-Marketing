@@ -13,6 +13,7 @@ function json(body: unknown, status = 200, cache = 'no-store'): Response {
     status,
     headers: {
       'content-type': 'application/json; charset=utf-8',
+      'access-control-allow-origin': '*',
       'cache-control': cache,
       'x-content-type-options': 'nosniff',
     },

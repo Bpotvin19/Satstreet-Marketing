@@ -1,0 +1,56 @@
+<!-- Satstreet terminal · Chart page. Paste into one Webflow Embed element. Generated; do not edit by hand. -->
+<script>window.SATSTREET_EMBED={host:"https://client-facing--satstreet.netlify.app",header:true,pages:{overview:"/overview",news:"/news",ticker:"/markets",chart:"/chart",explorer:"/explorer"}};</script>
+<script src="https://client-facing--satstreet.netlify.app/embed/shim.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://client-facing--satstreet.netlify.app/embed/chart.css">
+<div class="ss-app ss-page-chart">
+<div id="shell-header"></div>
+<main class="shell wide">
+<div class="charthead">
+<div class="ident">
+<span class="chart-coin" id="chart-coin" aria-hidden="true">₿</span>
+<div class="sel">
+<label class="sr" for="asset">Asset</label>
+<select id="asset"></select>
+<p class="meta" id="pair">—</p>
+</div>
+<div>
+<p class="px" id="px">—</p>
+<p class="mv" id="mv">&nbsp;</p>
+<p class="meta" id="stamp">Loading reference price…</p>
+</div>
+</div>
+</div>
+<div class="rangebar">
+<span class="lbl" id="rangelbl">Range</span>
+<div class="segmented" role="group" aria-labelledby="rangelbl" id="ranges"></div>
+<span class="interval" id="intervaltxt"></span>
+</div>
+<div class="surface">
+<div id="host"></div>
+<div class="cover" id="cover">
+<div class="inner">
+<span class="skel" style="height:14px;width:60%;margin:0 auto 10px"></span>
+<span class="skel" style="height:14px;width:80%;margin:0 auto 10px"></span>
+<span class="skel" style="height:14px;width:45%;margin:0 auto"></span>
+<p class="emptybox" style="margin-top:14px">Loading chart…</p>
+</div>
+</div>
+<div class="attrib">
+<span id="src">Chart data by TradingView · indicative reference price</span>
+<a href="https://www.tradingview.com/" target="_blank" rel="noopener noreferrer">Chart by TradingView</a>
+</div>
+</div>
+<div class="disclosure">
+<p><strong>Indicative reference prices only.</strong> Charts and quotes are drawn from
+third-party venues and may be delayed. They are not a quote, not an offer, and not the price
+at which Satstreet will execute.</p>
+<p><strong>Range</strong> sets the period shown and selects a candle interval to suit it. The
+interval in use is named beside the control.</p>
+<p>An asset appearing here is covered by the reference data source. It does not indicate that
+Satstreet trades, supports or will price that asset.</p>
+</div>
+</main>
+</div>
+<script src="https://client-facing--satstreet.netlify.app/assets/terminal.js"></script>
+<script src="https://client-facing--satstreet.netlify.app/embed/chart-1.js"></script>

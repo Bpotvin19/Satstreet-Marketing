@@ -92,6 +92,18 @@
   to = "/overview.html"
   status = 301
 
+# The Webflow pages read the calendar and embed assets from this host.
+[[headers]]
+  for = "/data/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+
+[[headers]]
+  for = "/embed/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Cache-Control = "public, max-age=300"
+
 [[headers]]
   for = "/*"
   [headers.values]

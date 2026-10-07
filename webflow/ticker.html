@@ -1,0 +1,105 @@
+<!-- Satstreet terminal · Markets page. Paste into one Webflow Embed element. Generated; do not edit by hand. -->
+<script>window.SATSTREET_EMBED={host:"https://client-facing--satstreet.netlify.app",header:true,pages:{overview:"/overview",news:"/news",ticker:"/markets",chart:"/chart",explorer:"/explorer"}};</script>
+<script src="https://client-facing--satstreet.netlify.app/embed/shim.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://client-facing--satstreet.netlify.app/embed/ticker.css">
+<div class="ss-app ss-page-ticker">
+<div id="shell-header"></div>
+<main class="shell wide">
+<div class="pagehead">
+<div>
+<p class="eyebrow">Digital asset reference board</p>
+<div class="page-title-row"><span class="page-emblem" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 17 9 12l4 3 7-8"/><path d="M15 7h5v5"/></svg></span><h1>Markets</h1></div>
+<p>Reference pricing and market context across major digital assets.</p>
+</div>
+</div>
+<div class="metrics" id="globals"></div>
+<div class="controls">
+<div class="search">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+<label class="sr" for="q">Filter assets by name or ticker</label>
+<input id="q" type="search" placeholder="Filter by name or ticker" autocomplete="off" spellcheck="false" />
+</div>
+<div class="segmented" role="group" aria-label="Asset filter">
+<button type="button" data-f="all" aria-pressed="true">All</button>
+<button type="button" data-f="majors" aria-pressed="false">Majors</button>
+</div>
+<div class="segmented" role="group" aria-label="Display currency">
+<button type="button" id="ccy-usd" aria-pressed="true">USD</button>
+<button type="button" id="ccy-cad" aria-pressed="false">CAD</button>
+</div>
+<span class="count" id="count"></span>
+</div>
+<div class="tablewrap">
+<table id="tbl">
+<caption class="sr">Reference prices for major digital assets, sortable by column.</caption>
+<thead>
+<tr id="head"></tr>
+</thead>
+<tbody id="rows"></tbody>
+</table>
+</div>
+<div id="noresults" hidden class="card" style="margin-top:16px">
+<div class="emptystate">
+<h3>No assets match that filter.</h3>
+<p>Try a different name or ticker, or clear the filter to see the full board.</p>
+<button class="btn ghost" id="clearfilter" type="button">Clear filter</button>
+</div>
+</div>
+<section class="structure" id="structure" aria-labelledby="structure-h">
+<div class="structure-head">
+<p class="eyebrow">Market structure</p>
+<h2 id="structure-h">Network conditions and fund flows</h2>
+<p>Positioning and network conditions behind the price.</p>
+</div>
+<div class="tabs" role="tablist" aria-label="Market structure sections">
+<button role="tab" id="tab-network" aria-selected="true" aria-controls="p-network" data-t="network"><span class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="19" cy="18" r="2"/><path d="m7 11 10-4M7 13l10 4"/></svg></span>Bitcoin network</button>
+<button role="tab" id="tab-institutional" tabindex="-1" aria-selected="false" aria-controls="p-institutional" data-t="institutional"><span class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19h16M6 16h12M8 13h8M12 4l8 5H4z"/></svg></span>ETF Inflows + Outflows</button>
+</div>
+<section id="p-network" role="tabpanel" aria-labelledby="tab-network" tabindex="0">
+<p class="ctx">Conditions on the Bitcoin network itself, independent of price.</p>
+<div class="metrics" id="net"></div>
+<section class="card" id="net-feed" style="margin-top:16px">
+<header><h2>Live transactions</h2><span class="eyebrow" id="feed-stat"></span></header>
+<p class="feednote">Every unconfirmed transaction as it is relayed. Each square is one transaction: area is its size in bytes, colour is what the sender pays per byte. They pack into the block being built, and clear when one is found.</p>
+<canvas id="feed-canvas" height="240" aria-label="Live mempool transactions"></canvas>
+<div class="striplegend" id="feed-legend"></div>
+</section>
+<div class="card" id="net-fees" style="margin-top:16px"></div>
+<div class="card" id="net-blocks" style="margin-top:16px"></div>
+<div class="card" id="net-extra" style="margin-top:16px"></div>
+<div class="card" id="net-halving" style="margin-top:16px"></div>
+</section>
+<section id="p-institutional" hidden role="tabpanel" aria-labelledby="tab-institutional" tabindex="0">
+<p class="ctx">US spot Bitcoin ETF creations and redemptions. Daily tape compiled by TFTC from SoSoValue and Farside Investors. Figures are not a Satstreet view on demand.</p>
+<div class="metrics" id="etf-kpis"></div>
+<div class="panelgrid" style="margin-top:16px">
+<div class="etf-left">
+<div class="card" id="etf-tape"></div>
+<div class="card" id="etf-cumulative"></div>
+</div>
+<div class="card" id="etf-issuers"></div>
+</div>
+<div class="card" id="etf-days" style="margin-top:16px"></div>
+</section>
+<div class="disclosure" id="structure-disclosure"></div>
+</section>
+<div class="disclosure">
+<p><strong>Reference data only.</strong> Prices, volumes and market capitalisations are
+indicative references from third-party venues and may be delayed. They are not a quote, not an
+offer, and not the price at which Satstreet will execute.</p>
+<p><strong>Rank</strong> is global market-capitalisation rank as reported by the data provider.
+Filtering or sorting the board does not renumber it, and stablecoins and other dollar-pegged
+tokens are left off entirely, so gaps in the sequence are expected.</p>
+<p><strong>Listing is not an offer.</strong> Assets shown here appear because they are covered by
+the reference data source. Their presence does not indicate that Satstreet trades, supports or
+will support any particular asset.</p>
+<p><strong>Canadian dollar values</strong> are converted from USD at a reference rate and are
+indicative only.</p>
+</div>
+</main>
+</div>
+<script src="https://client-facing--satstreet.netlify.app/assets/terminal.js"></script>
+<script src="https://client-facing--satstreet.netlify.app/assets/mempool-feed.js"></script>
+<script src="https://client-facing--satstreet.netlify.app/embed/ticker-1.js"></script>
+<script src="https://client-facing--satstreet.netlify.app/assets/market-structure.js"></script>
