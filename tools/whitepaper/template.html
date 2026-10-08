@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Satstreet · Bitcoin Whitepaper</title>
+<meta name="description" content="Bitcoin: A Peer-to-Peer Electronic Cash System, Satoshi Nakamoto's 2008 paper, in full." />
+
+<!--
+  Bitcoin Whitepaper.
+
+  The full text of Satoshi Nakamoto's paper, readable on the page rather than
+  as a PDF download. Generated from bitcoin.org's bitcoin.pdf (SHA-256
+  b1674191…f553): the prose is the PDF's own extracted text, unchanged except
+  for words the extractor fused at line-end hyphens. The figures are redrawn
+  as SVG and the formulas set in MathML so they stay sharp and searchable.
+  A copy of the original PDF is served from ./assets/bitcoin.pdf.
+
+  Nothing here calls an API; the page is static.
+-->
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="./assets/terminal.css" />
+<style>
+  .wp-layout { display: grid; grid-template-columns: 236px minmax(0, 1fr); gap: 32px; align-items: start; padding-bottom: 56px; }
+
+  /* ---- contents ---- */
+  .wp-toc { position: sticky; top: 20px; }
+  .wp-toc details { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+  .wp-toc summary { list-style: none; cursor: default; padding: 14px 16px 6px; font-size: 11px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); }
+  .wp-toc summary::-webkit-details-marker { display: none; }
+  .wp-toc ol { list-style: none; margin: 0; padding: 4px 8px 12px; }
+  .wp-toc ol a { display: flex; gap: 8px; padding: 6px 8px; border-radius: 7px; font-size: 13.5px; line-height: 1.35; color: var(--ink-2); text-decoration: none; }
+  .wp-toc ol a span { flex: none; width: 20px; color: var(--faint); font-variant-numeric: tabular-nums; }
+  .wp-toc ol a:hover { background: var(--border-2); color: var(--ink); }
+  .wp-toc ol a[aria-current="true"] { background: #e8f1ff; color: var(--blue); font-weight: 600; }
+  .wp-toc ol a[aria-current="true"] span { color: var(--blue); }
+  .wp-pdf { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 12px 14px; background: #fff; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; font-weight: 600; color: var(--ink); text-decoration: none; }
+  .wp-pdf:hover { border-color: #b7d7ff; color: var(--blue); }
+  .wp-pdf svg { flex: none; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .wp-pdf > span { flex: 1; min-width: 0; color: var(--ink); }
+  .wp-pdf:hover > span { color: var(--blue); }
+  .wp-pdf small { display: block; font-size: 11.5px; font-weight: 500; color: var(--muted); }
+
+  /* ---- the paper ---- */
+  .wp-paper { background: #fff; border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 56px clamp(20px, 6vw, 84px) 64px; }
+  .wp-body { max-width: 70ch; margin: 0 auto; font-family: 'Newsreader', Georgia, 'Times New Roman', serif; font-size: 18.5px; line-height: 1.7; color: #1d2733; font-optical-sizing: auto; }
+  .wp-body p { margin: 0 0 1.05em; text-wrap: pretty; hyphens: auto; }
+  .wp-title { text-align: center; margin-bottom: 36px; }
+  .wp-title h2 { font-family: 'Newsreader', Georgia, serif; font-weight: 600; font-size: clamp(27px, 3.6vw, 38px); line-height: 1.18; letter-spacing: -.3px; color: var(--ink); margin: 0 0 18px; }
+  .wp-title .author { font-size: 19px; color: var(--ink); margin: 0; }
+  .wp-title .contact { font-family: var(--font); font-size: 13px; color: var(--muted); margin: 4px 0 0; }
+  .wp-meta { display: flex; justify-content: center; gap: 8px 18px; flex-wrap: wrap; margin: 18px 0 0; font-family: var(--font); font-size: 12.5px; color: var(--muted); }
+  .wp-meta span + span::before { content: '·'; margin-right: 18px; color: var(--faint); }
+
+  .wp-abstract { margin: 0 0 44px; padding: 22px 26px; background: #f6f9fd; border: 1px solid var(--border-2); border-left: 3px solid var(--blue); border-radius: 0 10px 10px 0; font-size: 17px; line-height: 1.65; }
+  .wp-abstract p { margin: 0; }
+  .wp-abstract b { font-family: var(--font); font-size: 11px; letter-spacing: .9px; text-transform: uppercase; color: var(--blue); display: block; margin-bottom: 6px; }
+
+  .wp-sec { scroll-margin-top: 20px; }
+  .wp-sec h2 { display: flex; gap: 14px; align-items: baseline; font-family: 'Newsreader', Georgia, serif; font-weight: 600; font-size: 26px; line-height: 1.25; color: var(--ink); margin: 52px 0 16px; padding-top: 22px; border-top: 1px solid var(--border-2); }
+  .wp-sec:first-of-type h2 { margin-top: 0; border-top: 0; padding-top: 0; }
+  .wp-sec h2 .num { font-family: var(--font-data); font-size: 14px; font-weight: 600; color: var(--blue); min-width: 26px; }
+
+  .cite { font-family: var(--font); font-size: .72em; font-weight: 600; text-decoration: none; color: var(--blue); vertical-align: .35em; line-height: 0; padding: 0 1px; }
+  .cite:hover { text-decoration: underline; }
+
+  .wp-steps { margin: 0 0 1.2em; padding: 0; list-style: none; counter-reset: st; }
+  .wp-steps li { counter-increment: st; position: relative; padding: 8px 0 8px 46px; border-bottom: 1px solid var(--border-2); }
+  .wp-steps li:last-child { border-bottom: 0; }
+  .wp-steps li::before { content: counter(st); position: absolute; left: 0; top: 9px; width: 28px; height: 28px; border-radius: 50%; background: #e8f1ff; color: var(--blue); font-family: var(--font-data); font-size: 13px; font-weight: 600; display: grid; place-items: center; }
+
+  /* ---- figures ---- */
+  .wp-fig { margin: 30px -12px 34px; padding: 22px 18px 14px; background: #fafcfe; border: 1px solid var(--border-2); border-radius: 12px; }
+  .wp-fig-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .wp-svg { display: block; width: 100%; max-width: 640px; height: auto; margin: 0 auto; font-family: var(--font); }
+  .wp-svg text { font-size: 11.5px; fill: #22303f; }
+  .wp-svg .c { text-anchor: middle; dominant-baseline: central; }
+  .wp-svg .ft { font-size: 10.5px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; fill: var(--muted); }
+  .wp-svg .lb { font-size: 11px; fill: var(--muted); }
+  .wp-svg .it { font-style: italic; }
+  .wp-svg .cap { font-size: 11px; fill: var(--muted); }
+  .wp-svg .f { fill: #fff; stroke: #c9d5e3; stroke-width: 1.2; }
+  .wp-svg .f2 { fill: #f4f7fb; stroke: #d6e0ec; stroke-width: 1; }
+  .wp-svg .b { fill: #fff; stroke: #7d8fa6; stroke-width: 1.1; }
+  .wp-svg .b.em { fill: #eaf2ff; stroke: #5b8fe0; }
+  .wp-svg .b.nonce { fill: #fbf4e5; stroke: #c49a4d; }
+  .wp-svg .b.sig { fill: #e8f4ef; stroke: #4f9e82; }
+  .wp-svg .b.key { fill: #f4f7fb; stroke: #7d8fa6; }
+  .wp-svg .b.pub { fill: #0d1b2e; stroke: #0d1b2e; }
+  .wp-svg .b.pub + text { fill: #fff; font-weight: 600; }
+  .wp-svg .b.sm { fill: #f8fafc; stroke: #aab8c8; }
+  .wp-svg .b.sm + text { font-size: 10.5px; }
+  .wp-svg .b.dashed { stroke-dasharray: 3 2.5; fill: #fff; }
+  .wp-svg .a { fill: none; stroke: #4a5d73; stroke-width: 1.2; }
+  .wp-svg .m { marker-end: url(#wp-arr); }
+  .wp-svg .a.dash { stroke-dasharray: 2.5 3; stroke: #7d8fa6; }
+  .wp-svg .wall { stroke: #16202c; stroke-width: 2; }
+  .wp-fig figcaption { margin-top: 12px; text-align: center; font-family: var(--font); font-size: 12.5px; color: var(--muted); }
+  .wp-fig figcaption span { font-weight: 700; color: var(--ink-2); margin-right: 4px; }
+
+  /* ---- maths, code and tables ---- */
+  .wp-defs { margin: 6px 0 18px; display: grid; gap: 6px; }
+  .wp-defs div { display: flex; gap: 14px; align-items: baseline; }
+  .wp-defs dt { flex: none; width: 30px; font-size: 19px; }
+  .wp-defs dd { margin: 0; }
+  .wp-eq { margin: 18px 0 24px; padding: 14px 18px; overflow-x: auto; text-align: center; background: #fafcfe; border: 1px solid var(--border-2); border-radius: 10px; }
+  .wp-eq math { font-size: 21px; margin: 0 auto; }
+  .wp-eq .cases mtd { text-align: left; padding: 3px 10px; }
+
+  .wp-code { margin: 14px 0 26px; padding: 18px 20px; overflow-x: auto; background: #0d1b2e; color: #d7e3f2; border-radius: 10px; font-family: var(--font-data); font-size: 13.5px; line-height: 1.6; tab-size: 4; }
+  .wp-code code { font-family: inherit; }
+
+  .wp-tables { display: flex; flex-wrap: wrap; gap: 18px; margin: 10px 0 26px; }
+  .wp-table { border-collapse: collapse; font-family: var(--font-data); font-size: 13.5px; background: #fff; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin: 10px 0 26px; min-width: 210px; }
+  .wp-tables .wp-table { margin: 0; }
+  .wp-table caption { caption-side: top; text-align: left; font-family: 'Newsreader', Georgia, serif; font-size: 17px; padding: 0 0 6px 2px; color: var(--ink); }
+  .wp-table th { text-align: left; padding: 8px 16px; background: #f4f7fb; border-bottom: 1px solid var(--border); font-family: 'Newsreader', Georgia, serif; font-size: 16px; font-weight: 400; color: var(--ink-2); }
+  .wp-table td { padding: 5px 16px; border-bottom: 1px solid var(--border-2); font-variant-numeric: tabular-nums; color: var(--ink); }
+  .wp-table tr:last-child td { border-bottom: 0; }
+
+  .wp-refs { list-style: none; margin: 0; padding: 0; font-size: 16px; line-height: 1.55; }
+  .wp-refs li { display: flex; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border-2); scroll-margin-top: 20px; }
+  .wp-refs li:target { background: #fff8e6; }
+  .wp-refs .rn { flex: none; width: 30px; font-family: var(--font-data); font-size: 13px; color: var(--blue); padding-top: 2px; }
+  .wp-refs a { color: var(--blue); word-break: break-all; }
+
+  .wp-note { margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--border); font-family: var(--font); font-size: 12.5px; line-height: 1.65; color: var(--muted); }
+  .wp-note strong { color: var(--ink); }
+  .wp-note a { color: var(--blue); }
+
+  @media (max-width: 1023px) {
+    .wp-layout { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+    .wp-toc { position: static; }
+    .wp-toc summary { cursor: pointer; padding: 14px 16px; display: flex; justify-content: space-between; }
+    .wp-toc summary::after { content: '+'; font-size: 16px; line-height: 1; color: var(--muted); }
+    .wp-toc details[open] summary::after { content: '\2212'; }
+    .wp-toc ol { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); padding-top: 0; }
+  }
+  @media (max-width: 620px) {
+    .wp-paper { padding: 32px 18px 40px; border-radius: 10px; }
+    .wp-body { font-size: 17.5px; }
+    .wp-fig { margin-left: -8px; margin-right: -8px; padding: 16px 10px 12px; }
+    .wp-abstract { padding: 18px; }
+    .wp-sec h2 { font-size: 23px; }
+    .wp-eq math { font-size: 18px; }
+  }
+  @media print {
+    .topbar, .wp-toc, .pagehead { display: none !important; }
+    .wp-layout { display: block; }
+    .wp-paper { border: 0; box-shadow: none; padding: 0; }
+  }
+</style>
+</head>
+<body>
+<div id="shell-header"></div>
+<main class="shell wide">
+
+  <div class="pagehead">
+    <div>
+      <p class="eyebrow">Primary source</p>
+      <div class="page-title-row">
+        <span class="page-emblem" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 15h6M9 18h4"/></svg></span>
+        <h1>Bitcoin Whitepaper</h1>
+      </div>
+      <p>Satoshi Nakamoto&rsquo;s 2008 paper that introduced Bitcoin, in full.</p>
+    </div>
+  </div>
+
+  <div class="wp-layout">
+    <aside class="wp-toc" aria-label="Contents">
+      <details id="wp-toc-box" open>
+        <summary>Contents</summary>
+        <ol>{{TOC}}</ol>
+      </details>
+      <a class="wp-pdf" href="./assets/bitcoin.pdf" download="bitcoin.pdf">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
+        <span>Original PDF<small>9 pages &middot; 180 KB</small></span>
+      </a>
+    </aside>
+
+    <article class="wp-paper">
+      <div class="wp-body">
+        <header class="wp-title">
+          <h2>Bitcoin: A Peer-to-Peer Electronic Cash System</h2>
+          <p class="author">Satoshi Nakamoto</p>
+          <p class="contact">satoshin@gmx.com &middot; www.bitcoin.org</p>
+          <p class="wp-meta"><span>Published 31 October 2008</span><span>12 sections</span><span>About 20 minutes to read</span></p>
+        </header>
+
+        <div class="wp-abstract"><b>Abstract</b><p>{{ABSTRACT}}</p></div>
+
+{{SECTIONS}}
+
+        <section class="wp-sec" id="refs" aria-labelledby="refs-h">
+          <h2 id="refs-h">References</h2>
+          {{REFS}}
+        </section>
+
+        <p class="wp-note"><strong>About this page.</strong> The text is the original paper by Satoshi Nakamoto, as published at <a href="https://bitcoin.org/bitcoin.pdf" target="_blank" rel="noopener noreferrer">bitcoin.org/bitcoin.pdf</a>, which distributes it under the MIT License. The wording is unchanged; the figures are redrawn and the formulas re-set for the web. Satstreet has added nothing to the paper, and its inclusion here is for reference, not a recommendation.</p>
+      </div>
+    </article>
+  </div>
+
+</main>
+{{DEFS}}
+
+<script src="./assets/terminal.js"></script>
+<script>
+/* Contents: highlight the section being read; on narrow screens the list
+   starts collapsed and closes again after a jump. */
+SATSTREET.mountHeader('Bitcoin Whitepaper');
+(function () {
+  var box = document.getElementById('wp-toc-box');
+  var narrow = window.matchMedia('(max-width: 1023px)');
+  function fit() { box.open = !narrow.matches; }
+  fit();
+  if (narrow.addEventListener) narrow.addEventListener('change', fit);
+  var links = Array.prototype.slice.call(box.querySelectorAll('a'));
+  links.forEach(function (a) { a.addEventListener('click', function () { if (narrow.matches) box.open = false; }); });
+  var secs = links.map(function (a) { return document.getElementById(a.getAttribute('href').slice(1)); }).filter(Boolean);
+  if (!('IntersectionObserver' in window)) return;
+  var current = null;
+  var io = new IntersectionObserver(function () {
+    var best = null;
+    secs.forEach(function (s) { if (s.getBoundingClientRect().top < window.innerHeight * 0.35) best = s; });
+    if (best === current) return;
+    current = best;
+    links.forEach(function (a) { a.setAttribute('aria-current', best && a.getAttribute('href') === '#' + best.id ? 'true' : 'false'); });
+  }, { rootMargin: '0px 0px -60% 0px', threshold: [0, 1] });
+  secs.forEach(function (s) { io.observe(s); });
+})();
+</script>
+</body>
+</html>

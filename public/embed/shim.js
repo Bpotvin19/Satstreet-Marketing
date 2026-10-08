@@ -10,7 +10,11 @@
   'use strict';
   var C = window.SATSTREET_EMBED || {};
   var HOST = String(C.host || '').replace(/\/$/, '');
-  var PAGES = C.pages || {};
+  /* Default Webflow addresses, so a page added later is linked correctly
+     from snippets pasted before it existed. The snippet's own pages win. */
+  var PAGES = {overview:"/overview",news:"/news",ticker:"/markets",chart:"/chart",explorer:"/explorer",whitepaper:"/bitcoin-whitepaper"};
+  var own = C.pages || {};
+  for (var k in own) if (Object.prototype.hasOwnProperty.call(own, k)) PAGES[k] = own[k];
 
   var nativeFetch = window.fetch.bind(window);
   window.fetch = function (input, init) {
@@ -18,7 +22,7 @@
     return nativeFetch(input, init);
   };
 
-  var RE = /^(?:\.\/|\/)?(overview|news|ticker|chart|explorer)\.html(.*)$/;
+  var RE = /^(?:\.\/|\/)?(overview|news|ticker|chart|explorer|whitepaper)\.html(.*)$/;
   function map(url) {
     if (typeof url !== 'string') return url;
     var m = RE.exec(url);

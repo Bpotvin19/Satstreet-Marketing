@@ -1,14 +1,15 @@
 # Satstreet terminal on Webflow
 
-Five pages, one snippet each. Every snippet is well under Webflow's 50,000-character limit for an Embed element.
+Six pages, one snippet each. Every snippet is under Webflow's 50,000-character limit for an Embed element; the whitepaper is the largest at about 46k, because the whole paper is in the page.
 
 | Webflow page | Suggested slug | Paste this file | Size |
 | --- | --- | --- | --- |
-| Overview | `/overview` | `overview.html` | ~9.6k chars |
+| Overview | `/overview` | `overview.html` | ~10.7k chars |
 | News | `/news` | `news.html` | ~3.0k chars |
 | Markets | `/markets` | `ticker.html` | ~6.4k chars |
 | Chart | `/chart` | `chart.html` | ~2.6k chars |
 | Explorer | `/explorer` | `explorer.html` | ~8.5k chars |
+| Bitcoin Whitepaper | `/bitcoin-whitepaper` | `whitepaper.html` | ~45.9k chars |
 
 ## Setting up each page
 
@@ -22,20 +23,31 @@ Five pages, one snippet each. Every snippet is well under Webflow's 50,000-chara
 The second line of every snippet is a small config:
 
 ```html
-<script>window.SATSTREET_EMBED={host:"https://…",header:true,pages:{overview:"/overview",news:"/news",ticker:"/markets",chart:"/chart",explorer:"/explorer"}};</script>
+<script>window.SATSTREET_EMBED={host:"https://…",header:true,pages:{overview:"/overview",news:"/news",ticker:"/markets",chart:"/chart",explorer:"/explorer",whitepaper:"/bitcoin-whitepaper"}};</script>
 ```
 
-Change the paths in `pages` to match your Webflow slugs, using the **same values in all five snippets**. Links between the pages (for example, a Markets row opening its Chart, or a headline opening on News) follow these paths.
+Change the paths in `pages` to match your Webflow slugs, using the **same values in all six snippets**. Links between the pages (for example, a Markets row opening its Chart, or a headline opening on News) follow these paths.
 
 ## The terminal's own navigation bar
 
-Each page shows the terminal's dark navigation bar (Overview · News · Markets · Chart · Explorer) under your site navigation. To hide it and rely on the Webflow navigation instead, change `header:true` to `header:false` in all five snippets.
+Each page shows the terminal's dark navigation bar (Overview · News · Markets · Chart · Explorer · Bitcoin Whitepaper) under your site navigation. To hide it and rely on the Webflow navigation instead, change `header:true` to `header:false` in all six snippets.
 
 ## What still runs on Netlify
 
 Prices, news, charts and the block explorer are served by small functions on Netlify (`host` in the config line), which Webflow cannot run. The page styles and scripts are also loaded from there, which keeps the snippets small and means most updates go live without anything being re-pasted. That Netlify site must stay up.
 
-The host is currently the `client-facing` branch preview. For production, a Netlify site dedicated to that branch (for example `satstreet-terminal.netlify.app`, or `terminal.satstreet.com`) is better; changing hosts means updating `host` in the five snippets.
+The host is currently the `client-facing` branch preview. For production, a Netlify site dedicated to that branch (for example `satstreet-terminal.netlify.app`, or `terminal.satstreet.com`) is better; changing hosts means updating `host` in the six snippets.
+
+## Adding the Bitcoin Whitepaper page (October 2026)
+
+If the first five pages are already live, only two pastes are needed:
+
+1. Create the new page at `/bitcoin-whitepaper` and paste `whitepaper.html`.
+2. Re-paste `overview.html` into the Overview page, because its navigation bar now includes the new page.
+
+The other four pages pick up the new navigation link on their own.
+
+The whitepaper page is static: the full text of Satoshi Nakamoto's paper, the figures redrawn, and a download of the original PDF. bitcoin.org distributes the paper under the MIT License, and the page credits it.
 
 ## Notes
 

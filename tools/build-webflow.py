@@ -31,10 +31,10 @@ EMBED = PUBLIC / 'embed'
 OUT = ROOT / 'webflow'
 LIMIT = 50_000
 
-PAGES = ['overview', 'news', 'ticker', 'chart', 'explorer']
+PAGES = ['overview', 'news', 'ticker', 'chart', 'explorer', 'whitepaper']
 # Suggested Webflow slugs; editable in the config line of each snippet.
-SLUGS = {'overview': '/overview', 'news': '/news', 'ticker': '/markets', 'chart': '/chart', 'explorer': '/explorer'}
-TITLES = {'overview': 'Overview', 'news': 'News', 'ticker': 'Markets', 'chart': 'Chart', 'explorer': 'Explorer'}
+SLUGS = {'overview': '/overview', 'news': '/news', 'ticker': '/markets', 'chart': '/chart', 'explorer': '/explorer', 'whitepaper': '/bitcoin-whitepaper'}
+TITLES = {'overview': 'Overview', 'news': 'News', 'ticker': 'Markets', 'chart': 'Chart', 'explorer': 'Explorer', 'whitepaper': 'Bitcoin Whitepaper'}
 
 SCOPE = '.ss-app'
 
@@ -166,7 +166,11 @@ SHIM = r"""/* Webflow embed shim. Loaded first by every Satstreet page snippet.
   'use strict';
   var C = window.SATSTREET_EMBED || {};
   var HOST = String(C.host || '').replace(/\/$/, '');
-  var PAGES = C.pages || {};
+  /* Default Webflow addresses, so a page added later is linked correctly
+     from snippets pasted before it existed. The snippet's own pages win. */
+  var PAGES = __DEFAULT_PAGES__;
+  var own = C.pages || {};
+  for (var k in own) if (Object.prototype.hasOwnProperty.call(own, k)) PAGES[k] = own[k];
 
   var nativeFetch = window.fetch.bind(window);
   window.fetch = function (input, init) {
@@ -174,7 +178,7 @@ SHIM = r"""/* Webflow embed shim. Loaded first by every Satstreet page snippet.
     return nativeFetch(input, init);
   };
 
-  var RE = /^(?:\.\/|\/)?(overview|news|ticker|chart|explorer)\.html(.*)$/;
+  var RE = /^(?:\.\/|\/)?(overview|news|ticker|chart|explorer|whitepaper)\.html(.*)$/;
   function map(url) {
     if (typeof url !== 'string') return url;
     var m = RE.exec(url);
@@ -220,7 +224,8 @@ def main():
 
     EMBED.mkdir(exist_ok=True)
     OUT.mkdir(exist_ok=True)
-    (EMBED / 'shim.js').write_text(SHIM)
+    defaults = '{' + ','.join('%s:"%s"' % (k, v) for k, v in SLUGS.items()) + '}'
+    (EMBED / 'shim.js').write_text(SHIM.replace('__DEFAULT_PAGES__', defaults))
 
     config = ('<script>window.SATSTREET_EMBED={host:"%s",header:true,pages:{%s}};</script>'
               % (host, ','.join('%s:"%s"' % (k, v) for k, v in SLUGS.items())))
@@ -269,7 +274,7 @@ def main():
         markup = re.sub(r'\n\s*\n+', '\n', markup)
         markup = '\n'.join(line.strip() for line in markup.splitlines() if line.strip())
         # Relative asset references (none expected) would point at Webflow.
-        markup = markup.replace('src="./', f'src="{host}/')
+        markup = markup.replace('src="./', f'src="{host}/').replace('href="./assets/', f'href="{host}/assets/')
 
         snippet = '\n'.join([
             f'<!-- Satstreet terminal · {TITLES[page]} page. Paste into one Webflow Embed element. Generated; do not edit by hand. -->',
