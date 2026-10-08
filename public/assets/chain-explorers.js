@@ -121,7 +121,7 @@
   }
   function usdText(v) {
     if (v === null || v === undefined || !isFinite(v)) return '';
-    return '≈ ' + S.fmt.money(Math.abs(v), 'USD', Math.abs(v) >= 1 ? 2 : 4);
+    return '≈ ' + (usd(Math.abs(v)) || '$0');
   }
   /* o: { logo, label, amount, symbol, name, usd, tone, parties: [[label, html], …] } */
   function moveRow(o) {
@@ -543,7 +543,12 @@
       .then(function (d) { solUsd = d && d[WSOL] && d[WSOL].usdPrice || 0; return solUsd; })
       .catch(function () { return 0; });
   }
-  function usd(v) { return v ? S.fmt.money(v, 'USD', v >= 1 ? 2 : 4) : null; }
+  /* Dollar values read like Solscan: cents above $1 ($1,381.20), four
+     significant decimals below it. */
+  function usd(v) {
+    if (!v || !isFinite(v)) return null;
+    return v >= 1 ? '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : S.fmt.money(v, 'USD', 4);
+  }
   /* Look up up to 100 mints in two batches (Jupiter answers 50 at a time). */
   function solTokensMany(mints) {
     var a = mints.slice(0, 50), b = mints.slice(50, 100);
