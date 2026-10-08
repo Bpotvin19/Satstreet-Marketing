@@ -48,7 +48,7 @@
 
   var market = null;
   var selectedSymbol = 'BTC-USD';
-  var range = '1W', series = [];
+  var range = '1W', series = [], hoverIndex = null, chartGeom = null;
   var usePreview = new URLSearchParams(window.location.search).get('sample') === '1' || /\.chatgpt\.site$/.test(window.location.hostname);
   var ICONS = {
     'BTC-USD': '₿', 'ETH-USD': 'Ξ', 'GC=F': 'AU', 'CL=F': 'WTI',
@@ -129,9 +129,10 @@
       var m = move(q), active = q.symbol === selectedSymbol;
       var state = q.error ? 'Unavailable' : (q.marketState === 'REGULAR' ? 'Open' : (q.marketState || 'Reference'));
       var meta = metaFor(q.symbol);
-      return '<button type="button" class="asset-tile" data-symbol="' + esc(q.symbol) + '" aria-pressed="' + active + '" title="' + esc(q.source + ' · ' + state) + '">' +
+      return '<div class="asset-slot"><button type="button" class="asset-tile" data-symbol="' + esc(q.symbol) + '" aria-pressed="' + active + '" title="' + esc(q.source + ' · ' + state) + '">' +
         '<span class="tile-top"><span class="asset-id">' + assetIcon(q.symbol) + '<span><span class="tile-name">' + esc(q.label) + '</span><span class="tile-code">' + esc(meta.code) + '</span></span></span><span class="tile-change ' + m.c + '">' + m.t + '</span></span>' +
-        '<span class="tile-px">' + fmtPrice(q, q.price) + '</span><span class="tile-foot"><span></span>' + tileSpark(q.spark, m.c) + '</span></button>';
+        '<span class="tile-px">' + fmtPrice(q, q.price) + '</span><span class="tile-foot"><span></span>' + tileSpark(q.spark, m.c) + '</span></button>' +
+        '<button type="button" class="asset-remove" data-remove-symbol="' + esc(q.symbol) + '" aria-label="Remove ' + esc(q.label) + ' from your dashboard" title="Remove ' + esc(q.label) + '">&times;</button></div>';
     }).join('');
   }
   function summarise(d) {
@@ -245,15 +246,18 @@
     var ctx = cv.getContext('2d');
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, box.width, box.height);
+    chartGeom = null;
     if (series.length < 2) return;
 
     var pts = series.map(function (p) { return p.v; });
     var lo = Math.min.apply(null, pts), hi = Math.max.apply(null, pts);
-    var pad = (hi - lo) * 0.12 || 1;
+    var pad = (hi - lo) * 0.09 || Math.abs(hi) * .01 || 1;
     lo -= pad; hi += pad;
-    var W = box.width, H = box.height, L = 0, R = W - 56;
+    var W = box.width, H = box.height, L = 4, R = W - 64, top = 8, axisY = H - 24;
+    var volumeH = Math.min(62, H * .2), volumeTop = axisY - volumeH, plotBottom = volumeTop - 7;
     var x = function (i) { return L + (i / (pts.length - 1)) * (R - L); };
-    var y = function (v) { return H - 18 - ((v - lo) / (hi - lo)) * (H - 34); };
+    var y = function (v) { return plotBottom - ((v - lo) / (hi - lo)) * (plotBottom - top); };
+    chartGeom = { L:L, R:R, top:top, bottom:plotBottom, x:x, y:y, width:W, height:H };
 
     ctx.strokeStyle = '#eef2f8'; ctx.lineWidth = 1;
     ctx.fillStyle = '#98a5b4'; ctx.font = '11px ' + getComputedStyle(document.body).fontFamily;
@@ -263,18 +267,86 @@
       ctx.beginPath(); ctx.moveTo(L, yy); ctx.lineTo(R, yy); ctx.stroke();
       ctx.fillText(fmtAxis(selectedQuote(), v), R + 8, yy);
     }
+    var tickCount = W < 560 ? 4 : 6;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    for (var tick = 0; tick < tickCount; tick++) {
+      var ti = Math.round(tick * (series.length - 1) / (tickCount - 1));
+      ctx.fillText(fmtChartDate(series[ti].t), x(ti), H - 2);
+    }
     var chartColors = { 'BTC-USD':['#f17b00','rgba(241,123,0,.14)'], 'ETH-USD':['#5b6ee1','rgba(91,110,225,.14)'], 'GC=F':['#b4861e','rgba(180,134,30,.14)'], 'CL=F':['#294654','rgba(41,70,84,.13)'] };
     var palette = chartColors[selectedSymbol] || ['#0f8a78','rgba(15,138,120,.13)'];
+    var maxVolume = Math.max.apply(null, series.map(function (p) { return p.volume != null && isFinite(p.volume) ? p.volume : 0; }));
+    if (maxVolume > 0) {
+      var barW = Math.max(1, Math.min(5, (R - L) / series.length * .7));
+      ctx.fillStyle = 'rgba(112,130,145,.42)';
+      series.forEach(function (p, i) {
+        if (p.volume == null || !isFinite(p.volume) || p.volume <= 0) return;
+        var bh = p.volume / maxVolume * (volumeH - 6);
+        ctx.fillRect(x(i) - barW / 2, axisY - bh, barW, bh);
+      });
+    }
     var grad = ctx.createLinearGradient(0, 0, 0, H);
     grad.addColorStop(0, palette[1]);
     grad.addColorStop(1, 'rgba(255,255,255,0)');
     ctx.beginPath(); ctx.moveTo(x(0), y(pts[0]));
     pts.forEach(function (p, i) { ctx.lineTo(x(i), y(p)); });
-    ctx.lineTo(x(pts.length - 1), H); ctx.lineTo(x(0), H); ctx.closePath();
+    ctx.lineTo(x(pts.length - 1), plotBottom); ctx.lineTo(x(0), plotBottom); ctx.closePath();
     ctx.fillStyle = grad; ctx.fill();
     ctx.beginPath(); ctx.moveTo(x(0), y(pts[0]));
     pts.forEach(function (p, i) { ctx.lineTo(x(i), y(p)); });
     ctx.strokeStyle = palette[0]; ctx.lineWidth = 1.7; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.stroke();
+
+    var last = pts[pts.length - 1], lastY = y(last);
+    ctx.save(); ctx.setLineDash([4, 4]); ctx.strokeStyle = palette[0]; ctx.globalAlpha = .6;
+    ctx.beginPath(); ctx.moveTo(L, lastY); ctx.lineTo(R, lastY); ctx.stroke(); ctx.restore();
+    var priceText = fmtAxis(selectedQuote(), last), priceW = ctx.measureText(priceText).width + 12;
+    ctx.fillStyle = palette[0]; ctx.fillRect(R + 4, lastY - 10, Math.min(priceW, W - R - 4), 20);
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(priceText, R + 9, lastY);
+    var ret = (last / pts[0] - 1) * 100, retText = (ret >= 0 ? '+' : '') + ret.toFixed(2) + '%';
+    $('chart-return').textContent = retText + ' over ' + (range === 'ALL' ? 'all time' : range.toLowerCase());
+    $('chart-return').className = 'chart-return ' + (ret > 0 ? 'up' : ret < 0 ? 'down' : '');
+
+    if (hoverIndex !== null && series[hoverIndex]) {
+      var hp = series[hoverIndex], hx = x(hoverIndex), hy = y(hp.v);
+      ctx.save(); ctx.setLineDash([4, 3]); ctx.strokeStyle = '#637587'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(hx, top); ctx.lineTo(hx, axisY); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(L, hy); ctx.lineTo(R, hy); ctx.stroke(); ctx.restore();
+      ctx.beginPath(); ctx.arc(hx, hy, 4, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill();
+      ctx.strokeStyle = palette[0]; ctx.lineWidth = 2; ctx.stroke();
+    }
+  }
+
+  function fmtChartDate(timestamp) {
+    var d = new Date(timestamp);
+    if (range === '1D') return d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
+    if (range === '1W' || range === '1M' || range === '3M') return d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+    if (range === '1Y') return d.toLocaleDateString('en-US', { month:'short', year:'2-digit' });
+    return d.toLocaleDateString('en-US', { year:'numeric' });
+  }
+
+  function fmtVolume(value) {
+    if (!isFinite(value)) return '—';
+    if (value >= 1e9) return (value / 1e9).toFixed(2) + 'B';
+    if (value >= 1e6) return (value / 1e6).toFixed(2) + 'M';
+    if (value >= 1e3) return (value / 1e3).toFixed(1) + 'K';
+    return Math.round(value).toLocaleString('en-US');
+  }
+
+  function showChartTip(index, clientX, clientY) {
+    hoverIndex = Math.max(0, Math.min(series.length - 1, index));
+    var p = series[hoverIndex], q = selectedQuote(), tip = $('charttip');
+    var rows = [['Close', fmtPrice(q || {}, p.v)]];
+    if (p.o != null && isFinite(p.o)) rows.push(['Open', fmtPrice(q || {}, p.o)]);
+    if (p.h != null && isFinite(p.h)) rows.push(['High', fmtPrice(q || {}, p.h)]);
+    if (p.l != null && isFinite(p.l)) rows.push(['Low', fmtPrice(q || {}, p.l)]);
+    if (p.volume != null && isFinite(p.volume)) rows.push(['Volume', fmtVolume(p.volume)]);
+    tip.innerHTML = '<strong>' + new Date(p.t).toLocaleString('en-US', range === '1D' || range === '1W' ? { month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit' } : { month:'short', day:'numeric', year:'numeric' }) + '</strong>' + rows.map(function (row) { return '<div class="charttip-row"><span>' + row[0] + '</span><span>' + row[1] + '</span></div>'; }).join('');
+    tip.hidden = false;
+    var rect = $('chart').getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight;
+    var localX = clientX - rect.left, localY = clientY - rect.top;
+    tip.style.left = Math.max(6, Math.min(rect.width - tw - 6, localX + (localX > rect.width * .62 ? -tw - 16 : 16))) + 'px';
+    tip.style.top = Math.max(6, Math.min(rect.height - th - 6, localY - th / 2)) + 'px';
+    drawChart();
   }
 
   function fmtAxis(q, value) {
@@ -287,15 +359,16 @@
 
   function loadChart() {
     var msg = $('chartmsg'), requestSymbol = selectedSymbol;
-    series = []; msg.textContent = 'Loading chart…'; drawChart();
+    series = []; $('chart-return').textContent = '—'; $('chart-return').className = 'chart-return'; msg.textContent = 'Loading chart…'; drawChart();
     if (usePreview) {
-      var q = selectedQuote(), count = range === '1D' ? 78 : range === '1W' ? 84 : range === '1M' ? 90 : range === '3M' ? 90 : 120;
-      var days = range === '1D' ? 1 : range === '1W' ? 7 : range === '1M' ? 30 : range === '3M' ? 90 : 365;
+      var q = selectedQuote(), count = range === '1D' ? 78 : range === '1W' ? 84 : range === '1M' ? 90 : range === '3M' ? 90 : range === '1Y' ? 120 : range === '5Y' ? 180 : 240;
+      var days = range === '1D' ? 1 : range === '1W' ? 7 : range === '1M' ? 30 : range === '3M' ? 90 : range === '1Y' ? 365 : range === '5Y' ? 1825 : 3650;
       var end = Date.now(), start = end - days * 86400000, base = q ? q.price : 100;
       series = [];
       for (var i = 0; i < count; i++) {
         var progress = i / (count - 1), wave = Math.sin(i * .21 + Object.keys(ICONS).indexOf(selectedSymbol)) * .014 + Math.sin(i * .067) * .008;
-        series.push({ t: start + (end - start) * progress, v: base * (.94 + progress * .06 + wave) });
+        var close = base * (.94 + progress * .06 + wave), open = close * (1 + Math.sin(i * .9) * .003);
+        series.push({ t: start + (end - start) * progress, v: close, o: open, h: Math.max(open, close) * 1.004, l: Math.min(open, close) * .996, volume: base * (40 + Math.abs(Math.sin(i * .31)) * 120) });
       }
       msg.textContent = ''; drawChart(); return Promise.resolve();
     }
@@ -304,7 +377,9 @@
       .then(function (d) {
         if (requestSymbol !== selectedSymbol) return;
         if (!d || !Array.isArray(d.points) || d.points.length < 2) throw new Error('no data returned');
-        series = d.points.filter(function (p) { return p && isFinite(p.t) && isFinite(p.v); });
+        series = d.points.filter(function (p) { return p && isFinite(p.t) && isFinite(p.v); }).map(function (p) {
+          return { t:Number(p.t), v:Number(p.v), o:p.o == null ? null : Number(p.o), h:p.h == null ? null : Number(p.h), l:p.l == null ? null : Number(p.l), volume:p.volume == null ? null : Number(p.volume) };
+        });
         if (series.length < 2) throw new Error('not enough data');
         msg.textContent = ''; drawChart();
       })
@@ -317,15 +392,34 @@
   $('ranges').addEventListener('click', function (e) {
     var b = e.target.closest('button[data-r]');
     if (!b) return;
-    range = b.getAttribute('data-r');
+    range = b.getAttribute('data-r'); hoverIndex = null; $('charttip').hidden = true;
     Array.prototype.forEach.call(this.querySelectorAll('button'), function (o) { o.setAttribute('aria-pressed', String(o === b)); });
     loadChart();
   });
+  $('chart').addEventListener('mousemove', function (e) {
+    if (!chartGeom || series.length < 2) return;
+    var rect = this.getBoundingClientRect(), px = Math.max(chartGeom.L, Math.min(chartGeom.R, e.clientX - rect.left));
+    showChartTip(Math.round((px - chartGeom.L) / (chartGeom.R - chartGeom.L) * (series.length - 1)), e.clientX, e.clientY);
+  });
+  $('chart').addEventListener('mouseleave', function () { hoverIndex = null; $('charttip').hidden = true; drawChart(); });
+  $('chart').addEventListener('touchmove', function (e) {
+    if (!chartGeom || !e.touches[0]) return;
+    var touch = e.touches[0], rect = this.getBoundingClientRect(), px = Math.max(chartGeom.L, Math.min(chartGeom.R, touch.clientX - rect.left));
+    showChartTip(Math.round((px - chartGeom.L) / (chartGeom.R - chartGeom.L) * (series.length - 1)), touch.clientX, touch.clientY);
+  }, { passive:true });
   $('asset-grid').addEventListener('click', function (e) {
+    var remove = e.target.closest('button[data-remove-symbol]');
+    if (remove) {
+      var symbol = remove.getAttribute('data-remove-symbol');
+      if (P && P.remove && P.remove(symbol)) {
+        if (selectedSymbol === symbol) selectedSymbol = P.watchlist()[0].symbol;
+      }
+      return;
+    }
     var b = e.target.closest('button[data-symbol]');
     if (!b || b.getAttribute('data-symbol') === selectedSymbol) return;
     selectedSymbol = b.getAttribute('data-symbol');
-    Array.prototype.forEach.call(this.querySelectorAll('button'), function (o) { o.setAttribute('aria-pressed', String(o === b)); });
+    Array.prototype.forEach.call(this.querySelectorAll('button[data-symbol]'), function (o) { o.setAttribute('aria-pressed', String(o === b)); });
     renderFocus(selectedQuote());
     loadChart();
   });
