@@ -1,4 +1,4 @@
-/* Ethereum and Solana on the Explorer page.
+/* Ethereum, Solana and the XRP Ledger on the Explorer page.
 
    Works the same way as the Bitcoin explorer (explorer.js): search, a
    network overview with recent blocks, and block / transaction / address
@@ -112,6 +112,9 @@
      changes and holdings. */
   var ETH_LOGO = 'https://coin-images.coingecko.com/coins/images/279/small/ethereum.png';
   var SOL_LOGO = 'https://coin-images.coingecko.com/coins/images/4128/small/solana.png';
+  /* Resolved from this script's own URL so it also works inside the Webflow embed. */
+  var ASSET_BASE = (document.currentScript && document.currentScript.src || '').replace(/[^\/]*$/, '') || './assets/';
+  var XRP_LOGO = ASSET_BASE + 'coins/xrp.svg';
   function logo(url, label) {
     var words = String(label || '?').replace(/[^A-Za-z0-9 ]/g, ' ').trim().split(/\s+/);
     var ini = (words.length > 1 ? words[0][0] + words[1][0] : (words[0] || '?').slice(0, 2)).toUpperCase();
@@ -989,13 +992,424 @@
     return Promise.reject(new Error('Enter a Solana address, transaction signature or slot number.'));
   }
 
+  /* ═══════════════════════════ XRP Ledger ═══════════════════════════ */
+  /* Public XRP Ledger JSON-RPC (xrplcluster.com, xrpl.ws as fallback; both
+     allow browser requests, Ripple's own s1/s2 do not). Token names, icons
+     and XRP prices come from XRPL Meta; the XRP/USD rate from Coinbase. */
+  var XRPL = ['https://xrplcluster.com/', 'https://xrpl.ws/'];
+  var RIPPLE_EPOCH = 946684800;   // ledger times count seconds from 2000-01-01
+  var XR_ERR = {
+    txnNotFound: 'No transaction with this hash was found on the XRP Ledger.',
+    actNotFound: 'This address is not activated on the XRP Ledger. An address only exists once it has received its XRP reserve.',
+    actMalformed: 'That is not a valid XRP Ledger address.',
+    lgrNotFound: 'That ledger was not found. It may not be validated yet.',
+    invalidParams: 'That search could not be read as an XRP Ledger address, transaction or ledger.'
+  };
+  function xr(method, params, i) {
+    i = i || 0;
+    return withTimeout(fetch(XRPL[i], {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ method: method, params: [params || {}] })
+    }).then(function (r) { if (!r.ok) throw new Error(UNAVAILABLE); return r.json(); }), 12000)
+      .then(function (d) {
+        var res = d && d.result;
+        if (!res) throw new Error(UNAVAILABLE);
+        if (res.error) { var e = new Error(XR_ERR[res.error] || res.error_message || UNAVAILABLE); e.code = res.error; throw e; }
+        return res;
+      }, function (e) { if (i + 1 < XRPL.length) return xr(method, params, i + 1); throw e; });
+  }
+  function xrT(t) { return t === null || t === undefined ? null : Number(t) + RIPPLE_EPOCH; }
+  function xrp(drops, signed) {
+    if (drops === null || drops === undefined || !/^-?\d+$/.test(String(drops))) return '—';
+    return (signed && Number(drops) > 0 ? '+' : '') + units(String(drops), 6, 6) + ' XRP';
+  }
+  /* Currency codes are three letters or 40 hex characters; the hex form is
+     usually an ASCII name padded with zeros, or an AMM pool's LP token. */
+  function curName(c) {
+    if (!c) return '?';
+    if (c.length !== 40 || !/^[0-9A-F]+$/i.test(c)) return c;
+    if (/^03/.test(c)) return 'LP token';
+    var s = '';
+    for (var i = 0; i < 40; i += 2) { var n = parseInt(c.substr(i, 2), 16); if (n) s += String.fromCharCode(n); }
+    return /^[\x20-\x7e]+$/.test(s) ? s.trim() : short(c, 4, 4);
+  }
+  function hexText(h) {
+    try { return decodeURIComponent(String(h).replace(/(..)/g, '%$1')); } catch (e) { return null; }
+  }
+  /* An Amount is drops of XRP as a string, or { currency, issuer, value }. */
+  function xrAmt(a) {
+    if (a === null || a === undefined) return null;
+    if (typeof a === 'string') return { xrp: true, cur: 'XRP', n: Number(a) / 1e6, text: units(a, 6, 6) };
+    var n = Number(a.value);
+    return { xrp: false, cur: curName(a.currency), code: a.currency, issuer: a.issuer, n: n,
+      text: isFinite(n) ? n.toLocaleString('en-US', { maximumFractionDigits: Math.abs(n) >= 1 ? 6 : 10 }) : String(a.value) };
+  }
+  function amtText(a) { a = typeof a === 'object' && a && 'n' in a ? a : xrAmt(a); return a ? a.text + ' ' + a.cur : '—'; }
+  function xrAddr(addr, cls) {
+    if (!addr) return '—';
+    return link('xrp', 'address', addr, short(addr, 6, 6), cls || 'chain-addr');
+  }
+  function txType(t) { return String(t || 'Transaction').replace(/([a-z])([A-Z])/g, '$1 $2'); }
+
+  var xrpUsdP = null;
+  function xrpUsd() {
+    if (!xrpUsdP) xrpUsdP = withTimeout(fetch('https://api.coinbase.com/v2/prices/XRP-USD/spot').then(function (r) { return r.json(); }), 6000)
+      .then(function (d) { var v = Number(d && d.data && d.data.amount); return isFinite(v) && v > 0 ? v : null; })
+      .catch(function () { xrpUsdP = null; return null; });
+    return xrpUsdP;
+  }
+  var xrTok = {};
+  function tokenMeta(code, issuer) {
+    var k = code + ':' + issuer;
+    if (!xrTok[k]) xrTok[k] = withTimeout(fetch('https://s1.xrplmeta.org/token/' + encodeURIComponent(k)).then(function (r) {
+      if (!r.ok) throw new Error('no meta'); return r.json();
+    }), 6000).then(function (d) {
+      var t = d && d.meta && d.meta.token || {}, iss = d && d.meta && d.meta.issuer || {};
+      var px = Number(d && d.metrics && d.metrics.price);
+      return { name: t.name || null, icon: t.icon || null, issuerName: iss.name || null, priceXrp: isFinite(px) && px > 0 ? px : null };
+    }).catch(function () { return {}; });
+    return xrTok[k];
+  }
+  function tokenMetas(list) {
+    var seen = {}, keys = [];
+    list.forEach(function (t) { var k = t.code + ':' + t.issuer; if (t.code && t.issuer && !seen[k]) { seen[k] = 1; keys.push(t); } });
+    return Promise.all(keys.slice(0, 24).map(function (t) { return tokenMeta(t.code, t.issuer); })).then(function (r) {
+      var out = {};
+      keys.slice(0, 24).forEach(function (t, i) { out[t.code + ':' + t.issuer] = r[i]; });
+      return out;
+    });
+  }
+
+  /* ── overview ── */
+  function xrpOverview() {
+    $('xrp-metrics').innerHTML = [1, 2, 3, 4].map(function () { return '<div class="metric">' + S.skeleton(2, 16) + '</div>'; }).join('');
+    $('xrp-blocks').innerHTML = '<div style="padding:20px">' + S.skeleton(6, 13) + '</div>';
+    xr('server_info').then(function (si) {
+      var vl = si.info && si.info.validated_ledger;
+      if (!vl) throw new Error(UNAVAILABLE);
+      var seqs = [0, 1, 2, 3, 4, 5].map(function (i) { return vl.seq - i; });
+      return Promise.all(seqs.map(function (s) {
+        return xr('ledger', { ledger_index: s, transactions: true, expand: false }).then(function (r) { return r.ledger; }).catch(function () { return null; });
+      })).then(function (ls) { return { info: si.info, vl: vl, ledgers: ls }; });
+    }).then(function (d) {
+      var ls = d.ledgers.filter(Boolean), txs = 0;
+      ls.slice(0, -1).forEach(function (l) { txs += (l.transactions || []).length; });
+      var span = ls.length > 1 ? Number(ls[0].close_time) - Number(ls[ls.length - 1].close_time) : 0;
+      var load = Number(d.info.load_factor) || 1;
+      $('xrp-metrics').innerHTML =
+        metric('Validated ledger', num(d.vl.seq), 'closes every 3–5 seconds') +
+        metric('Throughput', span > 0 ? (txs / span).toFixed(1) + ' TPS' : '—', 'over the last ' + (ls.length - 1) + ' ledgers') +
+        metric('Base fee', (d.vl.base_fee_xrp != null ? d.vl.base_fee_xrp : 0.00001) + ' XRP', load > 1 ? 'load factor ×' + load : 'per transaction, burned') +
+        metric('Account reserve', (d.vl.reserve_base_xrp != null ? d.vl.reserve_base_xrp : 1) + ' XRP', '+' + (d.vl.reserve_inc_xrp != null ? d.vl.reserve_inc_xrp : 0.2) + ' XRP per owned object');
+      $('xrp-blocks').innerHTML = '<div class="explorer-tablewrap"><table class="explorer-table"><caption class="sr">Latest XRP ledgers</caption>' +
+        '<thead><tr><th>Ledger</th><th>Age</th><th>Transactions</th><th>XRP in existence</th><th>Ledger hash</th></tr></thead><tbody>' +
+        ls.map(function (l) {
+          var idx = Number(l.ledger_index);
+          return '<tr data-xhref="./explorer.html?chain=xrp&view=block&id=' + idx + '">' +
+            '<td data-label="Ledger">' + link('xrp', 'block', idx, num(idx), 'block-height') + '</td>' +
+            '<td data-label="Age">' + esc(age(xrT(l.close_time))) + '</td>' +
+            '<td data-label="Transactions">' + num((l.transactions || []).length) + '</td>' +
+            '<td data-label="XRP in existence">' + esc(units(l.total_coins, 6, 0)) + '</td>' +
+            '<td data-label="Ledger hash"><span class="chain-hash">' + esc(short(l.ledger_hash, 6, 6)) + '</span></td></tr>';
+        }).join('') + '</tbody></table></div>';
+    }).catch(function (e) {
+      $('xrp-metrics').innerHTML = '<div class="card" style="grid-column:1/-1">' +
+        S.errorState('Unable to load XRP Ledger data.', e.message, 'retry-xrp') + '</div>';
+      $('xrp-blocks').innerHTML = '';
+    });
+  }
+
+  /* ── transaction lists ── */
+  var xrpPager = null;   // { kind: 'block', txs, shown } | { kind: 'address', addr, marker }
+  function xrTxRows(list, withAge) {
+    if (!list.length) return '<div style="padding:18px">' + S.emptyState('No transactions were returned.') + '</div>';
+    return list.map(function (t) {
+      var ok = t.meta && t.meta.TransactionResult === 'tesSUCCESS';
+      return '<div class="transaction-row">' + link('xrp', 'tx', t.hash, short(t.hash, 14, 10)) +
+        '<div class="tx-stat"><span>Type</span><b>' + esc(txType(t.TransactionType)) + '</b></div>' +
+        '<div class="tx-stat"><span>Account</span><b>' + xrAddr(t.Account) + '</b></div>' +
+        (withAge ? '<div class="tx-stat"><span>Age</span><b>' + esc(age(xrT(t.date))) + '</b></div>'
+          : '<div class="tx-stat"><span>Result</span><b class="' + (ok ? '' : 'amount-negative') + '">' + (ok ? 'Success' : 'Failed') + '</b></div>') +
+        '</div>';
+    }).join('');
+  }
+  function xrpMore() {
+    if (!xrpPager) return;
+    var btn = $('xrp-more');
+    if (xrpPager.kind === 'block') {
+      var next = xrpPager.txs.slice(xrpPager.shown, xrpPager.shown + 25);
+      xrpPager.shown += next.length;
+      $('xrp-txlist').insertAdjacentHTML('beforeend', xrTxRows(next));
+      if (xrpPager.shown >= xrpPager.txs.length && btn) btn.parentNode.remove();
+      return;
+    }
+    if (btn) { btn.disabled = true; btn.textContent = 'Loading…'; }
+    xr('account_tx', { account: xrpPager.addr, limit: 25, marker: xrpPager.marker }).then(function (r) {
+      var list = (r.transactions || []).map(function (x) { var t = x.tx || x.tx_json || {}; t.meta = x.meta; return t; });
+      $('xrp-txlist').insertAdjacentHTML('beforeend', xrTxRows(list, true));
+      xrpPager.marker = r.marker || null;
+      if (btn) { if (r.marker) { btn.disabled = false; btn.textContent = 'Show more'; } else btn.parentNode.remove(); }
+    }).catch(function () { if (btn) { btn.disabled = false; btn.textContent = 'Try again'; } });
+  }
+
+  /* ── ledger ── */
+  function xrpBlock(id) {
+    setLoading('xrp', 'Loading ledger…');
+    var q = /^\d+$/.test(String(id)) ? { ledger_index: Number(id) } : { ledger_hash: String(id).toUpperCase() };
+    q.transactions = true; q.expand = true;
+    xr('ledger', q).then(function (r) {
+      var l = r.ledger, idx = Number(l.ledger_index);
+      var txs = (l.transactions || []).map(function (t) { t.meta = t.metaData || t.meta; return t; })
+        .sort(function (a, b) { return (a.meta ? a.meta.TransactionIndex : 0) - (b.meta ? b.meta.TransactionIndex : 0); });
+      xrpPager = { kind: 'block', txs: txs, shown: Math.min(25, txs.length) };
+      var prev = link('xrp', 'block', idx - 1, '← Previous Ledger', 'btn ghost small');
+      var fresh = Date.now() / 1000 - xrT(l.close_time) < 12;
+      var next = fresh ? '' : link('xrp', 'block', idx + 1, 'Next Ledger →', 'btn ghost small');
+      var counts = {};
+      txs.forEach(function (t) { counts[t.TransactionType] = (counts[t.TransactionType] || 0) + 1; });
+      var mix = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; }).slice(0, 4)
+        .map(function (k) { return num(counts[k]) + ' ' + txType(k); }).join(' · ');
+      var html = '<div class="detail-shell"><div class="detail-topline">' + backLink('xrp') + '<div class="block-nav">' + prev + next + '</div></div>' +
+        '<section class="card detail-card"><header><div><p class="eyebrow">XRP Ledger</p><h2>Ledger ' + num(idx) + '</h2></div>' +
+        badge(true, 'Validated') + '</header><div class="detail-grid">' +
+        field('Ledger index', num(idx)) + field('Ledger hash', hashLine(l.ledger_hash)) +
+        field('Close time', esc(when(xrT(l.close_time)))) + field('Age', esc(age(xrT(l.close_time)))) +
+        field('Transactions', num(txs.length)) + field('Mix', esc(mix || '—')) +
+        field('XRP in existence', esc(xrp(l.total_coins))) + field('Close time resolution', num(l.close_time_resolution) + ' seconds') +
+        field('Parent ledger', link('xrp', 'block', idx - 1, num(idx - 1))) + field('Parent hash', hashLine(l.parent_hash)) +
+        '</div><details class="technical"><summary>Technical details</summary><dl>' +
+        '<dt>Account state hash</dt><dd>' + esc(l.account_hash || '—') + '</dd>' +
+        '<dt>Transaction tree hash</dt><dd>' + esc(l.transaction_hash || '—') + '</dd>' +
+        '</dl></details></section>' +
+        '<section class="card subcard"><header><div><p class="eyebrow">Included activity</p><h2>Transactions</h2></div>' +
+        '<span class="section-meta">' + num(txs.length) + ' in this ledger, in execution order</span></header>' +
+        '<div class="transaction-list" id="xrp-txlist">' + xrTxRows(txs.slice(0, 25)) + '</div>' +
+        (txs.length > 25 ? moreButton('xrp-more') : '') + '</section></div>';
+      showDetail('xrp', html, 'Ledger ' + idx);
+    }).catch(function (e) { setError('xrp', 'Ledger not found.', e.message); });
+  }
+
+  /* ── balance changes, read from the ledger objects a transaction touched ── */
+  function xrChanges(meta) {
+    var out = [];
+    (meta && meta.AffectedNodes || []).forEach(function (w) {
+      var kind = Object.keys(w)[0], n = w[kind];
+      var fin = n.FinalFields || n.NewFields || {}, prev = n.PreviousFields || {};
+      if (n.LedgerEntryType === 'AccountRoot') {
+        var after = kind === 'DeletedNode' ? '0' : fin.Balance, before = kind === 'CreatedNode' ? '0' : (prev.Balance !== undefined ? prev.Balance : null);
+        if (kind === 'DeletedNode') before = prev.Balance !== undefined ? prev.Balance : fin.Balance;
+        if (before === null || after === undefined) return;
+        var d = BigInt(after) - BigInt(before);
+        if (d !== BigInt(0)) out.push({ xrp: true, account: fin.Account, d: d });
+      } else if (n.LedgerEntryType === 'RippleState') {
+        var fb = Number(fin.Balance && fin.Balance.value || 0);
+        var pb = kind === 'CreatedNode' ? 0 : Number(prev.Balance ? prev.Balance.value : fb);
+        if (kind === 'DeletedNode' && prev.Balance) { pb = Number(prev.Balance.value); fb = 0; }
+        var dt = fb - pb;
+        if (!dt || !fin.LowLimit || !fin.HighLimit) return;
+        /* Positive balance: the low account holds tokens the high account
+           issued. Report the holder's side. */
+        var lowHolds = (fb || pb) > 0;
+        out.push({
+          xrp: false, code: fin.Balance.currency, cur: curName(fin.Balance.currency),
+          account: lowHolds ? fin.LowLimit.issuer : fin.HighLimit.issuer,
+          issuer: lowHolds ? fin.HighLimit.issuer : fin.LowLimit.issuer,
+          d: lowHolds ? dt : -dt
+        });
+      }
+    });
+    return out;
+  }
+
+  /* ── transaction ── */
+  function xrpTx(hash) {
+    setLoading('xrp', 'Loading transaction…');
+    xr('tx', { transaction: String(hash).toUpperCase() }).then(function (t) {
+      var tj = t.tx_json || t, meta = t.meta || t.metaData || {};
+      var ok = meta.TransactionResult === 'tesSUCCESS', code = meta.TransactionResult || '—';
+      var date = xrT(t.date || tj.date), changes = xrChanges(meta);
+      var toks = changes.filter(function (c) { return !c.xrp; });
+      var ga = xrAmt(tj.TakerGets), pa = xrAmt(tj.TakerPays), am = xrAmt(tj.Amount || tj.DeliverMax);
+      [ga, pa, am, xrAmt(meta.delivered_amount), xrAmt(tj.LimitAmount)].forEach(function (a) { if (a && !a.xrp) toks.push(a); });
+      return Promise.all([xrpUsd(), tokenMetas(toks)]).then(function (px) {
+        var usdRate = px[0], metas = px[1];
+        var tokName = function (code, issuer) { var m = metas[code + ':' + issuer]; return m && m.name; };
+        var tokUsd = function (code, issuer, n) { var m = metas[code + ':' + issuer]; return m && m.priceXrp && usdRate ? Math.abs(n) * m.priceXrp * usdRate : null; };
+        var A = function (a) { return a ? '<b>' + esc(amtText(a)) + '</b>' : '—'; };
+
+        /* One plain-English line for what the transaction did. */
+        var type = tj.TransactionType, acts = [];
+        if (type === 'Payment') {
+          var del = xrAmt(meta.delivered_amount && meta.delivered_amount !== 'unavailable' ? meta.delivered_amount : (tj.Amount || tj.DeliverMax));
+          if (tj.Account === tj.Destination) {
+            var spent = changes.filter(function (c) { return c.account === tj.Account && (c.xrp ? c.d < BigInt(0) : c.d < 0); })
+              .filter(function (c) { return !(c.xrp && del && del.xrp); })[0];
+            acts.push('Converted ' + (spent ? '<b>' + esc((spent.xrp ? units((-spent.d).toString(), 6, 6) : Math.abs(spent.d).toLocaleString('en-US', { maximumFractionDigits: 6 })) + ' ' + (spent.xrp ? 'XRP' : spent.cur)) + '</b> into ' : 'funds into ') + A(del) + ' through the DEX');
+          } else {
+            acts.push('Sent ' + A(del) + ' from ' + xrAddr(tj.Account) + ' to ' + xrAddr(tj.Destination) +
+              (tj.DestinationTag !== undefined ? ' (destination tag ' + esc(String(tj.DestinationTag)) + ')' : ''));
+          }
+        } else if (type === 'OfferCreate') {
+          var filled = (meta.AffectedNodes || []).some(function (w) { var k = Object.keys(w)[0]; return w[k].LedgerEntryType === 'Offer' && w[k].FinalFields && w[k].FinalFields.Account !== tj.Account; });
+          acts.push('Placed a DEX order to sell ' + A(ga) + ' for ' + A(pa) + (filled ? ', filled at least in part against existing orders' : ''));
+        } else if (type === 'OfferCancel') {
+          acts.push('Cancelled DEX order #' + esc(String(tj.OfferSequence)));
+        } else if (type === 'TrustSet') {
+          var la = xrAmt(tj.LimitAmount);
+          acts.push((la && la.n === 0 ? 'Removed the trust line for ' : 'Opened a trust line for ') + '<b>' + esc(la ? la.cur : '?') + '</b> issued by ' + xrAddr(la && la.issuer) +
+            (la && la.n ? ' (limit ' + esc(la.text) + ')' : ''));
+        } else if (type === 'AccountSet') {
+          acts.push('Updated settings on ' + xrAddr(tj.Account));
+        } else if (/^AMM/.test(type)) {
+          acts.push(esc(txType(type)) + ' on an automated market maker pool' + (am ? ': ' + A(am) : ''));
+        } else if (type === 'EscrowCreate') {
+          acts.push('Locked ' + A(am) + ' in escrow for ' + xrAddr(tj.Destination));
+        } else {
+          acts.push(esc(txType(type)) + ' by ' + xrAddr(tj.Account));
+        }
+        if (!ok) acts.push('Did not succeed: result <b>' + esc(code) + '</b>' + (/^tec/.test(code) ? '; the fee was still charged' : ''));
+
+        var feeN = Number(tj.Fee) / 1e6;
+        var moves = changes.map(function (c) {
+          if (c.xrp) {
+            var abs = c.d < BigInt(0) ? -c.d : c.d;
+            return moveRow({ logo: XRP_LOGO, label: 'XRP', amount: (c.d > BigInt(0) ? '+' : '−') + units(abs.toString(), 6, 6), symbol: 'XRP', name: 'XRP',
+              usd: usdRate ? Number(abs) / 1e6 * usdRate : null, tone: c.d > BigInt(0) ? 'amount-positive' : 'amount-negative',
+              parties: [['Account', xrAddr(c.account)]] });
+          }
+          var m = metas[c.code + ':' + c.issuer] || {};
+          return moveRow({ logo: m.icon, label: m.name || c.cur, amount: (c.d > 0 ? '+' : '−') + Math.abs(c.d).toLocaleString('en-US', { maximumFractionDigits: 6 }),
+            symbol: esc(c.cur), name: m.name || ('Issued by ' + short(c.issuer, 5, 4)), usd: tokUsd(c.code, c.issuer, c.d),
+            tone: c.d > 0 ? 'amount-positive' : 'amount-negative', parties: [['Holder', xrAddr(c.account)], ['Issuer', xrAddr(c.issuer)]] });
+        });
+        var memos = (tj.Memos || []).map(function (m) { var d = m.Memo && m.Memo.MemoData && hexText(m.Memo.MemoData); return d && /^[\s\S]{1,300}$/.test(d) && !/[\x00-\x08]/.test(d) ? d : null; }).filter(Boolean);
+        var idx = Number(t.ledger_index || tj.ledger_index);
+
+        var html = '<div class="detail-shell"><div class="detail-topline">' + backLink('xrp') + '</div>' +
+          '<section class="card detail-card"><header><div><p class="eyebrow">XRP Ledger transaction</p><h2>' + esc(txType(type)) + '</h2></div>' +
+          badge(ok, ok ? 'Success' : 'Failed') + '</header>' +
+          '<div class="tx-summary"><span class="tx-summary-k">Summary</span><ul>' + acts.map(function (a) { return '<li>' + a + '</li>'; }).join('') + '</ul></div>' +
+          '<div class="detail-grid">' +
+          field('Transaction hash', hashLine(tj.hash || t.hash)) + field('Result', esc(ok ? 'Success' : 'Failed') + ' <span class="muted">(' + esc(code) + ')</span>') +
+          field('Ledger', isFinite(idx) ? link('xrp', 'block', idx, num(idx)) : '—') + field('Timestamp', esc(when(date)) + ' · ' + esc(age(date))) +
+          field('Type', esc(txType(type))) + field('Account', xrAddr(tj.Account)) +
+          (tj.Destination ? field('Destination', xrAddr(tj.Destination)) : '') +
+          (tj.DestinationTag !== undefined ? field('Destination tag', esc(String(tj.DestinationTag))) : '') +
+          (type === 'Payment' ? field('Delivered', A(xrAmt(meta.delivered_amount && meta.delivered_amount !== 'unavailable' ? meta.delivered_amount : tj.Amount))) : '') +
+          (type === 'OfferCreate' ? field('Selling', A(ga)) + field('Buying', A(pa)) : '') +
+          field('Fee', esc(xrp(tj.Fee)) + (usdRate ? ' <span class="muted">(' + esc(feeN * usdRate < 0.0001 ? '<$0.0001' : usd(feeN * usdRate)) + ')</span>' : '')) +
+          field('Sequence', tj.Sequence ? num(tj.Sequence) : (tj.TicketSequence ? 'Ticket ' + num(tj.TicketSequence) : '—')) +
+          (memos.length ? field('Memo', memos.map(esc).join('<br>')) : '') +
+          '</div><details class="technical"><summary>Technical details</summary><dl>' +
+          '<dt>Result code</dt><dd>' + esc(code) + '</dd>' +
+          '<dt>Position in ledger</dt><dd>' + esc(meta.TransactionIndex !== undefined ? String(meta.TransactionIndex) : '—') + '</dd>' +
+          '<dt>Last ledger sequence</dt><dd>' + esc(tj.LastLedgerSequence !== undefined ? String(tj.LastLedgerSequence) : '—') + '</dd>' +
+          '<dt>Flags</dt><dd>' + esc(tj.Flags !== undefined ? String(tj.Flags) : '0') + '</dd>' +
+          '<dt>Signing public key</dt><dd>' + esc(tj.SigningPubKey || '—') + '</dd>' +
+          '<dt>Ledger objects touched</dt><dd>' + num((meta.AffectedNodes || []).length) + '</dd>' +
+          '</dl></details></section>' +
+          (moves.length ? moveSection('Balance changes', 'Assets moved', num(moves.length) + (moves.length === 1 ? ' change' : ' changes') + ' · fees included', moves) : '') +
+          '<section class="card education ' + (ok ? '' : 'pending-card') + '">' +
+          (ok ? '<h2>Transaction validated</h2><p>Included in validated ledger ' + num(idx) + '. The XRP Ledger closes a new ledger every three to five seconds, and a validated ledger is final: it cannot be reorganised.</p>'
+              : '<h2>Transaction failed</h2><p>This transaction was included in ledger ' + num(idx) + ' with result ' + esc(code) + ', so it did not do what it asked. ' + (/^tec/.test(code) ? 'The transaction fee was still burned.' : '') + '</p>') +
+          '</section></div>';
+        showDetail('xrp', html, short(tj.hash || hash, 10, 8));
+      });
+    }).catch(function (e) { setError('xrp', 'Transaction not found.', e.message); });
+  }
+
+  /* ── address ── */
+  function xrpAddress(addr) {
+    setLoading('xrp', 'Loading address…');
+    Promise.all([
+      xr('account_info', { account: addr, ledger_index: 'validated', signer_lists: false }).catch(function (e) { if (e.code === 'actNotFound') return null; throw e; }),
+      xr('account_tx', { account: addr, limit: 25 }).catch(function () { return { transactions: [] }; }),
+      xr('account_lines', { account: addr, ledger_index: 'validated', limit: 400 }).catch(function () { return { lines: [] }; }),
+      xr('server_info').catch(function () { return null; })
+    ]).then(function (r) {
+      var info = r[0], hist = r[1], lines = r[2].lines || [], vl = r[3] && r[3].info && r[3].info.validated_ledger;
+      if (!info) throw new Error(XR_ERR.actNotFound);
+      var ad = info.account_data, flags = info.account_flags || {};
+      var base = vl ? vl.reserve_base_xrp : 1, inc = vl ? vl.reserve_inc_xrp : 0.2;
+      var reserve = base + inc * (ad.OwnerCount || 0), bal = Number(ad.Balance) / 1e6;
+      var issued = lines.filter(function (l) { return Number(l.balance) < 0; }).length;
+      var kind = issued > 0 && issued >= lines.length / 2 ? 'Token issuer' : 'Account';
+      var list = (hist.transactions || []).map(function (x) { var t = x.tx || x.tx_json || {}; t.meta = x.meta; if (!t.hash && x.hash) t.hash = x.hash; return t; });
+      xrpPager = { kind: 'address', addr: addr, marker: hist.marker || null };
+      var domain = ad.Domain ? hexText(ad.Domain) : null;
+      var html = '<div class="detail-shell"><div class="detail-topline">' + backLink('xrp') + '</div>' +
+        '<section class="card detail-card"><header><div><p class="eyebrow">XRP Ledger ' + esc(kind.toLowerCase()) + '</p><h2>' + esc(domain || 'Address') + '</h2></div></header><div class="detail-grid">' +
+        field('Address', hashLine(addr)) + field('Type', esc(kind)) +
+        field('XRP balance', esc(xrp(ad.Balance)) + '<span class="muted" id="xrp-bal-usd"></span>') +
+        field('Reserved', esc(reserve.toLocaleString('en-US', { maximumFractionDigits: 6 }) + ' XRP') + ' <span class="muted">(' + base + ' base + ' + inc + ' × ' + num(ad.OwnerCount || 0) + ' objects)</span>') +
+        field('Available', esc(Math.max(0, bal - reserve).toLocaleString('en-US', { maximumFractionDigits: 6 }) + ' XRP')) +
+        field('Trust lines', num(lines.length)) +
+        field('Destination tag', flags.requireDestinationTag ? 'Required' : 'Not required') +
+        field('Sequence', num(ad.Sequence)) +
+        (domain ? field('Domain', esc(domain)) : '') +
+        (flags.disableMasterKey ? field('Master key', 'Disabled') : '') +
+        '</div></section><p class="srcnote privacy-note">XRP Ledger addresses and transactions are public blockchain data. Searching an address does not identify its owner.</p>' +
+        '<section class="card subcard" id="xrp-holdings" hidden></section>' +
+        '<section class="card subcard"><header><div><p class="eyebrow">Recent activity</p><h2>Transaction history</h2></div>' +
+        '<span class="section-meta">Most recent first</span></header>' +
+        '<div class="transaction-list" id="xrp-txlist">' + xrTxRows(list, true) + '</div>' +
+        (hist.marker ? moreButton('xrp-more') : '') + '</section></div>';
+      showDetail('xrp', html, short(addr, 12, 8));
+      xrpUsd().then(function (p) { var el = $('xrp-bal-usd'); if (el && p) el.textContent = ' (' + usd(bal * p) + ')'; });
+      xrpHoldings(lines, bal);
+    }).catch(function (e) { setError('xrp', 'Address not found.', e.message); });
+  }
+  /* Tokens the account holds (positive trust-line balances), valued from
+     XRPL Meta's XRP price where it has one. */
+  function xrpHoldings(lines, xrpBal) {
+    var held = lines.filter(function (l) { return Number(l.balance) > 0; })
+      .map(function (l) { return { code: l.currency, issuer: l.account, cur: curName(l.currency), n: Number(l.balance) }; });
+    if (!held.length) return;
+    Promise.all([xrpUsd(), tokenMetas(held)]).then(function (r) {
+      var rate = r[0], metas = r[1];
+      held.forEach(function (h) { var m = metas[h.code + ':' + h.issuer] || {}; h.meta = m; h.usd = m.priceXrp && rate ? h.n * m.priceXrp * rate : null; });
+      held.sort(function (a, b) { return (b.usd || 0) - (a.usd || 0) || b.n - a.n; });
+      var total = held.reduce(function (s, h) { return s + (h.usd || 0); }, rate ? xrpBal * rate : 0);
+      var el = $('xrp-holdings');
+      if (!el) return;
+      var shown = held.slice(0, 20);
+      var tmp = document.createElement('div');
+      tmp.innerHTML = moveSection('Portfolio', 'Token holdings',
+        held.length + ' token' + (held.length === 1 ? '' : 's') + (total ? ' · ' + usd(total) + ' total incl. XRP' : ''),
+        shown.map(function (h) {
+          return moveRow({ logo: h.meta.icon, label: h.meta.name || h.cur,
+            amount: h.n.toLocaleString('en-US', { maximumFractionDigits: h.n >= 1 ? 4 : 8 }), symbol: esc(h.cur),
+            name: h.meta.name || null, parties: [['Issuer', xrAddr(h.issuer)]],
+            right: '<b>' + (h.usd ? esc(usd(h.usd)) : '—') + '</b><small>value</small>' });
+        }).concat(held.length > shown.length ? ['<p class="moves-more">' + (held.length - shown.length) + ' more not shown</p>'] : []));
+      el.innerHTML = tmp.firstChild.innerHTML;
+      el.hidden = false;
+    }).catch(function () {});
+  }
+
+  var XR_ADDR = /^r[1-9A-HJ-NP-Za-km-z]{24,34}$/;
+  function xrpSearch(q) {
+    if (/^\d+$/.test(q)) return Promise.resolve({ view: 'block', id: q });
+    if (XR_ADDR.test(q)) return Promise.resolve({ view: 'address', id: q });
+    if (/^[0-9A-Fa-f]{64}$/.test(q)) {
+      return xr('tx', { transaction: q.toUpperCase() }).then(function () { return { view: 'tx', id: q.toUpperCase() }; }, function (e) {
+        if (e.code !== 'txnNotFound') throw e;
+        return xr('ledger', { ledger_hash: q.toUpperCase() }).then(function () { return { view: 'block', id: q.toUpperCase() }; }, function () {
+          throw new Error('No transaction or ledger with this hash was found on the XRP Ledger.');
+        });
+      });
+    }
+    return Promise.reject(new Error('Enter an XRP Ledger address (starting with r), a transaction hash or a ledger number.'));
+  }
+
   /* ═══════════════════════════ routing ══════════════════════════════ */
   var VIEWS = {
     eth: { block: ethBlock, tx: ethTx, address: ethAddress, overview: ethOverview, search: ethSearch },
-    sol: { block: solBlock, tx: solTx, address: solAddress, overview: solOverview, search: solSearch }
+    sol: { block: solBlock, tx: solTx, address: solAddress, overview: solOverview, search: solSearch },
+    xrp: { block: xrpBlock, tx: xrpTx, address: xrpAddress, overview: xrpOverview, search: xrpSearch }
   };
-  var CHAINS = ['btc', 'eth', 'sol'];
-  var TITLES = { btc: 'Bitcoin Explorer', eth: 'Ethereum Explorer', sol: 'Solana Explorer' };
+  var CHAINS = ['btc', 'eth', 'sol', 'xrp'];
+  var TITLES = { btc: 'Bitcoin Explorer', eth: 'Ethereum Explorer', sol: 'Solana Explorer', xrp: 'XRP Ledger Explorer' };
   var overviewLoaded = {};
 
   function setTab(chain) {
@@ -1029,7 +1443,7 @@
   function fromLocation() {
     var p = new URLSearchParams(location.search);
     var chain = p.get('chain');
-    if (chain === 'eth' || chain === 'sol') route(chain, p.get('view'), p.get('id'), false);
+    if (chain === 'eth' || chain === 'sol' || chain === 'xrp') route(chain, p.get('view'), p.get('id'), false);
     else setTab('btc');
   }
 
@@ -1050,7 +1464,7 @@
   });
 
   /* search boxes */
-  ['eth', 'sol'].forEach(function (chain) {
+  ['eth', 'sol', 'xrp'].forEach(function (chain) {
     $(chain + '-search-form').addEventListener('submit', function (e) {
       e.preventDefault();
       var input = $(chain + '-query'), btn = $(chain + '-search-button'), err = $(chain + '-search-error');
@@ -1084,11 +1498,14 @@
     }
     if (e.target.id === 'eth-more') ethMore();
     if (e.target.id === 'sol-more') solMore();
+    if (e.target.id === 'xrp-more') xrpMore();
     if (e.target.id === 'retry-eth') ethOverview();
     if (e.target.id === 'retry-sol') solOverview();
+    if (e.target.id === 'retry-xrp') xrpOverview();
   });
   $('eth-refresh').addEventListener('click', ethOverview);
   $('sol-refresh').addEventListener('click', solOverview);
+  $('xrp-refresh').addEventListener('click', xrpOverview);
 
   window.addEventListener('popstate', fromLocation);
   fromLocation();

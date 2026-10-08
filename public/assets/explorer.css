@@ -152,11 +152,9 @@
 .chain-tabs button { display:flex; align-items:center; gap:9px; font:inherit; font-weight:600; color:var(--muted); background:#fff; border:1px solid var(--border); border-radius:999px; padding:8px 15px 8px 8px; cursor:pointer; white-space:nowrap; box-shadow:0 2px 10px rgba(13,27,46,.035); }
 .chain-tabs button:hover { color:var(--ink); }
 .chain-tabs button[aria-selected="true"] { color:#fff; background:var(--navy-2, #0d1b2e); border-color:var(--navy-2, #0d1b2e); box-shadow:0 8px 20px rgba(13,27,46,.13); }
-.chain-dot { width:24px; height:24px; display:grid; place-items:center; flex:none; border-radius:50%; color:#fff; font-size:13px; font-weight:700; line-height:1; }
-.chain-dot.btc { background:#f7931a; }
-.chain-dot.eth { background:#5968a8; }
-.chain-dot.sol { background:linear-gradient(135deg,#9945ff,#14f195); }
-.chain-dot svg { width:14px; height:14px; fill:#fff; display:block; }
+.chain-dot { width:24px; height:24px; display:block; flex:none; border-radius:50%; overflow:hidden; }
+.chain-dot svg { width:24px; height:24px; display:block; }
+.chain-tabs button[aria-selected="true"] .chain-dot { box-shadow:0 0 0 2px rgba(255,255,255,.14); }
 .chain-addr { color:var(--ink-2, #465463); font-family:var(--font-data); font-size:12px; text-decoration:none; }
 .chain-addr:hover { color:var(--blue); text-decoration:underline; }
 .chain-hash { color:var(--muted); font-family:var(--font-data); font-size:12px; }

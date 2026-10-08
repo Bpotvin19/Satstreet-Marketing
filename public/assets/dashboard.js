@@ -273,7 +273,7 @@
       body: 'Switch the range from one day to one year. Session open, high and low sit alongside.' },
     { el: function () { var n = $('mainnav'); return visible(n) ? n : $('navtoggle'); },
       title: 'More from the desk',
-      body: 'News from Decrypt, the full Markets board with network and ETF flows, detailed charts, and a block explorer for Bitcoin, Ethereum and Solana.' }
+      body: 'News from Decrypt, the full Markets board with network and ETF flows, detailed charts, and a block explorer for Bitcoin, Ethereum, Solana and XRP.' }
   ];
   var step = 0, active = false;
 

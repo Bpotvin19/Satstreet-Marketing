@@ -403,7 +403,7 @@
 
   function routeFromLocation() {
     var params = new URLSearchParams(location.search);
-    /* Ethereum and Solana routes belong to chain-explorers.js. */
+    /* Ethereum, Solana and XRP routes belong to chain-explorers.js. */
     var chain = params.get('chain');
     if (chain && chain !== 'btc') return;
     var view = params.get('view');
