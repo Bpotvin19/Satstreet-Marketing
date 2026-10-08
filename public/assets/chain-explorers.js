@@ -550,6 +550,7 @@
      significant decimals below it. */
   function usd(v) {
     if (!v || !isFinite(v)) return null;
+    if (v > 0 && v < 0.0001) return '<$0.0001';
     return v >= 1 ? '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : S.fmt.money(v, 'USD', 4);
   }
   /* Look up up to 100 mints in two batches (Jupiter answers 50 at a time). */
@@ -1419,6 +1420,13 @@
       $('chain-tab-' + c).tabIndex = on ? 0 : -1;
       $('chain-' + c).hidden = !on;
     });
+    /* On narrow screens the tab row scrolls sideways; keep the active one in view. */
+    var t = $('chain-tab-' + chain), row = t && t.parentNode;
+    if (row && row.scrollWidth > row.clientWidth) {
+      var l = t.offsetLeft - row.offsetLeft, r = l + t.offsetWidth;
+      if (l < row.scrollLeft) row.scrollLeft = l - 8;
+      else if (r > row.scrollLeft + row.clientWidth) row.scrollLeft = r - row.clientWidth + 8;
+    }
   }
 
   function route(chain, view, id, push) {
