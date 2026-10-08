@@ -722,7 +722,6 @@
         var info = res[0], price = res[1];
         var symOf = function (mint) { return mint === WSOL ? 'SOL' : (info[mint] && info[mint].symbol) || short(mint, 4, 4); };
         var tokenLink = function (mint) { return mint === WSOL ? 'SOL' : link('sol', 'address', mint, symOf(mint), 'mv-symlink'); };
-        var amtTok = function (raw, mint, dec) { return units(String(raw), dec, 6); };
 
         /* ── action summary ── */
         var actions = [];
@@ -749,21 +748,62 @@
         });
         var dex = programs.map(programName).filter(function (n) { return n && DEX.test(n); })[0];
         var leg = function (x) { return '<b>' + esc(units(String(Math.round(x.a)), x.dec, 6)) + '</b> ' + tokenLink(x.k === 'SOL' ? WSOL : x.k); };
-        if (outs.length && ins.length && (dex || outs.length + ins.length === 2)) {
-          actions.push('Swapped ' + leg(outs[0]) + ' for ' + leg(ins[0]) + (dex ? ' on <b>' + esc(dex.replace(/ Aggregator v\d| v\d/, '')) + '</b>' : ''));
+        /* Every SOL and token transfer, in order, with the program that
+           made it (the DEX pool, for a swap hop). */
+        var transfers = [], lastProg = null;
+        all.forEach(function (ix) {
+          var pn = programName(ix.programId);
+          if (pn && !/^(Token|Token-2022|System|Associated Token|Compute Budget)/.test(pn)) lastProg = pn;
+          var p = ix.parsed; if (!p) return;
+          var inf = p.info || {};
+          if (ix.program === 'system' && p.type === 'transfer') {
+            transfers.push({ from: inf.source, to: inf.destination, mint: WSOL, raw: String(inf.lamports), dec: 9, via: lastProg });
+          } else if ((ix.program === 'spl-token' || ix.program === 'spl-token-2022') && (p.type === 'transfer' || p.type === 'transferChecked')) {
+            var src = acct[inf.source] || {}, dst = acct[inf.destination] || {};
+            var mint = inf.mint || src.mint || dst.mint;
+            if (!mint) return;
+            transfers.push({
+              from: src.owner || inf.authority || inf.source, to: dst.owner || inf.destination, mint: mint,
+              raw: String(inf.tokenAmount ? inf.tokenAmount.amount : inf.amount),
+              dec: inf.tokenAmount ? inf.tokenAmount.decimals : (src.dec || dst.dec || 0), via: lastProg
+            });
+          }
+        });
+        var amt = function (x) { return '<b>' + esc(units(x.raw, x.dec, 6)) + '</b> ' + tokenLink(x.mint); };
+        var venue = function (n) { return n ? ' on <b>' + esc(n.replace(/ Aggregator v\d| v\d$/, '')) + '</b>' : ''; };
+
+        /* A hop: the signer sends one asset to a pool and receives a
+           different one back from that same pool. */
+        var used = {};
+        transfers.forEach(function (t, a) {
+          if (used[a] || t.from !== signer) return;
+          for (var b = a + 1; b < transfers.length; b++) {
+            var u = transfers[b];
+            if (used[b] || u.to !== signer || u.from !== t.to || u.mint === t.mint) continue;
+            used[a] = used[b] = true;
+            t.swapWith = u;
+            break;
+          }
+          if (!t.swapWith) for (var c = a - 1; c >= 0; c--) {
+            var w = transfers[c];
+            if (used[c] || w.to !== signer || w.from !== t.to || w.mint === t.mint) continue;
+            used[a] = used[c] = true;
+            t.swapWith = w;
+            break;
+          }
+        });
+        var hops = transfers.filter(function (t) { return t.swapWith; });
+
+        if (outs.length && ins.length && (dex || outs.length + ins.length === 2) && hops.length <= 1) {
+          actions.push('Swapped ' + leg(outs[0]) + ' for ' + leg(ins[0]) + venue(dex));
         } else {
-          all.forEach(function (ix) {
-            var p = ix.parsed; if (!p || actions.length >= 6) return;
-            var inf = p.info || {};
-            if (ix.program === 'system' && p.type === 'transfer') {
-              actions.push('Transferred <b>' + esc(units(String(inf.lamports), 9, 9)) + '</b> SOL from ' + solAddr(inf.source) + ' to ' + solAddr(inf.destination));
-            } else if ((ix.program === 'spl-token' || ix.program === 'spl-token-2022') && (p.type === 'transfer' || p.type === 'transferChecked')) {
-              var src = acct[inf.source] || {}, dst = acct[inf.destination] || {};
-              var mint = inf.mint || src.mint || dst.mint, dec = inf.tokenAmount ? inf.tokenAmount.decimals : (src.dec || dst.dec || 0);
-              var raw = inf.tokenAmount ? inf.tokenAmount.amount : inf.amount;
-              if (!mint) return;
-              actions.push('Transferred <b>' + esc(amtTok(raw, mint, dec)) + '</b> ' + tokenLink(mint) + ' from ' +
-                solAddr(src.owner || inf.authority || inf.source) + ' to ' + solAddr(dst.owner || inf.destination));
+          if (outs.length && ins.length && dex) actions.push('Swapped ' + leg(outs[0]) + ' for ' + leg(ins[0]) + venue(dex) + ' (net)');
+          transfers.forEach(function (t, k) {
+            if (actions.length >= 8) return;
+            if (t.swapWith) {
+              actions.push('Swapped ' + amt(t) + ' for ' + amt(t.swapWith) + venue(t.via || t.swapWith.via || dex));
+            } else if (!used[k]) {
+              actions.push('Transferred ' + amt(t) + ' from ' + solAddr(t.from) + ' to ' + solAddr(t.to));
             }
           });
           if (!actions.length) {
