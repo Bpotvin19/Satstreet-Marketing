@@ -203,3 +203,14 @@
   .mv-path, .mv-right { grid-column: 2; justify-content: flex-start; text-align: left; }
   .mv-logo { width: 32px; height: 32px; }
 }
+
+/* ---- Solana transaction summary (Solscan-style) ---- */
+.tx-summary { display: flex; gap: 14px; align-items: flex-start; padding: 14px 20px; border-bottom: 1px solid var(--border-2); background: #f6fafc; }
+.tx-summary-k { flex: none; margin-top: 2px; font-size: 10px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: var(--muted); }
+.tx-summary ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.tx-summary li { font-size: 14px; line-height: 1.5; color: var(--ink); }
+.tx-summary li b { font-family: var(--font-data); font-weight: 650; }
+.tx-summary a { color: var(--blue); font-family: var(--font-data); font-size: 12.5px; font-weight: 600; text-decoration: none; }
+.tx-summary a:hover { text-decoration: underline; }
+.detail-field .muted, .detail-field .v .muted { color: var(--muted); font-weight: 500; }
+.moves-more { margin: 0; padding: 12px 20px; font-size: 12.5px; color: var(--muted); }

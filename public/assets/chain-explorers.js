@@ -491,6 +491,31 @@
     '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8': 'Raydium AMM v4',
     'CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK': 'Raydium CLMM',
     '6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P': 'Pump.fun',
+    'pAMMBay6oceH9fJKBRHGP5D4bD4sWpmSwMn52FMfXEA': 'Pump.fun AMM',
+    'JUP4Fb2cqiRUcaTHdrPC8h2gNsA5ETXEPDoQyEkUohe': 'Jupiter Aggregator v4',
+    'jupoNjAxXgZ4rjzxzPMP4oxduvQsQtZzyknqvzYNrNu': 'Jupiter Limit Order',
+    'CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQB5qKP1C': 'Raydium CPMM',
+    'routeUGWgWzqBWFcrCfv8tritsqukccJPu3q5GPP3xS': 'Raydium Router',
+    'LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo': 'Meteora DLMM',
+    'Eo7WjKq67rjJQSZxS6z3YkapzY3eMj6Xy8X5EQVn5UaB': 'Meteora Pools',
+    'cpamdpZCGKUy5JxQXB4dcpGPiikHawvSWAd6mEn1sGG': 'Meteora DAMM v2',
+    '9W959DqEETiGZocYWCQPaJ6sBmUzgfxXfqGeTEdp3aQP': 'Orca Swap',
+    'PhoeNiXZ8ByJGLkxNfZRnkUfjvmuYqLR89jjFHGqdXY': 'Phoenix',
+    'srmqPvymJeFKQ4zGQed1GFppgkRHL9kaELCbyksJtPX': 'OpenBook',
+    'opnb2LAfJYbRMAHHvqjCwQxanZn7ReEHp1k81EohpZb': 'OpenBook v2',
+    '2wT8Yq49kHgDzXuPxZSaeLaH1qbmGXtEyPy64bL7aD3c': 'Lifinity',
+    'SoLFiHG9TfgtdUXUjWAxi3LtvYuFyDLVhBWxdMZxyCe': 'SolFi',
+    'TessVdML9pBGgG9yGks7o4HewRaXVAMuoVj4x83GLQH': 'Tessera',
+    'BiSoNHVpsVZW2F7rx2eQ59yQwKxzU5NvBcmKshCSUypi': 'Bisonfi',
+    'MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD': 'Marinade',
+    'SPoo1Ku8WFXoNDMHPsrGSTSG1Y47rzgn41SLUNakuHy': 'Stake Pool Program',
+    'dRiftyHA39MWEi3m9aunc5MzRF1JYuBsbn6VPcn33UH': 'Drift',
+    'KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD': 'Kamino Lending',
+    'MFv2hWf31Z9kbCa1snEPYctwafyhdvnV7FZnsebVacA': 'Marginfi',
+    'cndy3Z4yapfJBmL3ShUp5exZKqR3z33thTzeNMm2gRZ': 'Candy Machine',
+    'M2mx93ekt1fmXSVkTrUL9xVFHkmME8HTUi5Cyc5aF7K': 'Magic Eden',
+    'wormDTUJ6AWPNvk59vGQbDvGJmqbDTdgWgAqcLBCgUb': 'Wormhole',
+    'DeJBGdMFa1uynnnKiwrVioatTuHmNLpyFKnmB5kaFdzQ': 'Phantom Swap',
     'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s': 'Metaplex Token Metadata'
   };
   function programName(id) { return PROGRAMS[id] || null; }
@@ -509,6 +534,20 @@
         return tokenCache;
       })
       .catch(function () { return tokenCache; });
+  }
+  var DEX = /Jupiter|Raydium|Orca|Meteora|Pump\.fun|Phoenix|OpenBook|Lifinity|SolFi|Tessera|Bisonfi|Phantom Swap/;
+  var solUsd = null;
+  function solPrice() {
+    if (solUsd !== null) return Promise.resolve(solUsd);
+    return withTimeout(fetch('https://lite-api.jup.ag/price/v3?ids=' + WSOL).then(function (r) { return r.ok ? r.json() : {}; }), 5000)
+      .then(function (d) { solUsd = d && d[WSOL] && d[WSOL].usdPrice || 0; return solUsd; })
+      .catch(function () { return 0; });
+  }
+  function usd(v) { return v ? S.fmt.money(v, 'USD', v >= 1 ? 2 : 4) : null; }
+  /* Look up up to 100 mints in two batches (Jupiter answers 50 at a time). */
+  function solTokensMany(mints) {
+    var a = mints.slice(0, 50), b = mints.slice(50, 100);
+    return solTokens(a).then(function () { return b.length ? solTokens(b) : tokenCache; });
   }
   function solAddr(pk, cls) {
     if (!pk) return '—';
@@ -536,7 +575,7 @@
         slots = (slots || []).slice(-6).reverse();
         if (!slots.length) throw new Error('No recent blocks were returned.');
         return rpc(slots.map(function (s, i) {
-          return call(i, 'getBlock', [s, { transactionDetails: 'signatures', rewards: true, maxSupportedTransactionVersion: 0, commitment: 'finalized' }]);
+          return call(i, 'getBlock', [s, { transactionDetails: 'signatures', rewards: true, maxSupportedTransactionVersion: 1, commitment: 'finalized' }]);
         })).then(function (blocks) { return { slots: slots, blocks: blocks }; });
       })
       .then(function (d) {
@@ -606,7 +645,7 @@
     slot = Number(slot);
     setLoading('sol', 'Loading block…');
     rpc([
-      call(0, 'getBlock', [slot, { transactionDetails: 'signatures', rewards: true, maxSupportedTransactionVersion: 0, commitment: 'finalized' }]),
+      call(0, 'getBlock', [slot, { transactionDetails: 'signatures', rewards: true, maxSupportedTransactionVersion: 1, commitment: 'finalized' }]),
       call(1, 'getBlocks', [slot + 1, slot + 40, { commitment: 'finalized' }])
     ]).then(function (r) {
       var b = r[0], after = r[1] || [];
@@ -634,13 +673,23 @@
     }).catch(function (e) { setError('sol', 'Block not found.', e.message); });
   }
 
+  /* Solscan-style reading of a transaction: who signed it, what it did in
+     one line (a swap, transfers, or the programs it called), every balance
+     that moved, and the instructions underneath. */
   function solTx(sig) {
     setLoading('sol', 'Loading transaction…');
-    rpc(call(1, 'getTransaction', [sig, { encoding: 'jsonParsed', maxSupportedTransactionVersion: 0, commitment: 'confirmed' }])).then(function (t) {
+    rpc(call(1, 'getTransaction', [sig, { encoding: 'jsonParsed', maxSupportedTransactionVersion: 1, commitment: 'confirmed' }])).then(function (t) {
       if (!t) throw new Error('No transaction with that signature was found.');
       var meta = t.meta || {}, msg = t.transaction.message, keys = msg.accountKeys || [];
       var ok = !meta.err;
       var signers = keys.filter(function (k) { return k.signer; }).map(function (k) { return k.pubkey; });
+      var feePayer = keys[0] && keys[0].pubkey;
+
+      /* Token accounts → mint and owner, from the balance snapshots. */
+      var acct = {};
+      (meta.preTokenBalances || []).concat(meta.postTokenBalances || []).forEach(function (b) {
+        var k = keys[b.accountIndex]; if (k) acct[k.pubkey] = { mint: b.mint, owner: b.owner, dec: b.uiTokenAmount.decimals };
+      });
 
       var solChanges = keys.map(function (k, i) {
         return { pk: k.pubkey, d: (meta.postBalances[i] || 0) - (meta.preBalances[i] || 0) };
@@ -657,58 +706,132 @@
       });
       var tokChanges = Object.keys(tok).map(function (k) { return tok[k]; }).filter(function (x) { return x.post !== x.pre; });
 
-      return solTokens(tokChanges.map(function (x) { return x.mint; }).concat([WSOL])).then(function (meta2) {
-      var solPrice = meta2[WSOL] && meta2[WSOL].usdPrice;
-      var moves = [];
-      solChanges.forEach(function (x) {
-        var amt = units(String(Math.abs(x.d)), 9, 9);
-        moves.push(moveRow({
-          logo: SOL_LOGO, label: 'Solana', amount: (x.d > 0 ? '+' : '−') + amt, symbol: 'SOL', name: 'Solana',
-          usd: solPrice ? Math.abs(x.d) / 1e9 * solPrice : null, tone: x.d > 0 ? 'amount-positive' : 'amount-negative',
-          parties: [['Account', solAddr(x.pk)]]
-        }));
+      /* Every instruction, outer and inner, in order. */
+      var all = [];
+      (msg.instructions || []).forEach(function (ix, i) {
+        all.push(ix);
+        (meta.innerInstructions || []).filter(function (g) { return g.index === i; })
+          .forEach(function (g) { g.instructions.forEach(function (x) { all.push(x); }); });
       });
-      tokChanges.forEach(function (x) {
-        var d = x.post - x.pre, neg = d < BigInt(0), abs = neg ? -d : d;
-        var info = meta2[x.mint] || {}, sym = info.symbol || short(x.mint, 4, 4);
-        var amt = units(abs.toString(), x.dec, 6);
-        moves.push(moveRow({
-          logo: info.icon, label: info.name || sym, amount: (neg ? '−' : '+') + amt,
-          symbol: link('sol', 'address', x.mint, sym, 'mv-symlink'),
-          name: info.name, tone: neg ? 'amount-negative' : 'amount-positive',
-          usd: info.usdPrice ? Number(amt.replace(/,/g, '')) * info.usdPrice : null,
-          parties: [['Owner', solAddr(x.owner)]]
-        }));
-      });
+      var programs = [];
+      all.forEach(function (ix) { if (programs.indexOf(ix.programId) < 0) programs.push(ix.programId); });
 
-      var ixs = (msg.instructions || []).map(function (ix) {
-        var name = programName(ix.programId) || ix.program || short(ix.programId, 6, 6);
-        return '<div class="transaction-row ix-row"><div class="tx-stat"><span>Program</span><b>' + solAddr(ix.programId).replace(/>[^<]*</, '>' + esc(name) + '<') + '</b></div>' +
-          '<div class="tx-stat"><span>Instruction</span><b>' + esc(ix.parsed && ix.parsed.type ? ix.parsed.type : 'Program call') + '</b></div></div>';
-      }).join('');
+      var mints = tokChanges.map(function (x) { return x.mint; });
+      Object.keys(acct).forEach(function (k) { mints.push(acct[k].mint); });
+      return Promise.all([solTokensMany(mints.filter(function (m, i) { return mints.indexOf(m) === i; }).concat([WSOL])), solPrice()]).then(function (res) {
+        var info = res[0], price = res[1];
+        var symOf = function (mint) { return mint === WSOL ? 'SOL' : (info[mint] && info[mint].symbol) || short(mint, 4, 4); };
+        var tokenLink = function (mint) { return mint === WSOL ? 'SOL' : link('sol', 'address', mint, symOf(mint), 'mv-symlink'); };
+        var amtTok = function (raw, mint, dec) { return units(String(raw), dec, 6); };
 
-      var html = '<div class="detail-shell"><div class="detail-topline">' + backLink('sol') + '</div>' +
-        '<section class="card detail-card"><header><div><p class="eyebrow">Solana transaction</p><h2>Transaction</h2></div>' +
-        badge(ok, ok ? 'Success' : 'Failed') + '</header><div class="detail-grid">' +
-        field('Signature', hashLine(sig)) + field('Status', ok ? 'Success' : 'Failed') +
-        field('Slot', link('sol', 'block', t.slot, num(t.slot))) + field('Timestamp', esc(when(t.blockTime))) +
-        field('Age', esc(age(t.blockTime))) + field('Fee', esc(sol(meta.fee))) +
-        field('Fee payer', solAddr(keys[0] && keys[0].pubkey)) + field('Signers', num(signers.length)) +
-        field('Compute units', num(meta.computeUnitsConsumed)) + field('Version', esc(String(t.version))) +
-        field('Instructions', num((msg.instructions || []).length)) + field('Accounts', num(keys.length)) +
-        '</div><details class="technical"><summary>Technical details</summary><dl>' +
-        '<dt>Recent blockhash</dt><dd>' + esc(msg.recentBlockhash || '—') + '</dd>' +
-        (meta.err ? '<dt>Error</dt><dd>' + esc(JSON.stringify(meta.err)) + '</dd>' : '') +
-        '<dt>Log messages</dt><dd class="logs">' + ((meta.logMessages || []).slice(0, 40).map(esc).join('<br>') || '—') + '</dd>' +
-        '</dl></details></section>' +
-        (moves.length ? moveSection('Balance changes', 'Assets moved', num(moves.length) + (moves.length === 1 ? ' change' : ' changes') + ' · fees included', moves) : '') +
-        '<section class="card subcard"><header><div><p class="eyebrow">What it did</p><h2>Instructions</h2></div></header><div class="transaction-list">' +
-          (ixs || '<div style="padding:18px">' + S.emptyState('No instructions.') + '</div>') + '</div></section>' +
-        '<section class="card education ' + (ok ? '' : 'pending-card') + '">' +
-        (ok ? '<h2>Transaction confirmed</h2><p>Included in slot ' + num(t.slot) + '. Solana produces a block roughly every 400 milliseconds, and a block is finalized once a supermajority of stake has voted on it, usually within seconds.</p>'
-            : '<h2>Transaction failed</h2><p>This transaction was included in slot ' + num(t.slot) + ' but did not execute successfully. The fee was still charged.</p>') +
-        '</section></div>';
-      showDetail('sol', html, short(sig, 10, 8));
+        /* ── action summary ── */
+        var actions = [];
+        var signer = signers[0];
+        var net = {};   // signer's net change per asset, wrapped SOL folded into SOL
+        solChanges.forEach(function (x) {
+          if (x.pk !== signer) return;
+          net.SOL = (net.SOL || 0) + x.d + (x.pk === feePayer ? meta.fee : 0);
+        });
+        tokChanges.forEach(function (x) {
+          if (x.owner !== signer) return;
+          var key = x.mint === WSOL ? 'SOL' : x.mint;
+          var d = Number(x.post - x.pre) / Math.pow(10, x.mint === WSOL ? 9 : x.dec) * (x.mint === WSOL ? 1e9 : 1);
+          if (key === 'SOL') net.SOL = (net.SOL || 0) + d;
+          else net[key] = { d: (net[key] ? net[key].d : 0) + Number(x.post - x.pre), dec: x.dec };
+        });
+        var outs = [], ins = [];
+        var tokenLegs = Object.keys(net).filter(function (k) { return k !== 'SOL'; }).length;
+        Object.keys(net).forEach(function (k) {
+          var v = k === 'SOL' ? { d: net.SOL, dec: 9 } : net[k];
+          /* Account rent (~0.002 SOL) is not a trade leg when tokens moved. */
+          if (k === 'SOL' && Math.abs(v.d) < (tokenLegs ? 1e7 : 1e5)) return;
+          if (v.d < 0) outs.push({ k: k, a: -v.d, dec: v.dec }); else if (v.d > 0) ins.push({ k: k, a: v.d, dec: v.dec });
+        });
+        var dex = programs.map(programName).filter(function (n) { return n && DEX.test(n); })[0];
+        var leg = function (x) { return '<b>' + esc(units(String(Math.round(x.a)), x.dec, 6)) + '</b> ' + tokenLink(x.k === 'SOL' ? WSOL : x.k); };
+        if (outs.length && ins.length && (dex || outs.length + ins.length === 2)) {
+          actions.push('Swapped ' + leg(outs[0]) + ' for ' + leg(ins[0]) + (dex ? ' on <b>' + esc(dex.replace(/ Aggregator v\d| v\d/, '')) + '</b>' : ''));
+        } else {
+          all.forEach(function (ix) {
+            var p = ix.parsed; if (!p || actions.length >= 6) return;
+            var inf = p.info || {};
+            if (ix.program === 'system' && p.type === 'transfer') {
+              actions.push('Transferred <b>' + esc(units(String(inf.lamports), 9, 9)) + '</b> SOL from ' + solAddr(inf.source) + ' to ' + solAddr(inf.destination));
+            } else if ((ix.program === 'spl-token' || ix.program === 'spl-token-2022') && (p.type === 'transfer' || p.type === 'transferChecked')) {
+              var src = acct[inf.source] || {}, dst = acct[inf.destination] || {};
+              var mint = inf.mint || src.mint || dst.mint, dec = inf.tokenAmount ? inf.tokenAmount.decimals : (src.dec || dst.dec || 0);
+              var raw = inf.tokenAmount ? inf.tokenAmount.amount : inf.amount;
+              if (!mint) return;
+              actions.push('Transferred <b>' + esc(amtTok(raw, mint, dec)) + '</b> ' + tokenLink(mint) + ' from ' +
+                solAddr(src.owner || inf.authority || inf.source) + ' to ' + solAddr(dst.owner || inf.destination));
+            }
+          });
+          if (!actions.length) {
+            var named = programs.filter(function (pid) { return !/^(ComputeBudget|11111111111111111111111111111111$)/.test(pid); });
+            actions.push('Interacted with ' + (named.length ? named.slice(0, 3).map(function (pid) { return solAddr(pid).replace(/>[^<]*</, '>' + esc(programName(pid) || short(pid, 6, 6)) + '<'); }).join(', ') : 'the System Program'));
+          }
+        }
+
+        /* ── balance changes ── */
+        var moves = [];
+        solChanges.forEach(function (x) {
+          var amtS = units(String(Math.abs(x.d)), 9, 9);
+          moves.push(moveRow({
+            logo: SOL_LOGO, label: 'Solana', amount: (x.d > 0 ? '+' : '−') + amtS, symbol: 'SOL', name: 'Solana',
+            usd: price ? Math.abs(x.d) / 1e9 * price : null, tone: x.d > 0 ? 'amount-positive' : 'amount-negative',
+            parties: [['Account', solAddr(x.pk)]]
+          }));
+        });
+        tokChanges.forEach(function (x) {
+          var d = x.post - x.pre, neg = d < BigInt(0), abs = neg ? -d : d;
+          var ti = info[x.mint] || {}, sym = x.mint === WSOL ? 'wSOL' : (ti.symbol || short(x.mint, 4, 4));
+          var amt = units(abs.toString(), x.dec, 6);
+          moves.push(moveRow({
+            logo: x.mint === WSOL ? SOL_LOGO : ti.icon, label: ti.name || sym, amount: (neg ? '−' : '+') + amt,
+            symbol: link('sol', 'address', x.mint, sym, 'mv-symlink'),
+            name: x.mint === WSOL ? 'Wrapped SOL' : ti.name, tone: neg ? 'amount-negative' : 'amount-positive',
+            usd: (x.mint === WSOL ? price : ti.usdPrice) ? Number(amt.replace(/,/g, '')) * (x.mint === WSOL ? price : ti.usdPrice) : null,
+            parties: [['Owner', solAddr(x.owner)]]
+          }));
+        });
+
+        var sigCount = (t.transaction.signatures || []).length || 1;
+        var prio = Math.max(0, meta.fee - 5000 * sigCount);
+        var ixRows = (msg.instructions || []).map(function (ix, i) {
+          var name = programName(ix.programId) || (ix.program ? ix.program.replace(/^spl-/, '').replace(/-/g, ' ') : short(ix.programId, 6, 6));
+          var inner = (meta.innerInstructions || []).filter(function (g) { return g.index === i; }).reduce(function (n, g) { return n + g.instructions.length; }, 0);
+          return '<div class="transaction-row ix-row"><div class="tx-stat"><span>#' + (i + 1) + ' Program</span><b>' + solAddr(ix.programId).replace(/>[^<]*</, '>' + esc(name) + '<') + '</b></div>' +
+            '<div class="tx-stat"><span>Instruction</span><b>' + esc(ix.parsed && ix.parsed.type ? ix.parsed.type : (inner ? 'Program call · ' + inner + ' inner' : 'Program call')) + '</b></div></div>';
+        }).join('');
+
+        var html = '<div class="detail-shell"><div class="detail-topline">' + backLink('sol') + '</div>' +
+          '<section class="card detail-card"><header><div><p class="eyebrow">Solana transaction</p><h2>Transaction</h2></div>' +
+          badge(ok, ok ? 'Success' : 'Failed') + '</header>' +
+          '<div class="tx-summary"><span class="tx-summary-k">Summary</span><ul>' + actions.map(function (a) { return '<li>' + a + '</li>'; }).join('') + '</ul></div>' +
+          '<div class="detail-grid">' +
+          field('Signature', hashLine(sig)) + field('Result', ok ? 'Success' : 'Failed') +
+          field('Block', link('sol', 'block', t.slot, num(t.slot))) + field('Timestamp', esc(when(t.blockTime)) + ' · ' + esc(age(t.blockTime))) +
+          field('Signer', signers.map(function (pk) { return solAddr(pk); }).join('<br>')) +
+          field('Fee', esc(sol(meta.fee)) + (price ? ' <span class="muted">(' + esc(usd(meta.fee / 1e9 * price)) + ')</span>' : '')) +
+          field('Priority fee', esc(sol(prio))) +
+          field('Compute units', num(meta.computeUnitsConsumed)) +
+          field('Programs', programs.filter(function (pid) { return !/^ComputeBudget/.test(pid); }).slice(0, 4).map(function (pid) { return solAddr(pid).replace(/>[^<]*</, '>' + esc(programName(pid) || short(pid, 6, 6)) + '<'); }).join('<br>')) +
+          field('Version', esc(String(t.version))) +
+          field('Instructions', num((msg.instructions || []).length) + ' · ' + num(all.length - (msg.instructions || []).length) + ' inner') +
+          field('Accounts', num(keys.length)) +
+          '</div><details class="technical"><summary>Technical details</summary><dl>' +
+          '<dt>Recent blockhash</dt><dd>' + esc(msg.recentBlockhash || '—') + '</dd>' +
+          (meta.err ? '<dt>Error</dt><dd>' + esc(JSON.stringify(meta.err)) + '</dd>' : '') +
+          '<dt>Log messages</dt><dd class="logs">' + ((meta.logMessages || []).slice(0, 60).map(esc).join('<br>') || '—') + '</dd>' +
+          '</dl></details></section>' +
+          (moves.length ? moveSection('Balance changes', 'Assets moved', num(moves.length) + (moves.length === 1 ? ' change' : ' changes') + ' · fees included', moves) : '') +
+          '<section class="card subcard"><header><div><p class="eyebrow">What it did</p><h2>Instructions</h2></div></header><div class="transaction-list">' +
+            (ixRows || '<div style="padding:18px">' + S.emptyState('No instructions.') + '</div>') + '</div></section>' +
+          '<section class="card education ' + (ok ? '' : 'pending-card') + '">' +
+          (ok ? '<h2>Transaction confirmed</h2><p>Included in slot ' + num(t.slot) + '. Solana produces a block roughly every 400 milliseconds, and a block is finalized once a supermajority of stake has voted on it, usually within seconds.</p>'
+              : '<h2>Transaction failed</h2><p>This transaction was included in slot ' + num(t.slot) + ' but did not execute successfully. The fee was still charged.</p>') +
+          '</section></div>';
+        showDetail('sol', html, short(sig, 10, 8));
       });
     }).catch(function (e) { setError('sol', 'Transaction not found.', e.message); });
   }
@@ -747,18 +870,70 @@
           '<div><p class="eyebrow">Solana ' + esc(kind.toLowerCase()) + '</p><h2>' +
           esc(tinfo ? (tinfo.name || 'Token') + (tinfo.symbol ? ' (' + tinfo.symbol + ')' : '') : (programName(pk) || 'Address')) + '</h2></div></div></header><div class="detail-grid">' +
         field('Address', hashLine(pk)) + field('Type', esc(kind)) +
-        field('SOL balance', esc(sol(info ? info.lamports : 0))) +
+        field('SOL balance', esc(sol(info ? info.lamports : 0)) + '<span class="muted" id="sol-bal-usd"></span>') +
         field('Owner program', info ? solAddr(info.owner) : '—') +
         field('Data size', info ? num(info.space !== undefined ? info.space : 0) + ' bytes' : '—') +
         field('Executable', info ? (info.executable ? 'Yes' : 'No') : '—') + extra +
         '</div></section><p class="srcnote privacy-note">Solana addresses and transactions are public blockchain data. Searching an address does not identify its owner.</p>' +
+        '<section class="card subcard" id="sol-holdings" hidden></section>' +
         '<section class="card subcard"><header><div><p class="eyebrow">Recent activity</p><h2>Transaction history</h2></div>' +
         '<span class="section-meta">Most recent first</span></header>' +
         '<div class="transaction-list" id="sol-txlist">' + solSigRows(sigs) + '</div>' +
         (sigs.length === 25 ? moreButton('sol-more') : '') + '</section></div>';
       showDetail('sol', html, tinfo && tinfo.symbol ? tinfo.symbol : short(pk, 12, 8));
+      solPrice().then(function (p) {
+        var el = $('sol-bal-usd');
+        if (el && p && info) el.textContent = ' (' + usd(info.lamports / 1e9 * p) + ')';
+      });
+      if (!info || info.owner === '11111111111111111111111111111111') solHoldings(pk);
       });
     }).catch(function (e) { setError('sol', 'Address not found.', e.message); });
+  }
+
+  /* Token holdings, as Solscan's Portfolio tab shows them: every SPL token
+     the wallet holds, valued and sorted, from Jupiter's public holdings and
+     token APIs. Loaded after the page so a large wallet never holds it up. */
+  function solHoldings(pk) {
+    withTimeout(fetch('https://lite-api.jup.ag/ultra/v1/holdings/' + encodeURIComponent(pk)).then(function (r) {
+      if (!r.ok) throw new Error('holdings unavailable'); return r.json();
+    }), 12000).then(function (d) {
+      var tokens = d && d.tokens || {};
+      var list = Object.keys(tokens).map(function (mint) {
+        var total = (tokens[mint] || []).reduce(function (n, a) { return n + (Number(a.uiAmount) || 0); }, 0);
+        return { mint: mint, amount: total };
+      }).filter(function (x) { return x.amount > 0; });
+      if (!list.length) return null;
+      return Promise.all([solTokensMany(list.map(function (x) { return x.mint; })), solPrice()]).then(function (r) {
+        var info = r[0];
+        list.forEach(function (x) {
+          var ti = info[x.mint] || {};
+          x.info = ti;
+          x.usd = x.mint === WSOL ? x.amount * (r[1] || 0) : ti.usdPrice ? x.amount * ti.usdPrice : null;
+        });
+        list.sort(function (a, b) { return (b.usd || 0) - (a.usd || 0) || (b.info.symbol ? 1 : 0) - (a.info.symbol ? 1 : 0); });
+        var solVal = d.uiAmount && r[1] ? d.uiAmount * r[1] : 0;
+        var total = list.reduce(function (n, x) { return n + (x.usd || 0); }, solVal);
+        return { list: list, total: total };
+      });
+    }).then(function (res) {
+      var el = $('sol-holdings');
+      if (!el || !res) return;
+      var shown = res.list.slice(0, 20);
+      var tmp = document.createElement('div');
+      tmp.innerHTML = moveSection('Portfolio', 'Token holdings',
+        res.list.length + ' token' + (res.list.length === 1 ? '' : 's') + (res.total ? ' · ' + usd(res.total) + ' total incl. SOL' : ''),
+        shown.map(function (x) {
+          var sym = x.mint === WSOL ? 'wSOL' : (x.info.symbol || short(x.mint, 4, 4));
+          return moveRow({
+            logo: x.mint === WSOL ? SOL_LOGO : x.info.icon, label: x.info.name || sym,
+            amount: x.amount.toLocaleString('en-US', { maximumFractionDigits: x.amount >= 1 ? 4 : 8 }),
+            symbol: link('sol', 'address', x.mint, sym, 'mv-symlink'), name: x.mint === WSOL ? 'Wrapped SOL' : x.info.name,
+            right: '<b>' + (x.usd ? esc(usd(x.usd)) : '—') + '</b><small>value</small>'
+          });
+        }).concat(res.list.length > shown.length ? ['<p class="moves-more">' + (res.list.length - shown.length) + ' smaller holdings not shown</p>'] : []));
+      el.innerHTML = tmp.firstChild.innerHTML;
+      el.hidden = false;
+    }).catch(function () {});
   }
 
   var B58 = /^[1-9A-HJ-NP-Za-km-z]+$/;

@@ -296,6 +296,15 @@
 @media (max-width: 760px){.ss-app .move,.ss-app .move:has(.mv-right){grid-template-columns: 36px minmax(0, 1fr); padding: 13px 16px;}
 .ss-app .mv-path,.ss-app .mv-right{grid-column: 2; justify-content: flex-start; text-align: left;}
 .ss-app .mv-logo{width: 32px; height: 32px;}}
+.ss-app .tx-summary{display: flex; gap: 14px; align-items: flex-start; padding: 14px 20px; border-bottom: 1px solid var(--border-2); background: #f6fafc;}
+.ss-app .tx-summary-k{flex: none; margin-top: 2px; font-size: 10px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: var(--muted);}
+.ss-app .tx-summary ul{margin: 0; padding: 0; list-style: none; display: grid; gap: 6px;}
+.ss-app .tx-summary li{font-size: 14px; line-height: 1.5; color: var(--ink);}
+.ss-app .tx-summary li b{font-family: var(--font-data); font-weight: 650;}
+.ss-app .tx-summary a{color: var(--blue); font-family: var(--font-data); font-size: 12.5px; font-weight: 600; text-decoration: none;}
+.ss-app .tx-summary a:hover{text-decoration: underline;}
+.ss-app .detail-field .muted,.ss-app .detail-field .v .muted{color: var(--muted); font-weight: 500;}
+.ss-app .moves-more{margin: 0; padding: 12px 20px; font-size: 12.5px; color: var(--muted);}
 .ss-app .avatar{display:none!important}
 .ss-app .mainnav{gap:1px}
 .ss-app .mainnav a{padding-left:8px;padding-right:8px}
