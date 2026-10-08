@@ -465,7 +465,7 @@
         .replace(/</g, '&lt;').replace(/>/g, '&gt;');
     };
 
-    fetch('/api/news?limit=5', { cache: 'no-store' })
+    fetch('/api/news?limit=10', { cache: 'no-store' })
       .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(function (d) {
         if (d.error || !d.items || !d.items.length) throw new Error(d.error || 'the feed returned nothing');
@@ -482,6 +482,7 @@
             '</article>';
         }).join('') +
         '<div class="nsrc"><span>Not a Satstreet view</span></div>';
+        fitNews();
       })
       .catch(function (e) {
         $('news').innerHTML = '<p class="errbox"><b>News unavailable</b>The news feed could not be read (' +
@@ -555,9 +556,86 @@
           var d = new Date(e.date + 'T12:00:00'), high = e.kind === 'central-bank';
           return '<div class="cat"><div class="d">' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + '<small>' + d.toLocaleDateString('en-US', { weekday: 'short' }) + '</small></div><div class="t">' + esc(e.title) + '<small>' + esc(e.detail) + '</small></div><span class="impact' + (high ? ' high' : '') + '">' + (high ? 'High' : 'Data') + '</span></div>';
         }).join('');
+        fitNews();
       })
-      .catch(function () { $('cats').innerHTML = '<p class="errbox"><b>Calendar unavailable</b>Scheduled events could not be loaded.</p>'; });
+      .catch(function () { $('cats').innerHTML = '<p class="errbox"><b>Calendar unavailable</b>Scheduled events could not be loaded.</p>'; fitNews(); });
   }
+
+  /* Show as many headlines as fit beside the calendar and halving card, so
+     neither column trails white space: measure both columns at their
+     natural height, then drop headlines from the end (never below three)
+     until the news card is no taller than the right-hand stack. The halving
+     card's flex then absorbs the last partial row. Stacked (one column),
+     five are shown. */
+  var fitRaf = 0;
+  function fitNews() {
+    cancelAnimationFrame(fitRaf);
+    fitRaf = requestAnimationFrame(function () {
+      var pair = document.querySelector('.news-pair'), card = document.querySelector('.news-card');
+      var side = document.querySelector('.side-stack');
+      var rows = Array.prototype.slice.call(document.querySelectorAll('#news .newsrow'));
+      if (!pair || !rows.length) return;
+      rows.forEach(function (r) { r.hidden = false; });
+      var shown = rows.length;
+      var mark = function () { rows.forEach(function (r, i) { r.hidden = i >= shown; r.classList.toggle('last', i === shown - 1); }); };
+      if (getComputedStyle(pair).gridTemplateColumns.split(' ').length < 2) {
+        shown = Math.min(5, rows.length); mark();
+        return;
+      }
+      mark();
+      pair.classList.add('measuring');
+      var target = side.getBoundingClientRect().height;
+      while (shown > 3 && card.getBoundingClientRect().height > target + 1) { shown--; mark(); }
+      pair.classList.remove('measuring');
+    });
+  }
+  var fitTimer = 0;
+  window.addEventListener('resize', function () { clearTimeout(fitTimer); fitTimer = setTimeout(fitNews, 120); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitNews);
+
+  /* Next Bitcoin halving, from the chain tip on mempool.space. The date is
+     an estimate at the 10-minute target spacing, re-anchored to the real
+     tip every ten minutes; the countdown ticks locally in between. If the
+     tip can't be read the card is left out rather than showing a guess. */
+  var HALVING = 1050000, EPOCH = 210000, halvTimer = null, halvAt = 0;
+  function loadHalving() {
+    var card = $('halving');
+    fetch('https://mempool.space/api/blocks/tip/height', { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+      .then(function (t) {
+        var h = parseInt(t, 10);
+        if (!isFinite(h) || h <= 0) throw new Error('bad height');
+        var left = Math.max(0, HALVING - h);
+        halvAt = Date.now() + left * 600000;
+        var start = HALVING - EPOCH, pct = Math.min(100, Math.max(0, (h - start) / EPOCH * 100));
+        var n = function (x) { return x.toLocaleString('en-US'); };
+        var date = new Date(halvAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        $('halv-body').innerHTML =
+          '<div class="halv-cd"><span id="halv-cd">\u2014</span><small>Estimated time remaining</small></div>' +
+          '<div><div class="halv-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct.toFixed(1) + '" aria-label="Progress through the current halving epoch"><i style="width:' + pct.toFixed(1) + '%"></i></div>' +
+          '<div class="halv-scale"><span>' + n(start) + '</span><b>' + pct.toFixed(1) + '% of epoch</b><span>' + n(HALVING) + '</span></div></div>' +
+          '<div class="halv-stats">' +
+            '<div><div class="k">Blocks remaining</div><div class="v">' + n(left) + '</div><div class="s">at ~10 min / block</div></div>' +
+            '<div><div class="k">Current height</div><div class="v">' + n(h) + '</div><div class="s">chain tip</div></div>' +
+            '<div><div class="k">Predicted date</div><div class="v">' + esc(date) + '</div><div class="s">estimate only</div></div>' +
+            '<div><div class="k">Block reward</div><div class="v">3.125 &rarr; 1.5625</div><div class="s">BTC per block</div></div>' +
+          '</div>';
+        var pad = function (x) { return String(x).padStart(2, '0'); };
+        var tick = function () {
+          var ms = Math.max(0, halvAt - Date.now()), el = $('halv-cd');
+          if (!el) return;
+          el.textContent = Math.floor(ms / 864e5) + 'd ' + pad(Math.floor(ms % 864e5 / 36e5)) + 'h ' +
+            pad(Math.floor(ms % 36e5 / 6e4)) + 'm ' + pad(Math.floor(ms % 6e4 / 1e3)) + 's';
+        };
+        tick();
+        if (halvTimer) clearInterval(halvTimer);
+        halvTimer = setInterval(tick, 1000);
+        card.hidden = false;
+        fitNews();
+      })
+      .catch(function () { if (!halvAt) { card.hidden = true; fitNews(); } });
+  }
+  setInterval(function () { if (!document.hidden) loadHalving(); }, 600000);
 
   /* Largest assets by market cap. Fed by /api/assets. */
   var fmtCompact = function (v) {
@@ -662,7 +740,7 @@
   }
 
   loadMarket();
-  loadChart(); loadNews(); loadCats(); loadAssets(); loadMacro();
+  loadChart(); loadNews(); loadCats(); loadHalving(); loadAssets(); loadMacro();
   setInterval(loadMarket, 60000);
   setInterval(function () { if (!document.hidden) loadAssets(); }, 300000);
 

@@ -81,8 +81,17 @@ function decode(s: string): string {
     .replace(/&#8212;|&mdash;/gi, '—')
     .replace(/&#8211;|&ndash;/gi, '–')
     .replace(/&amp;/g, '&')
+    /* Any numeric entity, including ones the feed escaped twice
+       (&amp;#34; arrives as &#34; once &amp; is decoded). */
+    .replace(/&#(\d{1,7});/g, (_, n) => codePoint(Number(n)))
+    .replace(/&#x([0-9a-f]{1,6});/gi, (_, h) => codePoint(parseInt(h, 16)))
+    .replace(/&quot;/g, '"')
     .replace(/\s+/g, ' ')
     .trim()
+}
+
+function codePoint(n: number): string {
+  try { return n > 0 && n <= 0x10ffff ? String.fromCodePoint(n) : '' } catch { return '' }
 }
 
 function tagOf(chunk: string, name: string): string {

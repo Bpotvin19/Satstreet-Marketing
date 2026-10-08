@@ -4,7 +4,7 @@ Six pages, one snippet each. Every snippet is under Webflow's 50,000-character l
 
 | Webflow page | Suggested slug | Paste this file | Size |
 | --- | --- | --- | --- |
-| Overview | `/overview` | `overview.html` | ~10.7k chars |
+| Overview | `/overview` | `overview.html` | ~12.6k chars |
 | News | `/news` | `news.html` | ~3.0k chars |
 | Markets | `/markets` | `ticker.html` | ~6.4k chars |
 | Chart | `/chart` | `chart.html` | ~2.6k chars |

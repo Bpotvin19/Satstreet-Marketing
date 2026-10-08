@@ -87,18 +87,27 @@
 <div class="macro-grid" id="macro-grid"></div>
 <p class="macro-note">Data from FRED, Federal Reserve Bank of St. Louis. Each indicator shows its latest release date; series update daily, weekly or monthly. Select one to see its full history on FRED.</p>
 </section>
-<div class="grid cols-2" style="margin-top:16px;align-items:start">
-<section class="card" aria-labelledby="news-h">
+<div class="grid cols-2 news-pair" style="margin-top:16px">
+<section class="card news-card" aria-labelledby="news-h">
 <header>
 <div><p class="eyebrow">Latest crypto news</p><h2 id="news-h" class="sr">Latest crypto news</h2></div>
 <a class="seeall" href="./news.html">All news<span aria-hidden="true">&rsaquo;</span></a>
 </header>
 <div id="news"></div>
 </section>
+<div class="side-stack">
 <section class="card" aria-labelledby="cat-h">
 <header><p class="eyebrow" id="cat-h">Upcoming catalysts</p></header>
 <div id="cats"></div>
 </section>
+<section class="card halving" id="halving" aria-labelledby="halv-h">
+<header><h2 id="halv-h">Next Bitcoin Halving</h2><span class="eyebrow">Block 1,050,000</span></header>
+<div class="halv-body" id="halv-body">
+<div class="halv-cd"><span class="halv-skel"></span><small>Estimated time remaining</small></div>
+</div>
+<div class="nsrc"><span>Source: mempool.space</span><span>Halving #5 &middot; reward drops to 1.5625 BTC</span></div>
+</section>
+</div>
 </div>
 <div style="margin-top:28px">
 <p class="eyebrow">Market context</p>

@@ -223,7 +223,7 @@
   .seeall span { font-size: 15px; line-height: 1; }
   .newsrow { padding: 14px 0; border-bottom: 1px solid var(--border-2); }
   .newsrow:first-child { padding-top: 2px; }
-  .newsrow:last-of-type { border-bottom: 0; padding-bottom: 4px; }
+  .newsrow:last-of-type, .newsrow.last { border-bottom: 0; padding-bottom: 4px; }
   .nmeta { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 6px; }
   .nago { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
   .nchip { font-size: 10px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: #087fac; background: #e3f3f8; padding: 2px 7px; border-radius: 20px; white-space: nowrap; }
@@ -241,6 +241,37 @@
   .cat .t small { display: block; font-weight: 400; font-size: 12.5px; color: var(--muted); }
   .impact { font-size: 10.5px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; padding: 2px 7px; border-radius: 4px; white-space: nowrap; color: var(--muted); background: var(--border-2); }
   .impact.high { color: #8a5a10; background: #fbf1e0; }
+
+  /* News beside calendar + halving: equal-height columns, flush bottoms. */
+  .news-pair { align-items: stretch; }
+  .news-pair.measuring { align-items: start; }
+  .news-pair.measuring .halving { flex: none; }
+  .newsrow[hidden] { display: none; }
+  .news-card { display: flex; flex-direction: column; }
+  .news-card > #news { flex: 1; display: flex; flex-direction: column; }
+  .news-card .nsrc { margin-top: auto; }
+  .side-stack { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .halving { flex: 1; display: flex; flex-direction: column; }
+  .halving[hidden] { display: none; }
+  .halving > header { align-items: center; margin-bottom: 0; }
+  .halving > header .eyebrow { font-size: 10.5px; }
+  .halv-body { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 16px; padding: 18px 0 4px; }
+  .halv-cd { text-align: center; }
+  .halv-cd span { display: block; font-family: var(--font-data); font-size: 32px; font-weight: 600; letter-spacing: -.5px; line-height: 1.15; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .halv-cd small { display: block; margin-top: 5px; font-size: 10.5px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); }
+  .halv-skel { width: 260px; max-width: 80%; height: 34px; margin: 0 auto; border-radius: 6px; background: var(--border-2); }
+  .halv-bar { height: 6px; border-radius: 3px; background: var(--border-2); overflow: hidden; }
+  .halv-bar i { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, #f7a427, #f97316); }
+  .halv-scale { display: flex; justify-content: space-between; gap: 8px; margin-top: 6px; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .halv-scale b { color: var(--ink-2); font-weight: 600; }
+  .halv-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid var(--border-2); }
+  .halv-stats > div { padding: 11px 0 0; }
+  .halv-stats > div:nth-child(n+3) { padding-top: 12px; }
+  .halv-stats .k { font-size: 10.5px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; color: var(--muted); }
+  .halv-stats .v { margin-top: 2px; font-family: var(--font-data); font-size: 17px; font-weight: 600; letter-spacing: -.3px; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .halv-stats .s { font-size: 11.5px; color: var(--muted); }
+  .halving .nsrc { margin-top: 16px; flex-wrap: wrap; }
+  @media (max-width: 420px) { .halv-cd span { font-size: 25px; } }
 
   .srcnote { display: flex; gap: 9px; align-items: flex-start; font-size: 12.5px; color: var(--muted); background: var(--border-2); padding: 10px 12px; border-radius: 8px; margin-bottom: 14px; line-height: 1.5; }
   .srcnote svg { flex: none; margin-top: 2px; }
@@ -540,12 +571,12 @@
     <p class="macro-note">Data from FRED, Federal Reserve Bank of St. Louis. Each indicator shows its latest release date; series update daily, weekly or monthly. Select one to see its full history on FRED.</p>
   </section>
 
-  <!-- align-items:start so each card ends where its content ends. The news
-       card is driven by a live feed and the calendar by a fixed schedule, so
-       they will rarely be the same height; stretching the shorter one just
-       trails empty white below its last row. -->
-  <div class="grid cols-2" style="margin-top:16px;align-items:start">
-    <section class="card" aria-labelledby="news-h">
+  <!-- News on the left; the calendar and the halving countdown stacked on
+       the right. Both columns stretch to the taller one, and the halving card
+       takes up the difference (its countdown centres in the space), so the
+       two bottoms are always flush however long the headlines run. -->
+  <div class="grid cols-2 news-pair" style="margin-top:16px">
+    <section class="card news-card" aria-labelledby="news-h">
       <header>
         <div><p class="eyebrow">Latest crypto news</p><h2 id="news-h" class="sr">Latest crypto news</h2></div>
         <a class="seeall" href="./news.html">All news<span aria-hidden="true">&rsaquo;</span></a>
@@ -553,10 +584,20 @@
       <div id="news"></div>
     </section>
 
-    <section class="card" aria-labelledby="cat-h">
-      <header><p class="eyebrow" id="cat-h">Upcoming catalysts</p></header>
-      <div id="cats"></div>
-    </section>
+    <div class="side-stack">
+      <section class="card" aria-labelledby="cat-h">
+        <header><p class="eyebrow" id="cat-h">Upcoming catalysts</p></header>
+        <div id="cats"></div>
+      </section>
+
+      <section class="card halving" id="halving" aria-labelledby="halv-h">
+        <header><h2 id="halv-h">Next Bitcoin Halving</h2><span class="eyebrow">Block 1,050,000</span></header>
+        <div class="halv-body" id="halv-body">
+          <div class="halv-cd"><span class="halv-skel"></span><small>Estimated time remaining</small></div>
+        </div>
+        <div class="nsrc"><span>Source: mempool.space</span><span>Halving #5 &middot; reward drops to 1.5625 BTC</span></div>
+      </section>
+    </div>
   </div>
 
   <div style="margin-top:28px">
@@ -1115,7 +1156,7 @@
         .replace(/</g, '&lt;').replace(/>/g, '&gt;');
     };
 
-    fetch('/api/news?limit=5', { cache: 'no-store' })
+    fetch('/api/news?limit=10', { cache: 'no-store' })
       .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(function (d) {
         if (d.error || !d.items || !d.items.length) throw new Error(d.error || 'the feed returned nothing');
@@ -1132,6 +1173,7 @@
             '</article>';
         }).join('') +
         '<div class="nsrc"><span>Not a Satstreet view</span></div>';
+        fitNews();
       })
       .catch(function (e) {
         $('news').innerHTML = '<p class="errbox"><b>News unavailable</b>The news feed could not be read (' +
@@ -1205,9 +1247,86 @@
           var d = new Date(e.date + 'T12:00:00'), high = e.kind === 'central-bank';
           return '<div class="cat"><div class="d">' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + '<small>' + d.toLocaleDateString('en-US', { weekday: 'short' }) + '</small></div><div class="t">' + esc(e.title) + '<small>' + esc(e.detail) + '</small></div><span class="impact' + (high ? ' high' : '') + '">' + (high ? 'High' : 'Data') + '</span></div>';
         }).join('');
+        fitNews();
       })
-      .catch(function () { $('cats').innerHTML = '<p class="errbox"><b>Calendar unavailable</b>Scheduled events could not be loaded.</p>'; });
+      .catch(function () { $('cats').innerHTML = '<p class="errbox"><b>Calendar unavailable</b>Scheduled events could not be loaded.</p>'; fitNews(); });
   }
+
+  /* Show as many headlines as fit beside the calendar and halving card, so
+     neither column trails white space: measure both columns at their
+     natural height, then drop headlines from the end (never below three)
+     until the news card is no taller than the right-hand stack. The halving
+     card's flex then absorbs the last partial row. Stacked (one column),
+     five are shown. */
+  var fitRaf = 0;
+  function fitNews() {
+    cancelAnimationFrame(fitRaf);
+    fitRaf = requestAnimationFrame(function () {
+      var pair = document.querySelector('.news-pair'), card = document.querySelector('.news-card');
+      var side = document.querySelector('.side-stack');
+      var rows = Array.prototype.slice.call(document.querySelectorAll('#news .newsrow'));
+      if (!pair || !rows.length) return;
+      rows.forEach(function (r) { r.hidden = false; });
+      var shown = rows.length;
+      var mark = function () { rows.forEach(function (r, i) { r.hidden = i >= shown; r.classList.toggle('last', i === shown - 1); }); };
+      if (getComputedStyle(pair).gridTemplateColumns.split(' ').length < 2) {
+        shown = Math.min(5, rows.length); mark();
+        return;
+      }
+      mark();
+      pair.classList.add('measuring');
+      var target = side.getBoundingClientRect().height;
+      while (shown > 3 && card.getBoundingClientRect().height > target + 1) { shown--; mark(); }
+      pair.classList.remove('measuring');
+    });
+  }
+  var fitTimer = 0;
+  window.addEventListener('resize', function () { clearTimeout(fitTimer); fitTimer = setTimeout(fitNews, 120); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitNews);
+
+  /* Next Bitcoin halving, from the chain tip on mempool.space. The date is
+     an estimate at the 10-minute target spacing, re-anchored to the real
+     tip every ten minutes; the countdown ticks locally in between. If the
+     tip can't be read the card is left out rather than showing a guess. */
+  var HALVING = 1050000, EPOCH = 210000, halvTimer = null, halvAt = 0;
+  function loadHalving() {
+    var card = $('halving');
+    fetch('https://mempool.space/api/blocks/tip/height', { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+      .then(function (t) {
+        var h = parseInt(t, 10);
+        if (!isFinite(h) || h <= 0) throw new Error('bad height');
+        var left = Math.max(0, HALVING - h);
+        halvAt = Date.now() + left * 600000;
+        var start = HALVING - EPOCH, pct = Math.min(100, Math.max(0, (h - start) / EPOCH * 100));
+        var n = function (x) { return x.toLocaleString('en-US'); };
+        var date = new Date(halvAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        $('halv-body').innerHTML =
+          '<div class="halv-cd"><span id="halv-cd">\u2014</span><small>Estimated time remaining</small></div>' +
+          '<div><div class="halv-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct.toFixed(1) + '" aria-label="Progress through the current halving epoch"><i style="width:' + pct.toFixed(1) + '%"></i></div>' +
+          '<div class="halv-scale"><span>' + n(start) + '</span><b>' + pct.toFixed(1) + '% of epoch</b><span>' + n(HALVING) + '</span></div></div>' +
+          '<div class="halv-stats">' +
+            '<div><div class="k">Blocks remaining</div><div class="v">' + n(left) + '</div><div class="s">at ~10 min / block</div></div>' +
+            '<div><div class="k">Current height</div><div class="v">' + n(h) + '</div><div class="s">chain tip</div></div>' +
+            '<div><div class="k">Predicted date</div><div class="v">' + esc(date) + '</div><div class="s">estimate only</div></div>' +
+            '<div><div class="k">Block reward</div><div class="v">3.125 &rarr; 1.5625</div><div class="s">BTC per block</div></div>' +
+          '</div>';
+        var pad = function (x) { return String(x).padStart(2, '0'); };
+        var tick = function () {
+          var ms = Math.max(0, halvAt - Date.now()), el = $('halv-cd');
+          if (!el) return;
+          el.textContent = Math.floor(ms / 864e5) + 'd ' + pad(Math.floor(ms % 864e5 / 36e5)) + 'h ' +
+            pad(Math.floor(ms % 36e5 / 6e4)) + 'm ' + pad(Math.floor(ms % 6e4 / 1e3)) + 's';
+        };
+        tick();
+        if (halvTimer) clearInterval(halvTimer);
+        halvTimer = setInterval(tick, 1000);
+        card.hidden = false;
+        fitNews();
+      })
+      .catch(function () { if (!halvAt) { card.hidden = true; fitNews(); } });
+  }
+  setInterval(function () { if (!document.hidden) loadHalving(); }, 600000);
 
   /* Largest assets by market cap. Fed by /api/assets. */
   var fmtCompact = function (v) {
@@ -1312,7 +1431,7 @@
   }
 
   loadMarket();
-  loadChart(); loadNews(); loadCats(); loadAssets(); loadMacro();
+  loadChart(); loadNews(); loadCats(); loadHalving(); loadAssets(); loadMacro();
   setInterval(loadMarket, 60000);
   setInterval(function () { if (!document.hidden) loadAssets(); }, 300000);
 
