@@ -258,6 +258,9 @@
     var r = el.getBoundingClientRect();
     return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden';
   }
+  /* The tour follows the page top to bottom. A step whose section is not on
+     the page (the macro panel stays hidden until FRED data loads) is left
+     out when the tour starts, so the count never promises a step it skips. */
   var STEPS = [
     { el: function () { return document.querySelector('.intro'); },
       title: 'Your daily snapshot',
@@ -271,15 +274,28 @@
     { el: function () { return document.querySelector('.focus-panel'); },
       title: 'Focus chart',
       body: 'Switch the range from one day to one year. Session open, high and low sit alongside.' },
+    { el: function () { return document.querySelector('.card.macro'); },
+      title: 'Macro backdrop',
+      body: 'The US economy in eight numbers from the Federal Reserve’s FRED database: rates, inflation, jobs, the yield curve, money supply and the dollar. Select one to see its full history on FRED.' },
+    { el: function () { return document.querySelector('.news-card'); },
+      title: 'Latest crypto news',
+      body: 'Headlines from Decrypt. Select one to read the full article on decrypt.co in a new tab, free and with no sign-up. All news has the full feed.' },
+    { el: function () { return document.querySelector('.side-stack'); },
+      title: 'Catalysts and the halving',
+      body: 'Upcoming dates that tend to move markets, and a live countdown to the next Bitcoin halving.' },
+    { el: function () { return document.querySelector('.amc-table') && document.querySelector('.amc-table').closest('.card'); },
+      title: 'Largest assets',
+      body: 'Where Bitcoin ranks against gold, silver and the largest listed companies by market value, computed from live prices.' },
     { el: function () { var n = $('mainnav'); return visible(n) ? n : $('navtoggle'); },
       title: 'More from the desk',
       body: 'News from Decrypt, the full Markets board with network and ETF flows, detailed charts, and a block explorer for Bitcoin, Ethereum, Solana and XRP.' }
   ];
+  var steps = STEPS;
   var step = 0, active = false;
 
   function place() {
     if (!active) return;
-    var s = STEPS[step], el = s.el(), spot = $('tour-spot'), card = $('tour-card');
+    var s = steps[step], el = s.el(), spot = $('tour-spot'), card = $('tour-card');
     if (!el || !visible(el)) { spot.style.opacity = '0'; } else {
       var r = el.getBoundingClientRect(), pad = 8;
       spot.style.opacity = '1';
@@ -296,12 +312,12 @@
   }
   function show(i) {
     step = i;
-    var s = STEPS[i];
-    $('tour-step').textContent = 'Step ' + (i + 1) + ' of ' + STEPS.length;
+    var s = steps[i];
+    $('tour-step').textContent = 'Step ' + (i + 1) + ' of ' + steps.length;
     $('tour-title').textContent = s.title;
     $('tour-body').textContent = s.body;
     $('tour-back').hidden = i === 0;
-    $('tour-next').textContent = i === STEPS.length - 1 ? 'Finish' : 'Next';
+    $('tour-next').textContent = i === steps.length - 1 ? 'Finish' : 'Next';
     var el = s.el();
     if (el && visible(el)) {
       var r = el.getBoundingClientRect();
@@ -317,6 +333,8 @@
     save({ toured: true });
   }
   function tour() {
+    steps = STEPS.filter(function (s) { return visible(s.el()); });
+    if (!steps.length) return;
     active = true;
     open($('dash-tour-layer'));
     show(0);
@@ -324,7 +342,7 @@
   api.tour = tour;
 
   function wireTour() {
-    $('tour-next').addEventListener('click', function () { if (step < STEPS.length - 1) show(step + 1); else endTour(); });
+    $('tour-next').addEventListener('click', function () { if (step < steps.length - 1) show(step + 1); else endTour(); });
     $('tour-back').addEventListener('click', function () { if (step > 0) show(step - 1); });
     $('tour-skip').addEventListener('click', endTour);
     window.addEventListener('resize', place);

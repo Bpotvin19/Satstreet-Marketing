@@ -146,23 +146,6 @@
 .ss-app .news-disclosure{margin-top: 28px; padding: 22px 0 40px; border-top: 1px solid var(--border); font-size: 12.5px; color: var(--muted); line-height: 1.65;}
 .ss-app .news-disclosure strong{color: var(--ink);}
 .ss-app .skelcard{height: 250px; border-radius: 11px; background: linear-gradient(90deg, var(--border-2) 25%, #e6ecf5 37%, var(--border-2) 63%); background-size: 400% 100%; animation: nsh 1.3s ease-in-out infinite;}
-.ss-app .reader{position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 3vh 16px; background: rgba(13,27,46,.55); backdrop-filter: blur(2px);}
-.ss-app .reader[hidden]{display: none;}
-.ss-app .reader-panel{width: min(1040px, 100%); height: 100%; display: flex; flex-direction: column; background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 24px 60px rgba(13,27,46,.35);}
-.ss-app .reader-bar{display: flex; align-items: center; gap: 14px; padding: 11px 14px 11px 18px; border-bottom: 1px solid var(--border); background: #fafcfe;}
-.ss-app .reader-src{flex: none; font-size: 10.5px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; color: #087fac; background: #e3f3f8; padding: 4px 9px; border-radius: 20px;}
-.ss-app .reader-title{flex: 1; min-width: 0; margin: 0; font-size: 14px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
-.ss-app .reader-out{flex: none; font-size: 12.5px; font-weight: 600; color: var(--muted); text-decoration: none; white-space: nowrap;}
-.ss-app .reader-out:hover{color: var(--blue);}
-.ss-app .reader-close{flex: none; width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid var(--border); border-radius: 8px; background: #fff; color: var(--ink); font-size: 18px; line-height: 1; cursor: pointer;}
-.ss-app .reader-close:hover{background: var(--border-2);}
-.ss-app .reader-body{position: relative; flex: 1; background: #fff;}
-.ss-app .reader-body iframe{position: absolute; inset: 0; width: 100%; height: 100%; border: 0;}
-.ss-app .reader-loading{position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 13px; background: #fff;}
-body.reading{overflow: hidden;}
-@media (max-width: 620px){.ss-app .reader{padding: 0;}
-.ss-app .reader-panel{border-radius: 0;}
-.ss-app .reader-out span{display: none;}}
 @keyframes nsh{0% { background-position: 100% 50%; } 100% { background-position: 0 50%; }}
 .ss-app .avatar{display:none!important}
 .ss-app .mainnav{gap:1px}

@@ -476,7 +476,7 @@
               (when ? '<span class="nago">' + esc(when) + '</span>' : '') +
               (n.section ? '<span class="nchip">' + esc(n.section) + '</span>' : '') +
             '</div>' +
-            '<h3><a href="./news.html#read=' + escA(encodeURIComponent(n.link)) + '">' +
+            '<h3><a href="' + escA(n.link) + '" target="_blank" rel="noopener noreferrer">' +
               esc(n.title) + '</a></h3>' +
             (n.summary ? '<p>' + esc(n.summary) + '</p>' : '') +
             '</article>';
