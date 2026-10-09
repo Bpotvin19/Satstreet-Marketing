@@ -304,7 +304,11 @@
       spot.style.width = (r.width + pad * 2) + 'px';
       spot.style.height = (r.height + pad * 2) + 'px';
       var cw = card.offsetWidth, ch = card.offsetHeight, vw = window.innerWidth, vh = window.innerHeight;
-      var top = r.bottom + 16 + ch < vh ? r.bottom + 16 : (r.top - 16 - ch > 0 ? r.top - 16 - ch : Math.max(12, vh - ch - 12));
+      /* A section taller than most of the screen (the largest-assets table)
+         keeps its heading in view; the card sits at the foot instead. */
+      var tall = r.height > vh * 0.6;
+      var top = tall ? Math.max(12, vh - ch - 12) :
+        (r.bottom + 16 + ch < vh ? r.bottom + 16 : (r.top - 16 - ch > 0 ? r.top - 16 - ch : Math.max(12, vh - ch - 12)));
       var left = Math.min(Math.max(12, r.left), vw - cw - 12);
       card.style.top = top + 'px';
       card.style.left = left + 'px';
@@ -321,7 +325,9 @@
     var el = s.el();
     if (el && visible(el)) {
       var r = el.getBoundingClientRect();
-      if (r.top < 70 || r.bottom > window.innerHeight - 40) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      if (r.height > window.innerHeight * 0.6) {
+        if (Math.abs(r.top - 80) > 24) window.scrollBy({ top: r.top - 80, behavior: 'smooth' });
+      } else if (r.top < 70 || r.bottom > window.innerHeight - 40) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
     }
     setTimeout(place, 380);
     place();
