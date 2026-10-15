@@ -8,7 +8,7 @@
 
   var CG = 'https://api.coingecko.com/api/v3/';
   var TOP = 50;               // the board covers market-cap ranks 1 to TOP
-  var RATES = 'https://api.frankfurter.app/latest?from=USD&to=CAD';
+  var RATES = 'https://api.coinbase.com/v2/exchange-rates?currency=USD';
   /* Dollar pegs are excluded from the board outright. A row pinned to $1.0000
      with 0.00% beside it tells a reader nothing, and roughly a third of the
      top fifty by market cap are pegs of one kind or another.
@@ -263,7 +263,7 @@
           capChange: g.data.market_cap_change_percentage_24h_usd
         };
       }
-      cad = fx && fx.rates ? parseFloat(fx.rates.CAD) : null;
+      cad = fx && fx.data && fx.data.rates ? parseFloat(fx.data.rates.CAD) : null;
       $('ccy-cad').disabled = !cad;
       asOf = Date.now();
       renderGlobals(); render();

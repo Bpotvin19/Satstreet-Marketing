@@ -31,6 +31,7 @@
     { symbol: 'SOL-USD', label: 'Solana', type: 'Crypto' },
     { symbol: 'IBIT', label: 'iShares Bitcoin Trust', type: 'ETF' },
     { symbol: 'MSTR', label: 'Strategy', type: 'Stock' },
+    { symbol: 'COIN', label: 'COIN', type: 'Stock' },
     { symbol: 'SI=F', label: 'Silver', type: 'Futures' },
     { symbol: 'EURUSD=X', label: 'EUR/USD', type: 'FX' },
     { symbol: '^DJI', label: 'Dow Jones', type: 'Index' }

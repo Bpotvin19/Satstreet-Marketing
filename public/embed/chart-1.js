@@ -116,6 +116,7 @@
      ticker is never charted in its place. The first match in this order
      wins, and the answer is remembered in this browser for a day. */
   var VENUES = [
+    { tv: 'COINBASE', name: '', quote: 'USD', url: function (s) { return 'https://api.exchange.coinbase.com/products/' + s + '-USD/ticker'; }, px: function (d) { return d.price; } },
     { tv: 'KRAKEN', name: 'Kraken', quote: 'USD', url: function (s) { return 'https://api.kraken.com/0/public/Ticker?pair=' + s + 'USD'; }, px: function (d) { var k = d.result && Object.keys(d.result)[0]; return k ? d.result[k].c[0] : null; } },
     { tv: 'BINANCE', name: 'Binance', quote: 'USDT', url: function (s) { return 'https://api.binance.com/api/v3/ticker/price?symbol=' + s + 'USDT'; }, px: function (d) { return d.price; } },
     { tv: 'OKX', name: 'OKX', quote: 'USDT', url: function (s) { return 'https://www.okx.com/api/v5/market/ticker?instId=' + s + '-USDT'; }, px: function (d) { return d.data && d.data[0] && d.data[0].last; } },
@@ -130,7 +131,7 @@
   function remember(key, v) { try { v.t = Date.now(); localStorage.setItem(key, JSON.stringify(v)); } catch (e) {} }
 
   function findVenue(ref) {
-    var key = 'satstreet.chart.venue.v2.' + (coinId || symbol);
+    var key = 'satstreet.chart.venue.v3.' + (coinId || symbol);
     var known = remembered(key);
     if (known) return Promise.resolve(known);
     return Promise.all(VENUES.map(function (v) {
@@ -252,7 +253,7 @@
       gridColor: 'rgba(227, 234, 243, 0.6)',
       // Hidden so Range is the only interval control on the page.
       hide_top_toolbar: true,
-      hide_legend: false,
+      hide_legend: true,
       allow_symbol_change: false,
       save_image: false,
       withdateranges: false,
