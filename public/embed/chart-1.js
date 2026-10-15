@@ -65,7 +65,7 @@
       c.innerHTML = '<img src="' + esc(info.image) + '" alt="" />';
     }
     var tv = tvOverride || info.tv;
-    $('pair').textContent = symbol + '/USD' + (tv && info.venue ? ' · ' + info.venue : '');
+    $('pair').textContent = symbol + '/USD';
   }
 
   $('asset').addEventListener('change', function () {
