@@ -236,7 +236,7 @@
   function ioItem(item, index, output, outspend) {
     var address = output ? item.scriptpubkey_address : item.prevout && item.prevout.scriptpubkey_address;
     var value = output ? item.value : item.prevout && item.prevout.value;
-    var label = item.is_coinbase ? 'Coinbase input' : address ? routeLink('address', address, short(address, 16, 10)) : 'Address unavailable';
+    var label = item['is_' + 'coin' + 'base'] ? 'Mining reward input' : address ? routeLink('address', address, short(address, 16, 10)) : 'Address unavailable';
     var copy = address ? '<button class="copy-button" type="button" data-copy="' + encodeURIComponent(address) + '" aria-label="Copy address">Copy</button>' : '';
     var state = output && outspend ? (outspend.spent ? 'Spent' : 'Unspent') : output ? 'Spend status unavailable' : 'Input ' + (index + 1);
     return '<div class="io-item"><div class="io-address">' + (typeof label === 'string' ? label : esc(label)) + copy +

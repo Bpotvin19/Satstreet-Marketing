@@ -996,7 +996,7 @@
   /* ═══════════════════════════ XRP Ledger ═══════════════════════════ */
   /* Public XRP Ledger JSON-RPC (xrplcluster.com, xrpl.ws as fallback; both
      allow browser requests, Ripple's own s1/s2 do not). Token names, icons
-     and XRP prices come from XRPL Meta; the XRP/USD rate from Coinbase. */
+     and XRP prices come from XRPL Meta; the XRP/USD rate from CoinGecko. */
   var XRPL = ['https://xrplcluster.com/', 'https://xrpl.ws/'];
   var RIPPLE_EPOCH = 946684800;   // ledger times count seconds from 2000-01-01
   var XR_ERR = {
@@ -1054,8 +1054,8 @@
 
   var xrpUsdP = null;
   function xrpUsd() {
-    if (!xrpUsdP) xrpUsdP = withTimeout(fetch('https://api.coinbase.com/v2/prices/XRP-USD/spot').then(function (r) { return r.json(); }), 6000)
-      .then(function (d) { var v = Number(d && d.data && d.data.amount); return isFinite(v) && v > 0 ? v : null; })
+    if (!xrpUsdP) xrpUsdP = withTimeout(fetch('https://api.coingecko.com/api/v3/simple/price?ids=ripple&vs_currencies=usd').then(function (r) { return r.json(); }), 6000)
+      .then(function (d) { var v = Number(d && d.ripple && d.ripple.usd); return isFinite(v) && v > 0 ? v : null; })
       .catch(function () { xrpUsdP = null; return null; });
     return xrpUsdP;
   }

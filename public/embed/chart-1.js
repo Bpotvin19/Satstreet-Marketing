@@ -116,7 +116,6 @@
      ticker is never charted in its place. The first match in this order
      wins, and the answer is remembered in this browser for a day. */
   var VENUES = [
-    { tv: 'COINBASE', name: 'Coinbase', quote: 'USD', url: function (s) { return 'https://api.exchange.coinbase.com/products/' + s + '-USD/ticker'; }, px: function (d) { return d.price; } },
     { tv: 'KRAKEN', name: 'Kraken', quote: 'USD', url: function (s) { return 'https://api.kraken.com/0/public/Ticker?pair=' + s + 'USD'; }, px: function (d) { var k = d.result && Object.keys(d.result)[0]; return k ? d.result[k].c[0] : null; } },
     { tv: 'BINANCE', name: 'Binance', quote: 'USDT', url: function (s) { return 'https://api.binance.com/api/v3/ticker/price?symbol=' + s + 'USDT'; }, px: function (d) { return d.price; } },
     { tv: 'OKX', name: 'OKX', quote: 'USDT', url: function (s) { return 'https://www.okx.com/api/v5/market/ticker?instId=' + s + '-USDT'; }, px: function (d) { return d.data && d.data[0] && d.data[0].last; } },
