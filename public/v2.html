@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Satstreet · Terminal V2 Preview</title>
+<meta name="description" content="Preview of the next Satstreet client terminal experience.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Manrope:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./assets/v2.css?v=1">
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-in">
+    <a class="brand" href="./v2.html" aria-label="Satstreet home"><span class="brand-mark">S</span><span>Satstreet</span></a>
+    <nav class="mainnav" aria-label="Terminal preview">
+      <a class="active" href="./v2.html">Overview</a>
+      <a href="./ticker.html">Markets</a>
+      <a href="./chart.html">Chart</a>
+      <a href="./structure.html">Structure</a>
+      <a href="./treasuries.html">Treasuries</a>
+      <a href="./resources.html">Resources</a>
+      <a href="./portfolio.html">Wallet Monitor</a>
+    </nav>
+    <div class="spacer"></div>
+    <button class="command-trigger" id="command-trigger" type="button"><span>⌘</span>K</button>
+    <a class="trade" href="https://desk.satstreet.com/auth/login?welcome=1788456624959" target="_blank" rel="noopener">Place a Trade ↗</a>
+  </div>
+</header>
+<div class="pulsebar" id="pulsebar">
+  <div class="pulse"><span>BTC</span><strong id="btc-price">—</strong><em id="btc-move">—</em></div>
+  <div class="pulse"><span>ETH</span><strong id="eth-price">—</strong><em id="eth-move">—</em></div>
+  <div class="pulse"><span>S&amp;P 500</span><strong id="spx">—</strong><em>cross-asset</em></div>
+  <div class="pulse"><span>US 10Y</span><strong id="teny">—</strong><em>rates</em></div>
+  <div class="pulse"><span>DXY</span><strong id="dxy">—</strong><em>dollar</em></div>
+  <div class="pulse next"><span>Next catalyst</span><strong id="next-catalyst">Loading…</strong><em id="next-time"></em></div>
+</div>
+<main class="shell">
+  <section class="hero">
+    <div>
+      <p class="eyebrow">Satstreet terminal · preview</p>
+      <h1 id="greeting">Good afternoon.</h1>
+      <p class="lede">A daily operating view for digital assets: what moved, why it matters, what comes next, and where to go deeper.</p>
+    </div>
+    <div class="hero-actions">
+      <button class="ghost" id="contact" type="button">Contact the Desk</button>
+      <a class="primary" href="https://desk.satstreet.com/auth/login?welcome=1788456624959" target="_blank" rel="noopener">Place a Trade ↗</a>
+    </div>
+  </section>
+
+  <section class="command-grid">
+    <article class="card today">
+      <div class="card-head"><div><p class="eyebrow">Today at Satstreet</p><h2>Three things that matter.</h2></div><span class="badge" id="regime">Neutral</span></div>
+      <ol id="daily-brief">
+        <li><b>Market</b><span>Loading the cross-asset picture…</span></li>
+        <li><b>Structure</b><span>Loading positioning and flow context…</span></li>
+        <li><b>Watch</b><span>Loading the next catalyst…</span></li>
+      </ol>
+      <div class="regime-grid">
+        <div><span>Liquidity</span><strong id="liq">→</strong></div><div><span>Dollar</span><strong id="dol">→</strong></div><div><span>Rates</span><strong id="rates">→</strong></div><div><span>Crypto momentum</span><strong id="mom">→</strong></div>
+      </div>
+    </article>
+
+    <article class="card desk-view">
+      <p class="eyebrow">Desk view</p><h2>What I would tell a client today.</h2>
+      <div id="talking-points" class="talking-points">
+        <p>Loading current market context…</p>
+      </div>
+      <div class="card-actions"><a href="./news.html">Open Macro Desk</a><button id="copy-points" type="button">Copy talking points</button></div>
+    </article>
+  </section>
+
+  <section class="market-section">
+    <div class="section-head"><div><p class="eyebrow">Markets</p><h2>Cross-asset board</h2></div><a href="./ticker.html">Open Markets →</a></div>
+    <div class="asset-grid" id="asset-grid">
+      <button class="asset-card" data-symbol="bitcoin"><span class="coin"><img alt="Bitcoin"></span><span class="name">Bitcoin <small>BTC</small></span><strong>—</strong><em>—</em></button>
+      <button class="asset-card" data-symbol="ethereum"><span class="coin"><img alt="Ethereum"></span><span class="name">Ethereum <small>ETH</small></span><strong>—</strong><em>—</em></button>
+      <button class="asset-card" data-symbol="solana"><span class="coin"><img alt="Solana"></span><span class="name">Solana <small>SOL</small></span><strong>—</strong><em>—</em></button>
+      <button class="asset-card" data-symbol="bittensor"><span class="coin"><img alt="Bittensor"></span><span class="name">Bittensor <small>TAO</small></span><strong>—</strong><em>—</em></button>
+    </div>
+    <div class="focus-card">
+      <div class="focus-head"><div><p class="eyebrow">Focus</p><h3 id="focus-name">Bitcoin</h3></div><div class="focus-links"><a id="focus-chart" href="./chart.html?symbol=BTC&name=Bitcoin">Chart</a><a id="focus-structure" href="./structure.html">Structure</a><a id="focus-learn" href="./resources.html">Learn</a></div></div>
+      <div class="focus-body"><canvas id="focus-canvas"></canvas><aside><div><span>24h range</span><strong id="focus-range">—</strong></div><div><span>24h volume</span><strong id="focus-volume">—</strong></div><div><span>Market cap</span><strong id="focus-cap">—</strong></div><div><span>Context</span><p id="focus-context">Loading market context…</p></div></aside></div>
+    </div>
+  </section>
+
+  <section class="lower-grid">
+    <article class="card catalysts"><div class="card-head"><div><p class="eyebrow">Upcoming</p><h2>Catalyst board</h2></div><a href="./news.html">Full calendar →</a></div><div id="catalysts"></div></article>
+    <article class="card recent"><div class="card-head"><div><p class="eyebrow">Pick up where you left off</p><h2>Recent activity</h2></div></div><div id="recent-list"></div></article>
+  </section>
+
+  <section class="card quicklinks">
+    <div><p class="eyebrow">Go deeper</p><h2>One terminal, connected.</h2><p>Move from price to structure to education without losing context.</p></div>
+    <div class="quick-grid"><a href="./structure.html"><span>01</span><b>Market Structure</b><small>Flows, derivatives and network intelligence.</small></a><a href="./treasuries.html"><span>02</span><b>Treasuries</b><small>Who owns digital assets and who is adding.</small></a><a href="./resources.html"><span>03</span><b>Knowledge Centre</b><small>Learn the concepts behind the numbers.</small></a><a href="./portfolio.html"><span>04</span><b>Wallet Monitor</b><small>Watch public Bitcoin addresses locally.</small></a></div>
+  </section>
+</main>
+
+<div class="command-backdrop" id="command-backdrop" hidden>
+  <div class="command-modal" role="dialog" aria-modal="true" aria-labelledby="command-title">
+    <div class="command-search"><span>⌘K</span><input id="command-input" autocomplete="off" placeholder="Search the terminal or type a command…"><button id="command-close" type="button">Esc</button></div>
+    <div class="command-results" id="command-results"></div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+<script src="./assets/v2.js?v=1"></script>
+</body>
+</html>
