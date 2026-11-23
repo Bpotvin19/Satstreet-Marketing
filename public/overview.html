@@ -913,7 +913,8 @@
     var tp = q.tradingPeriod, t = Date.now();
     if (tp && tp.start && tp.end) {
       var a = Date.parse(tp.start), b = Date.parse(tp.end);
-      if (t >= a && t <= b) return { t: 'Market open', c: 'ok' };
+      if (!isFinite(a) || !isFinite(b) || b <= a) return { t: 'Trading hours not reported', c: '' };
+      if (t >= a && t < b) return { t: 'Market open', c: 'ok' };
       return { t: 'Market closed', c: 'closed' };
     }
     return { t: 'Trading hours not reported', c: '' };
@@ -934,7 +935,6 @@
   var market = null;
   var selectedSymbol = 'BTC-USD';
   var range = '1W', series = [], hoverIndex = null, chartGeom = null;
-  var usePreview = new URLSearchParams(window.location.search).get('sample') === '1' || /\.chatgpt\.site$/.test(window.location.hostname);
   var ICONS = {
     'BTC-USD': '₿', 'ETH-USD': 'Ξ', 'GC=F': 'AU', 'CL=F': 'WTI',
     'CAD=X': 'FX', '^TNX': '10Y', '^IXIC': 'NDQ', '^GSPC': 'SPX'
@@ -1061,27 +1061,9 @@
     return bits.join(' ');
   }
 
-  function previewMarket() {
-    var now = new Date().toISOString();
-    var rows = [
-      ['BTC-USD', 'Bitcoin', 109240, 1.62, 'usd'], ['ETH-USD', 'Ethereum', 4380, 2.31, 'usd'],
-      ['GC=F', 'Gold', 3494, .42, 'usd'], ['CL=F', 'WTI Oil', 64.18, -.74, 'usd'],
-      ['CAD=X', 'USD/CAD', 1.3812, .18, 'fx'], ['^TNX', 'US 10Y', 4.22, .04, 'pct'],
-      ['^IXIC', 'Nasdaq', 21870, 1.08, 'level'], ['^GSPC', 'S&P 500', 6482, .63, 'level']
-    ];
-    var quotes = rows.map(function (r, index) {
-      var absolute = r[4] === 'pct' ? r[3] : r[2] * r[3] / 100;
-      var open = r[2] - absolute, points = [];
-      for (var i = 0; i < 22; i++) points.push(open + absolute * i / 21 + Math.sin(i * .82 + index) * Math.abs(absolute || r[2] * .002) * .32);
-      return { symbol: r[0], label: r[1], price: r[2], changePct: r[4] === 'pct' ? null : r[3], changeAbs: absolute, spark: points, open: open, sessionHigh: Math.max.apply(null, points.concat([r[2]])), sessionLow: Math.min.apply(null, points.concat([r[2]])), kind: r[4], source: 'Illustrative preview', marketState: 'SAMPLE', asOf: now };
-    });
-    return { asOf: now, quotes: quotes, degraded: [], preview: true };
-  }
-
   var lastOk = 0, lastFail = 0, lastErr = '', marketBusy = false;
   function renderFresh() {
-    var el = $('meta-fresh'), ok = market && !market.preview;
-    if (market && market.preview) { el.className = 'brief-fresh'; el.innerHTML = '<i class="pip warn" aria-hidden="true"></i><span>Illustrative sample data</span>'; return; }
+    var el = $('meta-fresh'), ok = !!market;
     if (!market && !lastFail) { el.className = 'brief-fresh'; el.innerHTML = '<i class="pip" aria-hidden="true"></i><span>Loading prices…</span>'; return; }
     var stale = lastFail > lastOk;
     var retry = stale ? ' <button type="button" class="retry" data-retry="market">Retry</button>' : '';
@@ -1103,11 +1085,12 @@
     /* The client's own watchlist, if they have changed the default board. */
     var custom = P ? P.customSymbols() : null;
     var url = '/api/market' + (custom ? '?symbols=' + encodeURIComponent(custom.join(',')) : '');
-    var request = usePreview ? Promise.resolve(previewMarket()) : getJSON(url, 15000);
+    var request = getJSON(url, 15000);
     return request
       .then(function (d) {
         marketBusy = false;
         if (!d || !Array.isArray(d.quotes)) throw new Error('the price feed sent an unexpected response');
+        if (d.quotes.length && !d.quotes.some(function(q){return !q.error && typeof q.price === 'number' && isFinite(q.price);})) throw new Error('the sources did not report any prices');
         if (P) d.quotes.forEach(function (q) { var l = P.labelFor(q.symbol); if (l) q.label = l; });
         if (!d.quotes.some(function (q) { return q.symbol === selectedSymbol; }) && d.quotes.length) {
           selectedSymbol = d.quotes[0].symbol;
@@ -1322,18 +1305,6 @@
     if (sameAsset) { chartBusy(true); }
     else { series = []; $('chart-return').textContent = '\u00a0'; $('chart-return').className = 'chart-return'; msg.textContent = 'Loading chart…'; drawChart(); }
     $('chart-foot').textContent = 'Loading ' + RANGE_WORDS[requestRange].toLowerCase() + '…';
-    if (usePreview) {
-      var q = selectedQuote(), count = range === '1D' ? 78 : range === '1W' ? 84 : range === '1M' ? 90 : range === '3M' ? 90 : range === '1Y' ? 120 : range === '5Y' ? 180 : 240;
-      var days = range === '1D' ? 1 : range === '1W' ? 7 : range === '1M' ? 30 : range === '3M' ? 90 : range === '1Y' ? 365 : range === '5Y' ? 1825 : 3650;
-      var end = Date.now(), start = end - days * 86400000, base = q ? q.price : 100;
-      series = [];
-      for (var i = 0; i < count; i++) {
-        var progress = i / (count - 1), wave = Math.sin(i * .21 + Object.keys(ICONS).indexOf(selectedSymbol)) * .014 + Math.sin(i * .067) * .008;
-        var close = base * (.94 + progress * .06 + wave), open = close * (1 + Math.sin(i * .9) * .003);
-        series.push({ t: start + (end - start) * progress, v: close, o: open, h: Math.max(open, close) * 1.004, l: Math.min(open, close) * .996, volume: base * (40 + Math.abs(Math.sin(i * .31)) * 120) });
-      }
-      chartKey = key; chartBusy(false); msg.textContent = ''; $('chart-foot').textContent = 'Illustrative sample data'; drawChart(); return Promise.resolve();
-    }
     return getJSON('/api/history?symbol=' + encodeURIComponent(requestSymbol) + '&range=' + encodeURIComponent(requestRange), 15000)
       .then(function (d) {
         if (seq !== chartSeq) return;
