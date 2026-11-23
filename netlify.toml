@@ -109,3 +109,17 @@
   [headers.values]
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Charts now live inside Markets; preserve asset queries on old links.
+[[redirects]]
+  from = "/chart.html"
+  to = "/ticker.html"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/chart"
+  to = "/ticker.html"
+  status = 301
+  force = true
+
