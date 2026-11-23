@@ -59,6 +59,8 @@
   @media (max-width: 900px) { #host { height: 460px; } }
   @media (max-width: 620px) { #host { height: 380px; } .px { font-size: 25px; } }
 </style>
+<link rel="stylesheet" href="./assets/themes.css" />
+<script src="./assets/theme.js"></script>
 </head>
 <body>
 
@@ -421,10 +423,10 @@
       var dp = rows[rows.length - 1][4] >= 100 ? 2 : rows[rows.length - 1][4] >= 1 ? 4 : 6;
       lw = LC.createChart(host, {
         autoSize: true,
-        layout: { background: { color: '#ffffff' }, textColor: '#5f6f80', fontFamily: getComputedStyle(document.body).fontFamily },
-        grid: { vertLines: { color: 'rgba(227,234,243,0.6)' }, horzLines: { color: 'rgba(227,234,243,0.6)' } },
-        rightPriceScale: { borderColor: '#e3eaf3' },
-        timeScale: { borderColor: '#e3eaf3', timeVisible: r.days <= 30, secondsVisible: false },
+        layout: chartLayout(),
+        grid: chartGrid(),
+        rightPriceScale: { borderColor: tv('--chart-border', '#e3eaf3') },
+        timeScale: { borderColor: tv('--chart-border', '#e3eaf3'), timeVisible: r.days <= 30, secondsVisible: false },
         crosshair: { mode: 0 },
         localization: { priceFormatter: function (v) { return '$' + v.toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp }); } }
       });
@@ -440,6 +442,15 @@
       $('cover').hidden = true;
     }).catch(function (e) { unavailable(e.message); });
   }
+
+  /* Chart colours follow the active theme (assets/themes.css); fallbacks are the light theme. */
+  function tv(n, d) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim() || d; }
+  function chartLayout() { return { background: { color: tv('--chart-bg', '#ffffff') }, textColor: tv('--chart-text', '#5f6f80'), fontFamily: getComputedStyle(document.body).fontFamily }; }
+  function chartGrid() { var c = tv('--chart-grid-lw', 'rgba(227,234,243,0.6)'); return { vertLines: { color: c }, horzLines: { color: c } }; }
+  window.addEventListener('ss-themechange', function () {
+    if (!lw) return;
+    lw.applyOptions({ layout: chartLayout(), grid: chartGrid(), rightPriceScale: { borderColor: tv('--chart-border', '#e3eaf3') }, timeScale: { borderColor: tv('--chart-border', '#e3eaf3') } });
+  });
 
   function start() {
     loading();

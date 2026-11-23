@@ -1,0 +1,190 @@
+/* Client terminal themes.
+   "Classic" is the original light look and needs nothing here. The other three are chosen from the
+   Theme menu in the top bar (assets/theme.js), which sets <html data-theme="…"> and remembers the
+   choice on this device. Each theme mostly re-points the page's colour and font variables, then
+   adjusts the few surfaces that carry fixed light colours. Chart canvases read the --chart-* values. */
+
+/* ── Theme menu (all themes; the top bar is dark in every theme) ── */
+.topbar { position: relative; z-index: 50; }
+.ss-theme { position: relative; flex: none; }
+.ss-theme-btn { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px; border-radius: 8px;
+  border: 1px solid rgba(157, 180, 206, .35); background: rgba(255, 255, 255, .04); color: #dbe6f5; font: 600 13px/1 var(--font); cursor: pointer; }
+.ss-theme-btn:hover { background: rgba(255, 255, 255, .09); border-color: rgba(157, 180, 206, .6); }
+.ss-theme-btn svg { width: 16px; height: 16px; }
+.ss-theme-menu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 60; width: 268px; padding: 8px; border-radius: 12px;
+  background: #0e1a2c; border: 1px solid rgba(127, 208, 255, .25); box-shadow: 0 24px 60px rgba(0, 0, 0, .45); }
+.ss-theme-menu[hidden] { display: none; }
+.ss-theme-menu p { margin: 6px 8px 8px; color: #8ea4c2; font: 600 11px/1.2 var(--font); letter-spacing: .12em; text-transform: uppercase; }
+.ss-theme-opt { display: flex; align-items: center; gap: 12px; width: 100%; padding: 8px; border: 0; border-radius: 9px; background: none; color: #e6eef9;
+  font: 600 14px/1.25 var(--font); text-align: left; cursor: pointer; }
+.ss-theme-opt small { display: block; color: #8ea4c2; font-weight: 400; font-size: 12px; margin-top: 2px; }
+.ss-theme-opt:hover, .ss-theme-opt:focus-visible { background: rgba(127, 208, 255, .10); outline: none; }
+.ss-theme-opt[aria-checked="true"] { background: rgba(47, 123, 255, .18); box-shadow: inset 0 0 0 1px rgba(127, 208, 255, .45); }
+.ss-theme-sw { flex: none; width: 44px; height: 32px; border-radius: 7px; border: 1px solid rgba(255, 255, 255, .18); overflow: hidden; position: relative; }
+.ss-theme-sw i { position: absolute; inset: auto 6px 6px 6px; height: 9px; border-radius: 3px; }
+.ss-sw-classic { background: linear-gradient(180deg, #0d1b2e 0 30%, #edf4f8 30%); } .ss-sw-classic i { background: #fff; box-shadow: 0 0 0 1px #d5e0ea; }
+.ss-sw-horizon { background: linear-gradient(180deg, #000 0 35%, #2f6cf0 55%, #eef3f9 75%); } .ss-sw-horizon i { background: #fff; }
+.ss-sw-night { background: radial-gradient(60% 40% at 50% 55%, #2f6cf0, transparent 70%), #02050b; } .ss-sw-night i { background: rgba(127, 208, 255, .25); box-shadow: 0 0 0 1px rgba(127, 208, 255, .6); }
+.ss-sw-desk { background: #111214; } .ss-sw-desk i { background: #1a1c20; box-shadow: 0 0 0 1px #3a3e46; }
+@media (max-width: 760px) { .ss-theme-btn span { display: none; } .ss-theme-btn { padding: 0 9px; } }
+
+/* ── Shared by Horizon and Night: the onboarding-video sky ── */
+html[data-theme="night"], html[data-theme="horizon"] {
+  --font: 'Source Sans 3', 'Source Sans Pro', system-ui, -apple-system, sans-serif;
+  --font-display: 'Source Sans 3', 'Source Sans Pro', system-ui, sans-serif;
+  --font-data: 'Source Sans 3', 'Source Sans Pro', system-ui, sans-serif;
+  --blue: #2f7bff;
+}
+html[data-theme="night"] body *, html[data-theme="horizon"] body * { font-variant-numeric: tabular-nums; }
+html[data-theme="night"] .topbar, html[data-theme="horizon"] .topbar {
+  background: rgba(0, 0, 0, .55) !important; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid; border-image: linear-gradient(90deg, rgba(47,123,255,0), #2f7bff 35%, #7fd0ff 65%, rgba(127,208,255,0)) 1; }
+html[data-theme="night"] .mainnav a, html[data-theme="horizon"] .mainnav a { color: #93a6c4; font-weight: 600; }
+html[data-theme="night"] .mainnav a[aria-current="page"], html[data-theme="horizon"] .mainnav a[aria-current="page"] { color: #fff; box-shadow: inset 0 -2px 0 #7fd0ff; }
+html[data-theme="night"] h1, html[data-theme="horizon"] h1 { font-weight: 600; letter-spacing: -.01em; }
+html[data-theme="night"] .eyebrow, html[data-theme="night"] .datestamp,
+html[data-theme="horizon"] .eyebrow, html[data-theme="horizon"] .datestamp { letter-spacing: .14em; font-weight: 600; }
+
+/* ── Horizon: night sky behind the top of the page, daylight below ── */
+html[data-theme="horizon"] { --radius: 14px; background: #eef3f9; }
+html[data-theme="horizon"] body { position: relative; background: transparent !important; }
+/* Other pages get a shorter band that ends under their page title; Overview's runs behind the market board. */
+html[data-theme="horizon"] body::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 360px; z-index: -1; pointer-events: none;
+  background: url(./themes/stars.webp) center -380px / 1920px auto no-repeat, linear-gradient(180deg, #000 0, #02060f 200px, #0b1d40 290px, #eef3f9 360px);
+  -webkit-mask: linear-gradient(180deg, #000 270px, transparent 360px); mask: linear-gradient(180deg, #000 270px, transparent 360px); }
+html[data-theme="horizon"] body:has(.intro)::before { height: 760px;
+  background: url(./themes/stars.webp) center -200px / 1920px auto no-repeat, linear-gradient(180deg, #000 0, #02060f 500px, #0b1d40 640px, #eef3f9 760px);
+  -webkit-mask: linear-gradient(180deg, #000 600px, transparent 760px); mask: linear-gradient(180deg, #000 600px, transparent 760px); }
+html[data-theme="horizon"] .pagehead h1 { color: #fff; }
+html[data-theme="horizon"] .pagehead p { color: #c3d1e8; }
+html[data-theme="horizon"] .pagehead .eyebrow { color: #7fd0ff; }
+html[data-theme="horizon"] .page-emblem { background: rgba(127, 208, 255, .12); color: #7fd0ff; border-color: rgba(127, 208, 255, .3); }
+html[data-theme="horizon"] .intro h1, html[data-theme="horizon"] main > h1, html[data-theme="horizon"] .page-head h1 { color: #fff; }
+html[data-theme="horizon"] .intro .datestamp { color: #7fd0ff; }
+html[data-theme="horizon"] .intro .summary { color: #c3d1e8; }
+html[data-theme="horizon"] .eyebrow, html[data-theme="horizon"] .datestamp { color: #2f6df0; }
+html[data-theme="horizon"] .marketboard { box-shadow: 0 30px 80px rgba(0, 10, 40, .55), 0 0 0 1px rgba(127, 208, 255, .35); border: 0; border-radius: 18px; }
+html[data-theme="horizon"] .card { border-radius: 16px; box-shadow: 0 10px 30px rgba(13, 27, 46, .06); }
+html[data-theme="horizon"] .asset-tile[aria-pressed="true"] { border-color: #2f7bff; box-shadow: 0 0 0 1px #2f7bff, 0 10px 30px rgba(47, 123, 255, .25); }
+html[data-theme="horizon"] .segmented button[aria-pressed="true"] { background: #2f7bff; border-color: #2f7bff; }
+
+/* ── Night: the whole page in the video look ── */
+html[data-theme="night"] {
+  color-scheme: dark;
+  --bg: #02050b; --card: rgba(9, 18, 38, .72); --border: rgba(127, 208, 255, .22); --border-2: rgba(127, 208, 255, .12);
+  --ink: #eaf1ff; --ink-2: #c3d1e8; --muted: #93a6c4; --faint: #6f84a6; --on-navy-2: #93a6c4;
+  --up: #3ddc97; --up-soft: rgba(61, 220, 151, .12); --down: #ff6b7a; --down-soft: rgba(255, 107, 122, .12);
+  --warn: #f2c46d; --warn-soft: rgba(242, 196, 109, .12); --brass: #e0b768; --brass-soft: rgba(224, 183, 104, .12);
+  --cyan: #7fd0ff; --navy: #02050b; --navy-2: #0a1426; --radius: 16px;
+  --shadow: inset 0 1px 0 rgba(160, 200, 255, .10), 0 24px 60px rgba(0, 0, 0, .45);
+  --chart-grid: rgba(127, 208, 255, .10); --chart-label: #8ea4c2; --chart-volume: rgba(127, 160, 220, .30); --chart-fade: rgba(0, 0, 0, 0);
+  --chart-cross: #7f97b8; --chart-dot: #0a1426; --chart-oil: #8fb3c4;
+  background: #000 url(./themes/stars.webp) center -120px / 1920px auto no-repeat;
+}
+html[data-theme="night"] body { background: transparent !important; color: var(--ink); }
+html[data-theme="night"] .card, html[data-theme="night"] .marketboard, html[data-theme="night"] .focus-panel {
+  background: var(--card) !important; border: 1px solid var(--border) !important; border-radius: 18px;
+  box-shadow: var(--shadow) !important; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+html[data-theme="night"] .asset-tile, html[data-theme="night"] .macro-tile { background: rgba(255, 255, 255, .03) !important; border: 1px solid rgba(127, 208, 255, .16) !important; border-radius: 14px; color: var(--ink-2); }
+html[data-theme="night"] .asset-tile:hover, html[data-theme="night"] .macro-tile:hover { border-color: rgba(127, 208, 255, .45) !important; background: rgba(47, 123, 255, .08) !important; }
+html[data-theme="night"] .asset-tile[aria-pressed="true"] { border-color: #7fd0ff !important; box-shadow: 0 0 0 1px #7fd0ff, 0 0 36px rgba(47, 123, 255, .45) !important; background: rgba(47, 123, 255, .10) !important; }
+html[data-theme="night"] h1, html[data-theme="night"] h2, html[data-theme="night"] h3, html[data-theme="night"] strong { color: #fff; }
+html[data-theme="night"] .eyebrow, html[data-theme="night"] .datestamp { color: #7fd0ff; }
+html[data-theme="night"] .focus-aside, html[data-theme="night"] .source-note, html[data-theme="night"] .halv-stats > div,
+html[data-theme="night"] .chart-return { background: rgba(255, 255, 255, .03) !important; border-color: rgba(127, 208, 255, .14) !important; }
+html[data-theme="night"] .source-note b { color: #7fd0ff; }
+html[data-theme="night"] .focus-body, html[data-theme="night"] .focus-head, html[data-theme="night"] .chart-toolbar { background: transparent !important; }
+html[data-theme="night"] .btn, html[data-theme="night"] .btn.ghost, html[data-theme="night"] .segmented button {
+  background: rgba(255, 255, 255, .04); color: var(--ink); border-color: rgba(127, 208, 255, .22); }
+html[data-theme="night"] .segmented button[aria-pressed="true"] { background: #2f7bff; color: #fff; border-color: #2f7bff; box-shadow: 0 0 18px rgba(47, 123, 255, .55); }
+html[data-theme="night"] .impact, html[data-theme="night"] .nchip, html[data-theme="night"] .amc-kind { background: rgba(127, 208, 255, .10); color: #9dc9ff; border-color: transparent; }
+html[data-theme="night"] .halv-bar { background: rgba(255, 255, 255, .08); } html[data-theme="night"] .halv-bar i { background: linear-gradient(90deg, #2f7bff, #7fd0ff); }
+html[data-theme="night"] .amc-table tr.is-btc td { background: rgba(47, 123, 255, .12); }
+html[data-theme="night"] input, html[data-theme="night"] select, html[data-theme="night"] textarea, html[data-theme="night"] dialog {
+  background: #0a1426; color: var(--ink); border-color: rgba(127, 208, 255, .25); }
+
+/* ── Desk: the benterminal.netlify.app feel ── */
+html[data-theme="desk"] {
+  color-scheme: dark;
+  --bg: #111214; --card: #16181b; --border: #2b2e34; --border-2: #23262b;
+  --ink: #f2eee5; --ink-2: #d9d4c8; --muted: #aaa59a; --faint: #77736b; --on-navy-2: #aaa59a;
+  --up: #6fcf97; --up-soft: rgba(111, 207, 151, .10); --down: #ef7d7d; --down-soft: rgba(239, 125, 125, .10);
+  --warn: #d9b26a; --warn-soft: rgba(217, 178, 106, .10); --brass: #d9b26a; --brass-soft: rgba(217, 178, 106, .10);
+  --blue: #4d86ff; --cyan: #9dbcff; --navy: #111214; --navy-2: #16181b; --radius: 9px; --shadow: none;
+  --font: 'IBM Plex Sans', system-ui, sans-serif; --font-display: 'Instrument Serif', Georgia, serif; --font-data: 'IBM Plex Mono', ui-monospace, monospace;
+  --chart-grid: #23262b; --chart-label: #8a857b; --chart-volume: rgba(170, 165, 154, .28); --chart-fade: rgba(0, 0, 0, 0);
+  --chart-cross: #77736b; --chart-dot: #16181b; --chart-oil: #9fb8c2;
+  background: #111214;
+}
+html[data-theme="desk"] body { background: radial-gradient(1200px 500px at 15% -10%, rgba(77, 134, 255, .10), transparent 60%) #111214 !important; color: var(--ink); }
+html[data-theme="desk"] .topbar { background: #111214 !important; border-bottom: 1px solid #2b2e34; }
+html[data-theme="desk"] .mainnav a { color: #aaa59a; font-family: var(--font-data); font-size: 13px; text-transform: lowercase; }
+html[data-theme="desk"] .mainnav a::before { content: '/'; color: #4d86ff; margin-right: 2px; }
+html[data-theme="desk"] .mainnav a[aria-current="page"] { color: #f2eee5; box-shadow: inset 0 -2px 0 #4d86ff; }
+html[data-theme="desk"] h1 { font-weight: 400; letter-spacing: -.01em; line-height: 1.05; }
+html[data-theme="desk"] .intro h1 { font-size: 72px; }
+html[data-theme="desk"] h2 { font-weight: 400; }
+html[data-theme="desk"] .marketboard h2, html[data-theme="desk"] .card h2 { font-size: 34px; }
+html[data-theme="desk"] h1, html[data-theme="desk"] h2, html[data-theme="desk"] h3, html[data-theme="desk"] strong { color: #f2eee5; }
+html[data-theme="desk"] .eyebrow, html[data-theme="desk"] .datestamp { font-family: var(--font-data); color: #9dbcff; letter-spacing: .08em; font-size: 12px; }
+html[data-theme="desk"] .datestamp::before, html[data-theme="desk"] .card > header .eyebrow::before, html[data-theme="desk"] .marketboard .eyebrow::before { content: '● '; color: #6fcf97; }
+html[data-theme="desk"] .card, html[data-theme="desk"] .marketboard, html[data-theme="desk"] .focus-panel { background: #16181b !important; border: 1px solid #2b2e34 !important; border-radius: 10px; box-shadow: none !important; }
+html[data-theme="desk"] .asset-tile, html[data-theme="desk"] .macro-tile { background: #1a1c20 !important; border: 1px solid #2b2e34 !important; border-radius: 8px; color: var(--ink-2); }
+html[data-theme="desk"] .asset-tile:hover, html[data-theme="desk"] .macro-tile:hover { border-color: #3a3e46 !important; background: #1f2126 !important; }
+html[data-theme="desk"] .asset-tile[aria-pressed="true"] { border-color: #4d86ff !important; box-shadow: 0 0 0 1px #4d86ff, 0 8px 30px rgba(77, 134, 255, .18) !important; }
+html[data-theme="desk"] .focus-aside, html[data-theme="desk"] .source-note, html[data-theme="desk"] .halv-stats > div, html[data-theme="desk"] .chart-return { background: #1a1c20 !important; border-color: #2b2e34 !important; }
+html[data-theme="desk"] .source-note b { color: #9dbcff; }
+html[data-theme="desk"] .focus-body, html[data-theme="desk"] .focus-head, html[data-theme="desk"] .chart-toolbar { background: transparent !important; }
+html[data-theme="desk"] .btn, html[data-theme="desk"] .btn.ghost, html[data-theme="desk"] .segmented button { background: #1a1c20; color: #d9d4c8; border-color: #3a3e46; font-family: var(--font-data); }
+html[data-theme="desk"] .segmented button[aria-pressed="true"] { background: #4d86ff; color: #fff; border-color: #4d86ff; }
+html[data-theme="desk"] .impact, html[data-theme="desk"] .nchip, html[data-theme="desk"] .amc-kind { background: rgba(77, 134, 255, .13); color: #9dbcff; border-color: transparent; font-family: var(--font-data); }
+html[data-theme="desk"] .halv-bar { background: #2b2e34; } html[data-theme="desk"] .halv-bar i { background: #4d86ff; }
+html[data-theme="desk"] .amc-table tr.is-btc td { background: rgba(77, 134, 255, .10); }
+html[data-theme="desk"] input, html[data-theme="desk"] select, html[data-theme="desk"] textarea, html[data-theme="desk"] dialog { background: #1a1c20; color: var(--ink); border-color: #3a3e46; }
+
+/* ── Surfaces on the other pages that carry a fixed white background ── */
+html[data-theme="night"] .story, html[data-theme="night"] .feetier, html[data-theme="night"] .blk, html[data-theme="night"] .wp-toc details,
+html[data-theme="night"] .chain-tabs button, html[data-theme="night"] .copy-button, html[data-theme="night"] .newsfilters button,
+html[data-theme="night"] .search input, html[data-theme="night"] .ident select {
+  background: rgba(9, 18, 38, .72) !important; border-color: rgba(127, 208, 255, .2) !important; color: var(--ink); }
+html[data-theme="desk"] .story, html[data-theme="desk"] .feetier, html[data-theme="desk"] .blk, html[data-theme="desk"] .wp-toc details,
+html[data-theme="desk"] .chain-tabs button, html[data-theme="desk"] .copy-button, html[data-theme="desk"] .newsfilters button,
+html[data-theme="desk"] .search input, html[data-theme="desk"] .ident select {
+  background: #1a1c20 !important; border-color: #2b2e34 !important; color: var(--ink); }
+html[data-theme="night"] .chip, html[data-theme="desk"] .chip { background: rgba(127, 160, 220, .14) !important; color: var(--cyan) !important; border-color: transparent !important; }
+html[data-theme="night"] .page-emblem, html[data-theme="desk"] .page-emblem { background: rgba(127, 208, 255, .10); color: var(--cyan); border-color: var(--border); }
+html[data-theme="night"] .chain-tabs button[aria-pressed="true"], html[data-theme="night"] .chain-tabs button[aria-selected="true"] { border-color: #7fd0ff !important; box-shadow: 0 0 0 1px #7fd0ff; }
+html[data-theme="desk"] .chain-tabs button[aria-pressed="true"], html[data-theme="desk"] .chain-tabs button[aria-selected="true"] { border-color: #4d86ff !important; }
+/* The whitepaper stays a white sheet of paper in every theme, so its text keeps the light-theme colours. */
+html[data-theme="night"] .wp-paper, html[data-theme="desk"] .wp-paper { --ink: #16202c; --ink-2: #3d4956; --muted: #667585; --faint: #98a5b4; --border: #dfe6f0; --border-2: #eef2f8; color: #16202c; }
+html[data-theme="night"] .wp-paper h1, html[data-theme="night"] .wp-paper h2, html[data-theme="night"] .wp-paper h3, html[data-theme="night"] .wp-paper strong,
+html[data-theme="desk"] .wp-paper h1, html[data-theme="desk"] .wp-paper h2, html[data-theme="desk"] .wp-paper h3, html[data-theme="desk"] .wp-paper strong { color: #16202c; }
+/* TradingView-style chart on the Chart page */
+html[data-theme="night"] { --chart-bg: #08111f; --chart-text: #8ea4c2; --chart-grid-lw: rgba(127, 208, 255, .08); --chart-border: rgba(127, 208, 255, .18); }
+html[data-theme="desk"] { --chart-bg: #16181b; --chart-text: #8a857b; --chart-grid-lw: #23262b; --chart-border: #2b2e34; }
+html[data-theme="night"] #net-feed canvas { background: linear-gradient(180deg, #071024, #040a17) !important; }
+html[data-theme="desk"] #net-feed canvas { background: #131417 !important; }
+html[data-theme="horizon"] .pagehead { color: #c3d1e8; }
+html[data-theme="horizon"] .pagehead p { color: inherit; }
+html[data-theme="night"] .wp-pdf, html[data-theme="desk"] .wp-pdf { background: var(--card) !important; border-color: var(--border) !important; color: var(--ink) !important; }
+@media (max-width: 760px) { html[data-theme="desk"] .intro h1 { font-size: 46px; } }
+
+/* ── Overview: welcome card, Customize panel, Tour card ── */
+html[data-theme="night"] .dash-card, html[data-theme="night"] .dash-panel, html[data-theme="night"] .tour-card {
+  background: #0b162b !important; color: var(--ink); border: 1px solid rgba(127, 208, 255, .22); box-shadow: 0 30px 80px rgba(0, 0, 0, .6) !important; }
+html[data-theme="desk"] .dash-card, html[data-theme="desk"] .dash-panel, html[data-theme="desk"] .tour-card {
+  background: #16181b !important; color: var(--ink); border: 1px solid #2b2e34; box-shadow: 0 30px 80px rgba(0, 0, 0, .6) !important; }
+html[data-theme="night"] .dash-input, html[data-theme="night"] .dash-x, html[data-theme="night"] .dash-chip, html[data-theme="night"] .dash-row-actions button, html[data-theme="night"] .field input,
+html[data-theme="night"] .asset-remove, html[data-theme="night"] .asset-mark.custom.crypto-logo {
+  background: rgba(255, 255, 255, .05) !important; color: var(--ink); border-color: rgba(127, 208, 255, .25) !important; }
+html[data-theme="desk"] .dash-input, html[data-theme="desk"] .dash-x, html[data-theme="desk"] .dash-chip, html[data-theme="desk"] .dash-row-actions button, html[data-theme="desk"] .field input,
+html[data-theme="desk"] .asset-remove, html[data-theme="desk"] .asset-mark.custom.crypto-logo {
+  background: #1a1c20 !important; color: var(--ink); border-color: #3a3e46 !important; }
+html[data-theme="night"] .chart-return.down, html[data-theme="desk"] .chart-return.down { background: var(--down-soft) !important; color: var(--down) !important; }
+html[data-theme="night"] .chart-return.up, html[data-theme="desk"] .chart-return.up { background: var(--up-soft) !important; color: var(--up) !important; }
+html[data-theme="night"] .dash-card .btn:not(.ghost), html[data-theme="night"] .dash-card button[type="submit"] { background: #2f7bff !important; color: #fff !important; border-color: #2f7bff !important; }
+html[data-theme="desk"] .dash-card .btn:not(.ghost), html[data-theme="desk"] .dash-card button[type="submit"] { background: #4d86ff !important; color: #fff !important; border-color: #4d86ff !important; }
+html[data-theme="night"] .dash-result:hover:not([disabled]), html[data-theme="night"] .dash-chip:hover:not([disabled]) { background: rgba(47, 123, 255, .12) !important; }
+html[data-theme="desk"] .dash-result:hover:not([disabled]), html[data-theme="desk"] .dash-chip:hover:not([disabled]) { background: #1f2126 !important; }
+html[data-theme="night"] .dash-type, html[data-theme="desk"] .dash-type { background: rgba(127, 160, 220, .14) !important; color: var(--cyan) !important; }
+html[data-theme="night"] .dash-panel-foot, html[data-theme="desk"] .dash-panel-foot { border-color: var(--border) !important; }
