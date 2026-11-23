@@ -102,13 +102,16 @@ function kindFor(symbol: string, currency: string | undefined, instrumentType: s
 }
 
 function period(p: unknown): { start: string; end: string } | null {
-  const start = Number((p as { start?: unknown })?.start), end = Number((p as { end?: unknown })?.end)
-  if (!isFinite(start) || !isFinite(end) || end <= start) return null
-  return { start: new Date(start * 1000).toISOString(), end: new Date(end * 1000).toISOString() }
+  const raw = p as { start?: unknown; end?: unknown } | null
+  const start = raw?.start, end = raw?.end
+  if (typeof start !== 'number' || typeof end !== 'number' || !isFinite(start) || !isFinite(end) || start <= 0 || end <= start) return null
+  const first = new Date(start * 1000), last = new Date(end * 1000)
+  if (!isFinite(first.getTime()) || !isFinite(last.getTime())) return null
+  return { start: first.toISOString(), end: last.toISOString() }
 }
 
 async function yahoo(symbol: string, label: string, kind: Quote['kind'] | null): Promise<Quote> {
-  const base: Quote = { symbol, label, price: null, changePct: null, changeAbs: null, spark: [], kind: kind || 'usd', source: 'Yahoo Finance', changeBasis: 'prevClose' }
+  const base: Quote = { symbol, label, price: null, changePct: null, changeAbs: null, spark: [], kind: kind || 'usd', source: 'Yahoo Finance', changeBasis: 'prevClose', currency: null, exchangeTimezone: null, tradingPeriod: null, asOf: null }
   try {
     const r = await fetch(`${YAHOO}${encodeURIComponent(symbol)}?interval=1d&range=1mo`, {
       headers: { 'user-agent': 'Mozilla/5.0 (compatible; SatstreetDashboard/1.0)' },
@@ -121,14 +124,15 @@ async function yahoo(symbol: string, label: string, kind: Quote['kind'] | null):
     const quote = result?.indicators?.quote?.[0] ?? {}
     const closes: number[] = (quote.close ?? [])
       .filter((n: unknown): n is number => typeof n === 'number' && isFinite(n))
-    const price = Number(meta?.regularMarketPrice)
-    const previousFromMeta = Number(meta?.regularMarketPreviousClose ?? meta?.previousClose)
+    const price = typeof meta?.regularMarketPrice === 'number' ? meta.regularMarketPrice : NaN
+    const rawPrevious = meta?.regularMarketPreviousClose ?? meta?.previousClose
+    const previousFromMeta = typeof rawPrevious === 'number' ? rawPrevious : NaN
     const prev = isFinite(previousFromMeta)
       ? previousFromMeta
-      : closes.length > 1 ? closes[closes.length - 2] : Number(meta?.chartPreviousClose)
+      : closes.length > 1 ? closes[closes.length - 2] : typeof meta?.chartPreviousClose === 'number' ? meta.chartPreviousClose : NaN
     const lastFinite = (values: unknown[]): number | null => {
       for (let i = values.length - 1; i >= 0; i--) {
-        const value = Number(values[i])
+        const value = typeof values[i] === 'number' ? values[i] as number : NaN
         if (isFinite(value)) return value
       }
       return null
@@ -143,11 +147,11 @@ async function yahoo(symbol: string, label: string, kind: Quote['kind'] | null):
       changePct: isFinite(prev) && prev !== 0 ? ((price - prev) / prev) * 100 : null,
       changeAbs: isFinite(prev) ? price - prev : null,
       spark: closes.slice(-22),
-      open: isFinite(Number(meta?.regularMarketOpen)) ? Number(meta.regularMarketOpen) : lastFinite(quote.open ?? []),
-      sessionHigh: isFinite(Number(meta?.regularMarketDayHigh)) ? Number(meta.regularMarketDayHigh) : lastFinite(quote.high ?? []),
-      sessionLow: isFinite(Number(meta?.regularMarketDayLow)) ? Number(meta.regularMarketDayLow) : lastFinite(quote.low ?? []),
+      open: typeof meta?.regularMarketOpen === 'number' && isFinite(meta.regularMarketOpen) ? Number(meta.regularMarketOpen) : lastFinite(quote.open ?? []),
+      sessionHigh: typeof meta?.regularMarketDayHigh === 'number' && isFinite(meta.regularMarketDayHigh) ? Number(meta.regularMarketDayHigh) : lastFinite(quote.high ?? []),
+      sessionLow: typeof meta?.regularMarketDayLow === 'number' && isFinite(meta.regularMarketDayLow) ? Number(meta.regularMarketDayLow) : lastFinite(quote.low ?? []),
       marketState: typeof meta?.marketState === 'string' ? meta.marketState : null,
-      asOf: isFinite(Number(meta?.regularMarketTime)) ? new Date(Number(meta.regularMarketTime) * 1000).toISOString() : null,
+      asOf: typeof meta?.regularMarketTime === 'number' && meta.regularMarketTime > 0 && isFinite(new Date(meta.regularMarketTime * 1000).getTime()) ? new Date(Number(meta.regularMarketTime) * 1000).toISOString() : null,
       currency: typeof meta?.currency === 'string' ? meta.currency : null,
       exchangeTimezone: typeof meta?.exchangeTimezoneName === 'string' ? meta.exchangeTimezoneName : null,
       tradingPeriod: period(meta?.currentTradingPeriod?.regular),
@@ -160,7 +164,7 @@ async function yahoo(symbol: string, label: string, kind: Quote['kind'] | null):
 /* Crypto comes from Coinbase, which the rest of the site already quotes.
    Using the same venue keeps the strip and the focus chart aligned. */
 async function spot(pair: string, label: string, kind: Quote['kind']): Promise<Quote> {
-    const base: Quote = { symbol: pair, label, price: null, changePct: null, changeAbs: null, spark: [], kind, source: 'Digital asset venue', changeBasis: '24h', currency: 'USD' }
+    const base: Quote = { symbol: pair, label, price: null, changePct: null, changeAbs: null, spark: [], kind, source: 'Digital asset venue', changeBasis: '24h', currency: 'USD', exchangeTimezone: null, tradingPeriod: null, asOf: null }
     try {
       const [t, s, c] = await Promise.all([
         fetch(`https://api.exchange.coinbase.com/products/${pair}/ticker`, { signal: AbortSignal.timeout(6000) }),
@@ -195,7 +199,7 @@ async function spot(pair: string, label: string, kind: Quote['kind']): Promise<Q
         sessionHigh: isFinite(parseFloat(stats.high)) ? parseFloat(stats.high) : null,
         sessionLow: isFinite(parseFloat(stats.low)) ? parseFloat(stats.low) : null,
         marketState: 'REGULAR',
-        asOf: typeof ticker.time === 'string' ? ticker.time : new Date().toISOString(),
+        asOf: typeof ticker.time === 'string' && isFinite(Date.parse(ticker.time)) ? ticker.time : null,
       }
     } catch (e) {
       return { ...base, error: e instanceof Error ? e.message : 'failed' }
