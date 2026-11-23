@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+<head><base href="../"><meta name="robots" content="noindex">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Satstreet · Chart</title>
+<meta name="description" content="Reference charts for major digital assets." />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+<link rel="manifest" href="/manifest.webmanifest" />
+<meta name="apple-mobile-web-app-title" content="Satstreet" />
+<meta name="theme-color" content="#0d1b2e" />
+
+<!--
+  Chart.
+
+  TradingView's Advanced Chart widget in Satstreet's chrome. The integration
+  is unchanged — same embed, same symbol construction, same attribution, which
+  their free widget requires to stay visible.
+
+  One control, not two. The widget's own interval toolbar used to sit directly
+  above this page's range buttons, offering the same choice twice with
+  different vocabulary. The toolbar is now hidden and Range is the single
+  control: it sets the window and picks a sensible candle interval, which is
+  named next to it so the relationship is visible rather than implied. It also
+  returns that strip of height to the chart.
+
+  Links from Markets arrive as ?symbol=&name=. Both this file and the
+  extensionless /chart path serve it, so existing links keep working.
+-->
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="./assets/terminal.css" />
+
+<style>
+  .charthead { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; justify-content: space-between; margin-bottom: 16px; padding:17px 18px; background:linear-gradient(145deg,#fff,#f8fbfd); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); }
+  .ident { display: flex; gap: 14px; align-items: flex-start; }
+  .chart-coin.has-logo { box-shadow:0 0 0 1px var(--border), 0 7px 18px rgba(13,27,46,.08); overflow:hidden; }
+  .chart-coin img { width:100%; height:100%; object-fit:contain; display:block; }
+  .chart-coin { width:45px; height:45px; display:grid; place-items:center; flex:none; border-radius:50%; color:#fff; background:linear-gradient(145deg,#ef8a12,#f7a431); box-shadow:0 7px 18px rgba(236,137,20,.2); font-family:var(--font-data); font-size:20px; font-weight:600; }
+  .ident .sel { min-width: 168px; }
+  .ident select { font: inherit; font-size: 14px; font-weight: 600; padding: 8px 10px; border: 1px solid var(--border); border-radius: 7px; background: #fff; color: var(--ink); width: 100%; }
+  .ident select:focus { border-color: var(--blue); outline: none; box-shadow: 0 0 0 3px rgba(0,104,255,0.12); }
+  .px { font-family:var(--font-data); font-size: 29px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.1; margin: 0; }
+  .mv { font-size: 14px; font-variant-numeric: tabular-nums; margin: 2px 0 0; }
+  .meta { font-size: 12.5px; color: var(--muted); margin: 4px 0 0; }
+  .rangebar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+  .rangebar .lbl { font-size: 11px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; color: var(--muted); }
+  .interval { font-size: 12.5px; color: var(--muted); }
+  .surface { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; position: relative; }
+  #host { height: 620px; }
+  #host .tradingview-widget-container, #host .tradingview-widget-container__widget { height: 100%; }
+  .cover { position: absolute; inset: 0; display: grid; place-items: center; background: var(--card); padding: 24px; text-align: center; }
+  .cover .inner { max-width: 42ch; }
+  .attrib { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 14px; border-top: 1px solid var(--border-2); font-size: 12px; color: var(--muted); }
+  .attrib a { color: var(--muted); }
+  @media (max-width: 900px) { #host { height: 460px; } }
+  @media (max-width: 620px) { #host { height: 380px; } .px { font-size: 25px; } }
+</style>
+<link rel="stylesheet" href="./assets/themes.css" />
+<script>
+(function(){var allowed=['classic','night','desk','horizon'];function apply(t){if(!allowed.includes(t))return;if(t==='classic')document.documentElement.removeAttribute('data-theme');else document.documentElement.dataset.theme=t;window.dispatchEvent(new Event('ss-themechange'));}apply(new URLSearchParams(location.search).get('theme')||'classic');addEventListener('message',function(e){if(e.origin!==location.origin||e.source!==parent||!e.data||e.data.type!=='satstreet-theme')return;apply(e.data.theme);});})();
+</script>
+<link rel="stylesheet" href="./assets/workspace-chart.css"></head>
+<body>
+
+<div id="shell-header"></div>
+
+<main class="shell wide">
+
+  <div class="charthead">
+    <div class="ident">
+      <span class="chart-coin" id="chart-coin" aria-hidden="true">₿</span>
+      <div class="sel">
+        <label class="sr" for="asset">Asset</label>
+        <select id="asset"></select>
+        <p class="meta" id="pair">—</p>
+      </div>
+      <div>
+        <p class="px" id="px">—</p>
+        <p class="mv" id="mv">&nbsp;</p>
+        <p class="meta" id="stamp">Loading reference price…</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="rangebar">
+    <span class="lbl" id="rangelbl">Range</span>
+    <div class="segmented" role="group" aria-labelledby="rangelbl" id="ranges"></div>
+    <span class="interval" id="intervaltxt"></span>
+  </div>
+
+  <div class="surface">
+    <div id="host"></div>
+    <div class="cover" id="cover">
+      <div class="inner">
+        <span class="skel" style="height:14px;width:60%;margin:0 auto 10px"></span>
+        <span class="skel" style="height:14px;width:80%;margin:0 auto 10px"></span>
+        <span class="skel" style="height:14px;width:45%;margin:0 auto"></span>
+        <p class="emptybox" style="margin-top:14px">Loading chart…</p>
+      </div>
+    </div>
+    <div class="attrib">
+      <span id="src">Chart data by TradingView · indicative reference price</span>
+      <a href="https://www.tradingview.com/" target="_blank" rel="noopener noreferrer">Chart by TradingView</a>
+    </div>
+  </div>
+
+  <div class="disclosure">
+    <p><strong>Indicative reference prices only.</strong> Charts and quotes are drawn from
+      third-party venues and may be delayed. They are not a quote, not an offer, and not the price
+      at which Satstreet will execute.</p>
+    <p><strong>Range</strong> sets the period shown and selects a candle interval to suit it. The
+      interval in use is named beside the control.</p>
+    <p>An asset appearing here is covered by the reference data source. It does not indicate that
+      Satstreet trades, supports or will price that asset.</p>
+  </div>
+
+</main>
+
+<script src="./assets/terminal.js"></script>
+<script>
+(function () {
+  'use strict';
+  var S = window.SATSTREET, $ = function (id) { return document.getElementById(id); };
+  var esc = S.esc, fmt = S.fmt;
+
+
+  var params = new URLSearchParams(location.search);
+  var symbol = (params.get('symbol') || 'BTC').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  var name = params.get('name') || '';
+  var coinId = (params.get('id') || '').toLowerCase().replace(/[^a-z0-9-]/g, '');
+  var tvOverride = params.get('tv');
+
+  /* Range carries the window and the candle interval together. TradingView's
+     own toolbar is hidden, so this is the only control and the interval it
+     implies is spelled out rather than left to be discovered. `days` and
+     `fallback` describe the same range when the chart is drawn from
+     CoinGecko candles instead, whose interval CoinGecko picks by window. */
+  var RANGES = [
+    { key: '24h', label: '24H', interval: '30',  words: '30-minute candles', days: 1,   fallback: '30-minute candles' },
+    { key: '7d',  label: '7D',  interval: '60',  words: 'hourly candles',    days: 7,   fallback: '4-hour candles' },
+    { key: '30d', label: '30D', interval: '240', words: '4-hour candles',    days: 30,  fallback: '4-hour candles' },
+    { key: '90d', label: '90D', interval: 'D',   words: 'daily candles',     days: 90,  fallback: '4-day candles' },
+    { key: '1y',  label: '1Y',  interval: 'W',   words: 'weekly candles',    days: 365, fallback: '4-day candles' }
+  ];
+  var range = params.get('range') || '7d';
+
+  var COMMON = [['BTC','Bitcoin','bitcoin'],['ETH','Ethereum','ethereum'],['SOL','Solana','solana'],
+                ['XRP','XRP','ripple'],['ADA','Cardano','cardano'],['AVAX','Avalanche','avalanche-2'],
+                ['LINK','Chainlink','chainlink'],['DOT','Polkadot','polkadot'],['LTC','Litecoin','litecoin'],
+                ['POL','Polygon','polygon-ecosystem-token'],['XMR','Monero','monero'],['DOGE','Dogecoin','dogecoin']];
+  if (!coinId) {
+    var known = COMMON.filter(function (c) { return c[0] === symbol; })[0];
+    if (known) coinId = known[2];
+  }
+
+  /* What we know about this coin: CoinGecko's price, logo and 24h change,
+     plus the exchange market TradingView will chart (null when none of the
+     exchanges below lists it). */
+  var info = null;
+  function cur() { return RANGES.filter(function (r) { return r.key === range; })[0] || RANGES[1]; }
+  function drawnByTv() { return !!(tvOverride || (info && info.tv)); }
+
+  /* ── identity ────────────────────────────────────────────── */
+  function fillSelect() {
+    var opts = [];
+    if (!COMMON.some(function (c) { return c[0] === symbol; })) opts.push([symbol, name || symbol, coinId]);
+    COMMON.forEach(function (c) { opts.push(c); });
+    $('asset').innerHTML = opts.map(function (o) {
+      return '<option value="' + esc(o[0]) + '" data-id="' + esc(o[2] || '') + '"' + (o[0] === symbol ? ' selected' : '') + '>' +
+        esc(o[1]) + ' · ' + esc(o[0]) + '</option>';
+    }).join('');
+    $('pair').textContent = symbol + '/USD';
+    $('chart-coin').textContent = symbol === 'BTC' ? '₿' : symbol === 'ETH' ? 'Ξ' : symbol.slice(0,2);
+    $('chart-coin').style.background = symbol === 'ETH' ? 'linear-gradient(145deg,#58669b,#7d89ba)' : symbol === 'BTC' ? 'linear-gradient(145deg,#ef8a12,#f7a431)' : 'linear-gradient(145deg,#087fab,#1eb8d7)';
+  }
+  function paintIdentity() {
+    if (!info) return;
+    if (info.image) {
+      var c = $('chart-coin');
+      c.textContent = '';
+      c.style.background = '#fff';
+      c.classList.add('has-logo');
+      c.innerHTML = '<img src="' + esc(info.image) + '" alt="" />';
+    }
+    var tv = tvOverride || info.tv;
+    $('pair').textContent = symbol + '/USD';
+  }
+
+  $('asset').addEventListener('change', function () {
+    var opt = this.options[this.selectedIndex], next = this.value;
+    var label = (COMMON.filter(function (c) { return c[0] === next; })[0] || [next, next])[1];
+    var id = opt.getAttribute('data-id');
+    /* SS_URL maps the address onto the Webflow page when embedded. */
+    location.href = (window.SS_URL || String)('./ticker.html?symbol=' + encodeURIComponent(next) +
+      '&name=' + encodeURIComponent(label) + (id ? '&id=' + encodeURIComponent(id) : '') +
+      '&range=' + encodeURIComponent(range));
+  });
+
+  /* ── reference price ─────────────────────────────────────── */
+  var CG = 'https://api.coingecko.com/api/v3/';
+  function getJSON(url, ms) {
+    var ctl = new AbortController(), t = setTimeout(function () { ctl.abort(); }, ms || 8000);
+    return fetch(url, { signal: ctl.signal }).then(function (r) {
+      clearTimeout(t);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }, function (e) { clearTimeout(t); throw e; });
+  }
+
+  function resolveId() {
+    if (coinId) return Promise.resolve(coinId);
+    return getJSON(CG + 'search?query=' + encodeURIComponent(symbol)).then(function (d) {
+      var hits = (d.coins || []).filter(function (c) { return String(c.symbol).toUpperCase() === symbol; });
+      hits.sort(function (a, b) { return (a.market_cap_rank || 1e9) - (b.market_cap_rank || 1e9); });
+      if (!hits.length) throw new Error('Unknown asset');
+      coinId = hits[0].id;
+      return coinId;
+    });
+  }
+
+  function loadCoin() {
+    return resolveId().then(function (id) {
+      return getJSON(CG + 'coins/markets?vs_currency=usd&ids=' + encodeURIComponent(id) + '&price_change_percentage=24h');
+    }).then(function (rows) {
+      var c = rows && rows[0];
+      if (!c) throw new Error('Unknown asset');
+      return { id: c.id, name: c.name, image: c.image, priceUsd: c.current_price, changePct24h: c.price_change_percentage_24h };
+    });
+  }
+
+  /* Which exchange market TradingView should chart. Every venue is asked in
+     parallel for this ticker; a market only counts if its price is within
+     5% of CoinGecko's, so an unrelated token that happens to share the
+     ticker is never charted in its place. The first match in this order
+     wins, and the answer is remembered in this browser for a day. */
+  var VENUES = [
+    { tv: 'COINBASE', name: '', quote: 'USD', url: function (s) { return 'https://api.exchange.coinbase.com/products/' + s + '-USD/ticker'; }, px: function (d) { return d.price; } },
+    { tv: 'KRAKEN', name: 'Kraken', quote: 'USD', url: function (s) { return 'https://api.kraken.com/0/public/Ticker?pair=' + s + 'USD'; }, px: function (d) { var k = d.result && Object.keys(d.result)[0]; return k ? d.result[k].c[0] : null; } },
+    { tv: 'BINANCE', name: 'Binance', quote: 'USDT', url: function (s) { return 'https://api.binance.com/api/v3/ticker/price?symbol=' + s + 'USDT'; }, px: function (d) { return d.price; } },
+    { tv: 'OKX', name: 'OKX', quote: 'USDT', url: function (s) { return 'https://www.okx.com/api/v5/market/ticker?instId=' + s + '-USDT'; }, px: function (d) { return d.data && d.data[0] && d.data[0].last; } },
+    { tv: 'BYBIT', name: 'Bybit', quote: 'USDT', url: function (s) { return 'https://api.bybit.com/v5/market/tickers?category=spot&symbol=' + s + 'USDT'; }, px: function (d) { return d.result && d.result.list && d.result.list[0] && d.result.list[0].lastPrice; } },
+    { tv: 'BITGET', name: 'Bitget', quote: 'USDT', url: function (s) { return 'https://api.bitget.com/api/v2/spot/market/tickers?symbol=' + s + 'USDT'; }, px: function (d) { return d.data && d.data[0] && d.data[0].lastPr; } },
+    { tv: 'GATEIO', name: 'Gate', quote: 'USDT', url: function (s) { return 'https://api.gateio.ws/api/v4/spot/tickers?currency_pair=' + s + '_USDT'; }, px: function (d) { return d[0] && d[0].last; } }
+  ];
+  var DAY = 86400000;
+  function remembered(key) {
+    try { var v = JSON.parse(localStorage.getItem(key) || 'null'); return v && Date.now() - v.t < DAY ? v : null; } catch (e) { return null; }
+  }
+  function remember(key, v) { try { v.t = Date.now(); localStorage.setItem(key, JSON.stringify(v)); } catch (e) {} }
+
+  function findVenue(ref) {
+    var key = 'satstreet.chart.venue.v3.' + (coinId || symbol);
+    var known = remembered(key);
+    if (known) return Promise.resolve(known);
+    return Promise.all(VENUES.map(function (v) {
+      return getJSON(v.url(symbol), 6000).then(function (d) {
+        var p = parseFloat(v.px(d));
+        return isFinite(p) && p > 0 ? p : null;
+      }).catch(function () { return null; });
+    })).then(function (prices) {
+      var pick = null;
+      for (var i = 0; i < VENUES.length && !pick; i++) {
+        var p = prices[i];
+        if (p === null) continue;
+        /* Without a reference price only the two USD venues are trusted. */
+        var ok = ref ? Math.abs(p - ref) / ref < 0.05 : VENUES[i].quote === 'USD';
+        if (ok) pick = { tv: VENUES[i].tv + ':' + symbol + VENUES[i].quote, venue: VENUES[i].name };
+      }
+      var out = pick || { tv: null, venue: null };
+      remember(key, out);
+      return out;
+    });
+  }
+
+  function paintPrice(c) {
+    var price = c && c.priceUsd, pct = c && c.changePct24h;
+    if (price === null || price === undefined || !isFinite(price)) {
+      $('px').textContent = '—';
+      $('mv').innerHTML = '<span style="color:var(--muted)">Reference price unavailable</span>';
+      $('stamp').textContent = 'Reference price unavailable';
+      return;
+    }
+    $('px').textContent = fmt.money(price, 'USD', price >= 100 ? 0 : price >= 1 ? 2 : price >= 0.01 ? 4 : 6);
+    $('mv').innerHTML = pct === null || pct === undefined || !isFinite(pct)
+      ? '<span style="color:var(--muted)">24h change unavailable</span>'
+      : '<span class="' + fmt.dir(pct) + '">' + fmt.pct(pct) + '</span> <span style="color:var(--muted)">24h</span>';
+    $('stamp').textContent = 'Reference price';
+  }
+
+  function loadInfo() {
+    return loadCoin().catch(function (e) { return { error: e.message }; }).then(function (c) {
+      var coin = c && !c.error ? c : null;
+      if (coin) { coinId = coin.id; }
+      paintPrice(coin);
+      if (!coin && c && c.error === 'Unknown asset') $('stamp').textContent = symbol + ' is not covered by the reference data source';
+      var venue = info ? Promise.resolve({ tv: info.tv, venue: info.venue }) : findVenue(coin && coin.priceUsd);
+      return venue.then(function (v) {
+        info = { id: coinId, image: coin ? coin.image : (info && info.image), tv: v.tv, venue: v.venue };
+        paintIdentity();
+        return info;
+      });
+    });
+  }
+  function refreshPrice() { loadCoin().then(paintPrice).catch(function () {}); }
+
+  /* ── ranges ──────────────────────────────────────────────── */
+  function paintRanges() {
+    $('ranges').innerHTML = RANGES.map(function (r) {
+      return '<button type="button" data-r="' + r.key + '" aria-pressed="' +
+        (r.key === range) + '">' + r.label + '</button>';
+    }).join('');
+    $('intervaltxt').textContent = info && !drawnByTv() ? cur().fallback : cur().words;
+  }
+  $('ranges').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-r]');
+    if (!b) return;
+    range = b.getAttribute('data-r');
+    paintRanges(); mount();
+    history.replaceState(null, '', './ticker.html?symbol=' + encodeURIComponent(symbol) +
+      (name ? '&name=' + encodeURIComponent(name) : '') + (coinId ? '&id=' + encodeURIComponent(coinId) : '') +
+      '&range=' + encodeURIComponent(range));
+  });
+
+  /* ── the chart ───────────────────────────────────────────── */
+  var loadTimer = null, check = null, lw = null;
+
+  function cover(html) { $('cover').innerHTML = '<div class="inner">' + html + '</div>'; $('cover').hidden = false; }
+  function loading() {
+    cover('<span class="skel" style="height:14px;width:60%;margin:0 auto 10px"></span>' +
+          '<span class="skel" style="height:14px;width:80%;margin:0 auto 10px"></span>' +
+          '<span class="skel" style="height:14px;width:45%;margin:0 auto"></span>' +
+          '<p class="emptybox" style="margin-top:14px">Loading chart…</p>');
+  }
+  function unavailable(why) {
+    cover('<p class="errbox"><b>Chart unavailable</b>' + esc(why) + '</p>' +
+      '<button class="btn ghost small" id="retry" type="button" style="margin-top:10px">Try again</button>' +
+      '<p class="emptybox" style="margin-top:12px">The reference price above is unaffected.</p>');
+    var b = $('retry'); if (b) b.addEventListener('click', function () { if (!info) start(); else mount(); });
+  }
+
+  function mount() {
+    clearTimeout(loadTimer); clearInterval(check);
+    if (lw) { lw.remove(); lw = null; }
+    $('host').innerHTML = '';
+    loading();
+    if (drawnByTv()) mountTradingView(); else mountCandles();
+  }
+
+  function mountTradingView() {
+    var host = $('host'), r = cur();
+    $('src').textContent = 'Chart data by TradingView · ' + ((info && info.venue) || 'exchange') + ' market';
+    var box = document.createElement('div');
+    box.className = 'tradingview-widget-container';
+    var inner = document.createElement('div');
+    inner.className = 'tradingview-widget-container__widget';
+    box.appendChild(inner);
+
+    var s = document.createElement('script');
+    s.type = 'text/javascript';
+    s.async = true;
+    s.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+    s.text = JSON.stringify({
+      symbol: tvOverride || info.tv,
+      interval: r.interval,
+      timezone: 'America/Toronto',
+      theme: ['night','desk'].includes(document.documentElement.dataset.theme) ? 'dark' : 'light',
+      style: '1',
+      locale: 'en',
+      autosize: true,
+      backgroundColor: tv('--chart-bg','#ffffff'),
+      gridColor: tv('--chart-grid-lw','rgba(227, 234, 243, 0.6)'),
+      // Hidden so Range is the only interval control on the page.
+      hide_top_toolbar: true,
+      hide_legend: true,
+      allow_symbol_change: false,
+      save_image: false,
+      withdateranges: false,
+      calendar: false,
+      details: false,
+      support_host: 'https://www.tradingview.com'
+    });
+    s.onerror = function () { unavailable('The chart provider could not be reached.'); };
+    box.appendChild(s);
+    host.appendChild(box);
+
+    // Reveal only once the frame exists, so there is never a blank white area.
+    check = setInterval(function () {
+      if (host.querySelector('iframe')) { clearInterval(check); clearTimeout(loadTimer); $('cover').hidden = true; }
+    }, 250);
+    loadTimer = setTimeout(function () {
+      clearInterval(check);
+      if (!host.querySelector('iframe')) unavailable('The chart did not load in time.');
+    }, 9000);
+  }
+
+  /* No exchange TradingView carries lists this coin, so draw CoinGecko's
+     candles with TradingView's open-source charting library instead. */
+  var LIB = 'https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js';
+  function library() {
+    if (window.LightweightCharts) return Promise.resolve(window.LightweightCharts);
+    return new Promise(function (resolve, reject) {
+      var s = document.createElement('script');
+      s.src = LIB; s.async = true;
+      s.onload = function () { resolve(window.LightweightCharts); };
+      s.onerror = function () { reject(new Error('The chart provider could not be reached.')); };
+      document.head.appendChild(s);
+    });
+  }
+  function mountCandles() {
+    var r = cur(), host = $('host');
+    $('src').textContent = 'Price data by CoinGecko · aggregated across exchanges';
+    if (!coinId) { unavailable('No price history is available for ' + symbol + '.'); return; }
+    Promise.all([
+      library(),
+      getJSON(CG + 'coins/' + encodeURIComponent(coinId) + '/ohlc?vs_currency=usd&days=' + r.days)
+        .catch(function () { throw new Error('Price history is temporarily unavailable.'); })
+    ]).then(function (res) {
+      if (r !== cur()) return;   // the range changed while this was loading
+      var LC = res[0], rows = (res[1] || []).filter(function (c) { return c && c.length >= 5; });
+      if (rows.length < 2) throw new Error('Not enough price history to draw a chart.');
+      var dp = rows[rows.length - 1][4] >= 100 ? 2 : rows[rows.length - 1][4] >= 1 ? 4 : 6;
+      lw = LC.createChart(host, {
+        autoSize: true,
+        layout: chartLayout(),
+        grid: chartGrid(),
+        rightPriceScale: { borderColor: tv('--chart-border', '#e3eaf3') },
+        timeScale: { borderColor: tv('--chart-border', '#e3eaf3'), timeVisible: r.days <= 30, secondsVisible: false },
+        crosshair: { mode: 0 },
+        localization: { priceFormatter: function (v) { return '$' + v.toLocaleString('en-US', { minimumFractionDigits: dp, maximumFractionDigits: dp }); } }
+      });
+      var series = lw.addCandlestickSeries({
+        upColor: '#0f8a63', downColor: '#c33a49', borderVisible: false,
+        wickUpColor: '#0f8a63', wickDownColor: '#c33a49',
+        priceFormat: { type: 'price', precision: dp, minMove: Math.pow(10, -dp) }
+      });
+      series.setData(rows.map(function (c) {
+        return { time: Math.floor(c[0] / 1000), open: c[1], high: c[2], low: c[3], close: c[4] };
+      }));
+      lw.timeScale().fitContent();
+      $('cover').hidden = true;
+    }).catch(function (e) { unavailable(e.message); });
+  }
+
+  /* Chart colours follow the active theme (assets/themes.css); fallbacks are the light theme. */
+  function tv(n, d) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim() || d; }
+  function chartLayout() { return { background: { color: tv('--chart-bg', '#ffffff') }, textColor: tv('--chart-text', '#5f6f80'), fontFamily: getComputedStyle(document.body).fontFamily }; }
+  function chartGrid() { var c = tv('--chart-grid-lw', 'rgba(227,234,243,0.6)'); return { vertLines: { color: c }, horzLines: { color: c } }; }
+  window.addEventListener('ss-themechange', function () {
+    if (!lw) { if(info && drawnByTv()) mount(); return; }
+    lw.applyOptions({ layout: chartLayout(), grid: chartGrid(), rightPriceScale: { borderColor: tv('--chart-border', '#e3eaf3') }, timeScale: { borderColor: tv('--chart-border', '#e3eaf3') } });
+  });
+
+  function start() {
+    loading();
+    loadInfo().then(function () {
+      paintRanges();
+      if (!drawnByTv() && !coinId) { unavailable('This asset is not covered by the reference data source.'); return; }
+      mount();
+    });
+  }
+
+  fillSelect(); paintRanges(); start();
+  setInterval(refreshPrice, 60000);
+})();
+</script>
+</body>
+</html>
