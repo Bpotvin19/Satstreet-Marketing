@@ -30,3 +30,18 @@ test('missing or malformed trading windows remain unreported', async () => {
 test('missing market timestamp remains unknown', async()=>{
   assert.equal((await quote({regularMarketPrice:100,regularMarketTime:null})).asOf,null)
 })
+
+test('focus status never infers exchange hours from absent or invalid periods', async()=>{
+  const {readFile} = await import('node:fs/promises')
+  const {runInNewContext} = await import('node:vm')
+  const html = await readFile(new URL('../public/overview.html',import.meta.url),'utf8')
+  const helpers = html.slice(html.indexOf('  function isCrypto(q)'),html.indexOf('  function ccyNote(q)'))
+  const status = runInNewContext(helpers+';qStatus')
+  const base = {price:100,changeBasis:'prevClose'}
+  assert.equal(status(base).t,'Trading hours not reported')
+  assert.equal(status({...base,tradingPeriod:{start:'invalid',end:'invalid'}}).t,'Trading hours not reported')
+  const now=Date.now()
+  assert.equal(status({...base,tradingPeriod:{start:new Date(now-60000).toISOString(),end:new Date(now+60000).toISOString()}}).t,'Market open')
+  assert.equal(status({...base,tradingPeriod:{start:new Date(now-120000).toISOString(),end:new Date(now-60000).toISOString()}}).t,'Market closed')
+  assert.equal(status({...base,changeBasis:'24h'}).t,'Trades 24/7')
+})
