@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Satstreet · Markets</title>
-<meta name="description" content="Reference pricing and market context across major digital assets." />
+<meta name="description" content="Find an asset. Inspect the chart. Keep the market context in view." />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
 <link rel="manifest" href="/manifest.webmanifest" />
@@ -143,7 +143,7 @@
 </style>
 <link rel="stylesheet" href="./assets/themes.css" />
 <script src="./assets/theme.js"></script>
-</head>
+<link rel="stylesheet" href="./assets/workspace.css"></head>
 <body>
 
 <div id="shell-header"></div>
@@ -154,7 +154,7 @@
     <div>
       <p class="eyebrow">Digital asset reference board</p>
       <div class="page-title-row"><span class="page-emblem" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 17 9 12l4 3 7-8"/><path d="M15 7h5v5"/></svg></span><h1>Markets</h1></div>
-      <p>Reference pricing and market context across major digital assets.</p>
+      <p>Find an asset. Inspect the chart. Keep the market context in view.</p>
     </div>
   </div>
 
@@ -177,6 +177,12 @@
     <span class="count" id="count"></span>
   </div>
 
+<section id="market-workspace" class="market-workspace" hidden aria-labelledby="workspace-title">
+<div class="workspace-bar"><button class="btn ghost small" id="back-board" type="button">All markets</button><div><span class="eyebrow">Market workspace</span><h2 id="workspace-title">Select an asset</h2></div></div>
+<div class="workspace-grid"><div class="workspace-chart"><iframe id="workspace-frame" title="Selected asset reference chart" loading="lazy"></iframe></div><aside id="workspace-stats" class="workspace-stats" aria-label="Selected asset statistics"></aside></div>
+<div class="workspace-context"><div><span class="eyebrow">Reference snapshot</span><p id="workspace-context"></p></div><span class="workspace-tag">Third-party venue data</span></div>
+</section>
+  <div class="board-heading"><h2>Asset board</h2><p>Select an asset to open its chart and market stats.</p></div>
   <div class="tablewrap">
     <table id="tbl">
       <caption class="sr">Reference prices for major digital assets, sortable by column.</caption>
@@ -296,7 +302,7 @@
     return near && Math.abs(d) < 1 && Math.abs(w) < 2;
   }
 
-  var assets = [], globals = null, cad = null, asOf = null;
+  var assets = [], globals = null, cad = null, asOf = null, selectedId = null;
   var filter = 'all', query = '', ccy = 'USD';
   var sortKey = 'cap', sortDir = -1;
 
@@ -369,7 +375,7 @@
     $('rows').innerHTML = list.map(function (a) {
       return '<tr data-sym="' + esc(a.symbol) + '">' +
         '<td class="l rank">' + a.rank + '</td>' +
-        '<td class="l"><a class="asset" href="./chart.html?symbol=' + encodeURIComponent(a.symbol.toUpperCase()) +
+        '<td class="l"><a class="asset" href="./ticker.html?symbol=' + encodeURIComponent(a.symbol.toUpperCase()) +
           '&name=' + encodeURIComponent(a.name) + '&id=' + encodeURIComponent(a.id || '') + '">' +
           (a.image ? '<img src="' + esc(a.image) + '" alt="" loading="lazy" />' : '') +
           '<span><span class="nm">' + esc(a.name) + '</span> <span class="tk">' + esc(a.symbol) + '</span></span></a></td>' +
@@ -387,6 +393,22 @@
         '</tr>';
     }).join('');
   }
+
+  function focusAsset(a, navigate) {
+    selectedId=a.id;
+    var old=$('workspace-frame').getAttribute('data-coin');
+    $('market-workspace').hidden=false;
+    $('workspace-title').textContent=a.name+' / '+a.symbol.toUpperCase();
+    var query='?symbol='+encodeURIComponent(a.symbol.toUpperCase())+'&name='+encodeURIComponent(a.name)+'&id='+encodeURIComponent(a.id||'');
+    if(old!==a.id){$('workspace-frame').src='./embed/market-chart.html'+query+'&theme='+encodeURIComponent(document.documentElement.getAttribute('data-theme')||'classic');$('workspace-frame').setAttribute('data-coin',a.id);}
+
+    $('workspace-stats').innerHTML='<div class="workspace-ident">'+(a.image?'<img src="'+esc(a.image)+'" alt="">':'')+'<div><h3>'+esc(a.name)+'</h3><span>'+esc(a.symbol.toUpperCase())+' · Rank '+esc(a.rank)+'</span></div></div><div class="workspace-price">'+price(a.price)+'</div><div class="workspace-change">'+chg(a.ch24)+' <span>past 24 hours</span></div><div class="workspace-periods"><div><span>1h</span>'+chg(a.ch1)+'</div><div><span>24h</span>'+chg(a.ch24)+'</div><div><span>7d</span>'+chg(a.ch7)+'</div></div><dl><div><dt>Market cap</dt><dd>'+big(a.cap)+'</dd></div><div><dt>Volume · 24h</dt><dd>'+big(a.vol)+'</dd></div><div><dt>Circulating supply</dt><dd>'+(a.supply?a.supply.toLocaleString('en-US',{maximumFractionDigits:0}):'—')+'</dd></div><div><dt>Display currency</dt><dd>'+esc(ccy)+'</dd></div></dl><p class="workspace-note">Chart prices use the venue and quote shown on the chart. Statistics use the aggregate reference feed and your selected currency.</p>';
+    $('workspace-context').textContent='Statistics updated '+new Date(asOf||Date.now()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})+'. Price and volume are indicative references, not executable quotes or a live transaction tape.';
+    document.querySelectorAll('#rows tr[data-sym]').forEach(function(tr){tr.classList.toggle('selected-asset',tr.dataset.sym===a.symbol);});
+    if(navigate){history.replaceState(null,'','./ticker.html'+query);$('market-workspace').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});$('workspace-title').tabIndex=-1;$('workspace-title').focus({preventScroll:true});}
+  }
+  $('rows').addEventListener('click',function(e){var a=e.target.closest('a.asset');if(!a||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;var tr=a.closest('tr');var coin=assets.find(function(x){return x.symbol===tr.dataset.sym;});if(!coin)return;e.preventDefault();focusAsset(coin,true);});
+  $('back-board').addEventListener('click',function(){ $('market-workspace').hidden=true;selectedId=null;history.replaceState(null,'','./ticker.html');$('workspace-frame').removeAttribute('src');$('workspace-frame').removeAttribute('data-coin');$('q').focus();});
 
   /* On a narrow screen the secondary columns are hidden rather than crushed,
      and this puts them back one row at a time on request. */
@@ -440,7 +462,7 @@
     ccy = n;
     $('ccy-usd').setAttribute('aria-pressed', String(n === 'USD'));
     $('ccy-cad').setAttribute('aria-pressed', String(n === 'CAD'));
-    renderGlobals(); render();
+    renderGlobals(); render(); if(selectedId){var chosen=assets.find(function(a){return a.id===selectedId;});if(chosen)focusAsset(chosen,false);}
   }
   $('ccy-usd').addEventListener('click', function () { setCcy('USD'); });
   $('ccy-cad').addEventListener('click', function () { setCcy('CAD'); });
@@ -518,7 +540,8 @@
       cad = fx && fx.data && fx.data.rates ? parseFloat(fx.data.rates.CAD) : null;
       $('ccy-cad').disabled = !cad;
       asOf = Date.now();
-      renderGlobals(); render();
+      if(!selectedId){var incoming=new URLSearchParams(location.search);var initial=assets.find(function(a){return incoming.get('id')?a.id===incoming.get('id'):a.symbol.toUpperCase()===(incoming.get('symbol')||'').toUpperCase();});if(initial)focusAsset(initial,true);}
+      renderGlobals(); render(); if(selectedId){var chosen=assets.find(function(a){return a.id===selectedId;});if(chosen)focusAsset(chosen,false);}
     }).catch(function (e) {
       $('globals').innerHTML = '';
       $('rows').innerHTML = '<tr><td colspan="11" style="padding:20px">' +
@@ -527,6 +550,7 @@
     });
   }
 
+  window.addEventListener('ss-themechange',function(e){var f=$('workspace-frame');if(f.contentWindow && f.getAttribute('src'))f.contentWindow.postMessage({type:'satstreet-theme',theme:e.detail},location.origin);});
   load();
   setInterval(function () {
     // Only refresh when the tab is visible; a background tab does not need it.
