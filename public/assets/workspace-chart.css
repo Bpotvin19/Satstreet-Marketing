@@ -1,0 +1,2 @@
+#shell-header,.charthead,.ss-motion,.ss-theme{display:none!important}html,body{margin:0;min-height:0;background:var(--card)}main.shell.wide{width:100%;max-width:none;padding:0;margin:0}.rangebar{padding:14px 16px;margin:0;border-bottom:1px solid var(--border)}.surface{border:0;border-radius:0;box-shadow:none}#host{height:535px!important}.attrib{font-size:11px;padding:12px 16px}@media(max-width:760px){#host{height:395px!important}.rangebar{padding:10px}.interval{display:none}}
+.topbar,main>.disclosure{display:none!important}
