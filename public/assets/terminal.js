@@ -20,7 +20,6 @@ window.SATSTREET = (function () {
     ['Overview',  './overview.html'],
     ['News',      './news.html'],
     ['Markets',   './ticker.html'],
-    ['Chart',     './chart.html'],
     ['Explorer',  './explorer.html'],
     ['Bitcoin Whitepaper', './whitepaper.html']
   ];
@@ -134,3 +133,4 @@ window.SATSTREET = (function () {
     emptyState: emptyState, staleness: staleness
   };
 })();
+
