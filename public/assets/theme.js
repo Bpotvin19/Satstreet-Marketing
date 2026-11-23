@@ -4,9 +4,9 @@
   var KEY = 'satstreet.theme.v1';
   var THEMES = [
     { id: 'classic', name: 'Classic', note: 'The original light terminal' },
-    { id: 'horizon', name: 'Horizon', note: 'Night sky up top, daylight below' },
     { id: 'night', name: 'Night', note: 'Dark, in the style of our videos' },
-    { id: 'desk', name: 'Desk', note: 'Charcoal and serif, trading-desk feel' }
+    { id: 'desk', name: 'Desk', note: 'Charcoal and serif, trading-desk feel' },
+    { id: 'horizon', name: 'Horizon', note: 'Night sky up top, daylight below' }
   ];
   var FONTS = {
     horizon: 'https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap',
