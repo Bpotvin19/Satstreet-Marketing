@@ -483,6 +483,8 @@
     .dash-card { padding:24px 20px 20px; }
   }
 </style>
+<link rel="stylesheet" href="./assets/themes.css" />
+<script src="./assets/theme.js"></script>
 </head>
 <body>
 
@@ -955,8 +957,10 @@
     var y = function (v) { return plotBottom - ((v - lo) / (hi - lo)) * (plotBottom - top); };
     chartGeom = { L:L, R:R, top:top, bottom:plotBottom, x:x, y:y, width:W, height:H };
 
-    ctx.strokeStyle = '#eef2f8'; ctx.lineWidth = 1;
-    ctx.fillStyle = '#98a5b4'; ctx.font = '11px ' + getComputedStyle(document.body).fontFamily;
+    /* Colours come from the active theme (assets/themes.css); the fallbacks are the original light theme. */
+    var tv = function (n, d) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim() || d; };
+    ctx.strokeStyle = tv('--chart-grid', '#eef2f8'); ctx.lineWidth = 1;
+    ctx.fillStyle = tv('--chart-label', '#98a5b4'); ctx.font = '11px ' + getComputedStyle(document.body).fontFamily;
     ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
     for (var g = 0; g <= 3; g++) {
       var v = lo + ((hi - lo) / 3) * g, yy = Math.round(y(v)) + 0.5;
@@ -969,12 +973,12 @@
       var ti = Math.round(tick * (series.length - 1) / (tickCount - 1));
       ctx.fillText(fmtChartDate(series[ti].t), x(ti), H - 2);
     }
-    var chartColors = { 'BTC-USD':['#f17b00','rgba(241,123,0,.14)'], 'ETH-USD':['#5b6ee1','rgba(91,110,225,.14)'], 'GC=F':['#b4861e','rgba(180,134,30,.14)'], 'CL=F':['#294654','rgba(41,70,84,.13)'] };
+    var chartColors = { 'BTC-USD':['#f17b00','rgba(241,123,0,.14)'], 'ETH-USD':['#5b6ee1','rgba(91,110,225,.14)'], 'GC=F':['#b4861e','rgba(180,134,30,.14)'], 'CL=F':[tv('--chart-oil', '#294654'),'rgba(41,70,84,.13)'] };
     var palette = chartColors[selectedSymbol] || ['#0f8a78','rgba(15,138,120,.13)'];
     var maxVolume = Math.max.apply(null, series.map(function (p) { return p.volume != null && isFinite(p.volume) ? p.volume : 0; }));
     if (maxVolume > 0) {
       var barW = Math.max(1, Math.min(5, (R - L) / series.length * .7));
-      ctx.fillStyle = 'rgba(112,130,145,.42)';
+      ctx.fillStyle = tv('--chart-volume', 'rgba(112,130,145,.42)');
       series.forEach(function (p, i) {
         if (p.volume == null || !isFinite(p.volume) || p.volume <= 0) return;
         var bh = p.volume / maxVolume * (volumeH - 6);
@@ -983,7 +987,7 @@
     }
     var grad = ctx.createLinearGradient(0, 0, 0, H);
     grad.addColorStop(0, palette[1]);
-    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    grad.addColorStop(1, tv('--chart-fade', 'rgba(255,255,255,0)'));
     ctx.beginPath(); ctx.moveTo(x(0), y(pts[0]));
     pts.forEach(function (p, i) { ctx.lineTo(x(i), y(p)); });
     ctx.lineTo(x(pts.length - 1), plotBottom); ctx.lineTo(x(0), plotBottom); ctx.closePath();
@@ -1004,10 +1008,10 @@
 
     if (hoverIndex !== null && series[hoverIndex]) {
       var hp = series[hoverIndex], hx = x(hoverIndex), hy = y(hp.v);
-      ctx.save(); ctx.setLineDash([4, 3]); ctx.strokeStyle = '#637587'; ctx.lineWidth = 1;
+      ctx.save(); ctx.setLineDash([4, 3]); ctx.strokeStyle = tv('--chart-cross', '#637587'); ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(hx, top); ctx.lineTo(hx, axisY); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(L, hy); ctx.lineTo(R, hy); ctx.stroke(); ctx.restore();
-      ctx.beginPath(); ctx.arc(hx, hy, 4, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill();
+      ctx.beginPath(); ctx.arc(hx, hy, 4, 0, Math.PI * 2); ctx.fillStyle = tv('--chart-dot', '#fff'); ctx.fill();
       ctx.strokeStyle = palette[0]; ctx.lineWidth = 2; ctx.stroke();
     }
   }
