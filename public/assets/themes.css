@@ -49,9 +49,10 @@ html[data-theme="horizon"] .eyebrow, html[data-theme="horizon"] .datestamp { let
 html[data-theme="horizon"] { --radius: 14px; background: #eef3f9; }
 html[data-theme="horizon"] body { position: relative; background: transparent !important; }
 /* Other pages get a shorter band that ends under their page title; Overview's runs behind the market board. */
-html[data-theme="horizon"] body::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 360px; z-index: -1; pointer-events: none;
-  background: url(./themes/stars.webp) center -380px / 1920px auto no-repeat, linear-gradient(180deg, #000 0, #02060f 200px, #0b1d40 290px, #eef3f9 360px);
-  -webkit-mask: linear-gradient(180deg, #000 270px, transparent 360px); mask: linear-gradient(180deg, #000 270px, transparent 360px); }
+html[data-theme="horizon"] body::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: var(--hz-h, 360px); z-index: -1; pointer-events: none;
+  background: url(./themes/stars.webp) center calc(var(--hz-h, 360px) - 560px) / 1920px auto no-repeat,
+    linear-gradient(180deg, #000 0, #02060f calc(var(--hz-h, 360px) - 140px), #0b1d40 calc(var(--hz-h, 360px) - 60px), #eef3f9 var(--hz-h, 360px));
+  -webkit-mask: linear-gradient(180deg, #000 calc(var(--hz-h, 360px) - 60px), transparent var(--hz-h, 360px)); mask: linear-gradient(180deg, #000 calc(var(--hz-h, 360px) - 60px), transparent var(--hz-h, 360px)); }
 html[data-theme="horizon"] body:has(.intro)::before { height: 760px;
   background: url(./themes/stars.webp) center -200px / 1920px auto no-repeat, linear-gradient(180deg, #000 0, #02060f 500px, #0b1d40 640px, #eef3f9 760px);
   -webkit-mask: linear-gradient(180deg, #000 600px, transparent 760px); mask: linear-gradient(180deg, #000 600px, transparent 760px); }
@@ -221,3 +222,16 @@ html[data-motion="off"] .marketboard::after, html[data-motion="off"] main .card:
 .ss-switch { position: relative; flex: none; width: 40px; height: 22px; border-radius: 11px; border: 0; background: #2a3a55; cursor: pointer; transition: background .2s; }
 .ss-switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .2s; }
 .ss-switch[aria-checked="true"] { background: #2f7bff; } .ss-switch[aria-checked="true"]::after { transform: translateX(18px); }
+
+/* ── Readability fixes: header copy on the Horizon band, and remaining white surfaces in dark themes ── */
+html[data-theme="horizon"] .news-lede { color: #c3d1e8; }
+html[data-theme="night"] .charthead { background: var(--card) !important; border-color: var(--border) !important; box-shadow: inset 0 1px 0 rgba(160, 200, 255, .08), 0 24px 60px rgba(0, 0, 0, .4) !important; }
+html[data-theme="desk"] .charthead { background: #1a1c20 !important; border-color: #2b2e34 !important; box-shadow: none !important; }
+html[data-theme="night"] .charthead .px, html[data-theme="desk"] .charthead .px { color: #fff; }
+html[data-theme="night"] .explorer-table th, html[data-theme="night"] .tx-summary, html[data-theme="night"] .mv-party, html[data-theme="night"] .blk.pending { background: rgba(127, 208, 255, .05) !important; border-color: rgba(127, 208, 255, .14) !important; color: var(--muted); }
+html[data-theme="desk"] .explorer-table th, html[data-theme="desk"] .tx-summary, html[data-theme="desk"] .mv-party, html[data-theme="desk"] .blk.pending { background: #1f2125 !important; border-color: #2b2e34 !important; color: var(--muted); }
+html[data-theme="night"] .transaction-row:hover, html[data-theme="night"] .move:hover { background: rgba(47, 123, 255, .08) !important; }
+html[data-theme="desk"] .transaction-row:hover, html[data-theme="desk"] .move:hover { background: #202328 !important; }
+html[data-theme="night"] .feetier.sel { background: rgba(47, 123, 255, .14) !important; border-color: #7fd0ff !important; }
+html[data-theme="desk"] .feetier.sel { background: rgba(77, 134, 255, .12) !important; border-color: #4d86ff !important; }
+html[data-theme="night"] .tab-icon, html[data-theme="desk"] .tab-icon, html[data-theme="night"] .mv-logo.fallback, html[data-theme="desk"] .mv-logo.fallback { background: rgba(127, 208, 255, .12) !important; color: var(--cyan); }

@@ -81,5 +81,20 @@
   function tryMount() { if (mount()) return; var n = 0, iv = setInterval(function () { if (mount() || ++n > 40) clearInterval(iv); }, 100); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', tryMount); else tryMount();
   if (motionOn()) { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', loadTrail); else loadTrail(); }
+  /* Horizon: size the night-sky band to end just below this page's header copy. */
+  function sizeBand() {
+    if (root.getAttribute('data-theme') !== 'horizon' || document.querySelector('.intro')) return;
+    var m = document.querySelector('main'); if (!m) return;
+    var last = null, kids = m.children;
+    for (var i = 0; i < kids.length; i++) { var c = kids[i]; if (c.matches('.pagehead, .news-lede, .page-head')) last = c; else if (last) break; }
+    var r, y;
+    if (last) { r = last.getBoundingClientRect(); y = r.bottom + 76; }
+    else if ((last = m.querySelector('.charthead'))) { r = last.getBoundingClientRect(); y = r.top + r.height * .55; }
+    else { root.style.removeProperty('--hz-h'); return; }
+    root.style.setProperty('--hz-h', Math.round(y + window.scrollY) + 'px');
+  }
+  window.addEventListener('resize', sizeBand); window.addEventListener('ss-themechange', sizeBand);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', sizeBand); else sizeBand();
+  window.addEventListener('load', sizeBand); if (document.fonts && document.fonts.ready) document.fonts.ready.then(sizeBand);
   window.SSTheme = { list: THEMES.map(function (t) { return t.id; }), get: saved, set: choose };
 })();
