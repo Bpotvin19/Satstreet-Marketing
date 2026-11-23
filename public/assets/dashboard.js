@@ -300,10 +300,10 @@
       body: 'Headlines from Decrypt. Select one to read the full article on decrypt.co in a new tab, free and with no sign-up. All news has the full feed.' },
     { el: function () { return document.querySelector('.side-stack'); },
       title: 'Catalysts and the halving',
-      body: 'Upcoming dates that tend to move markets, and a live countdown to the next Bitcoin halving.' },
+      body: 'Upcoming dates that tend to move markets, and a countdown to the next Bitcoin halving.' },
     { el: function () { return document.querySelector('.amc-table') && document.querySelector('.amc-table').closest('.card'); },
       title: 'Largest assets',
-      body: 'Where Bitcoin ranks against gold, silver and the largest listed companies by market value, computed from live prices.' },
+      body: 'Where Bitcoin ranks against gold, silver and the largest listed companies by market value, computed from returned reference prices.' },
     { el: function () { var n = $('mainnav'); return visible(n) ? n : $('navtoggle'); },
       title: 'More from the desk',
       body: 'News from Decrypt, the full Markets board with network and ETF flows, detailed charts, and a block explorer for Bitcoin, Ethereum, Solana and XRP.' }
