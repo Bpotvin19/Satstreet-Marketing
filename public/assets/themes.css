@@ -168,3 +168,23 @@ html[data-theme="horizon"] .pagehead { color: #c3d1e8; }
 html[data-theme="horizon"] .pagehead p { color: inherit; }
 html[data-theme="night"] .wp-pdf, html[data-theme="desk"] .wp-pdf { background: var(--card) !important; border-color: var(--border) !important; color: var(--ink) !important; }
 @media (max-width: 760px) { html[data-theme="desk"] .intro h1 { font-size: 46px; } }
+
+/* ── Overview: welcome card, Customize panel, Tour card ── */
+html[data-theme="night"] .dash-card, html[data-theme="night"] .dash-panel, html[data-theme="night"] .tour-card {
+  background: #0b162b !important; color: var(--ink); border: 1px solid rgba(127, 208, 255, .22); box-shadow: 0 30px 80px rgba(0, 0, 0, .6) !important; }
+html[data-theme="desk"] .dash-card, html[data-theme="desk"] .dash-panel, html[data-theme="desk"] .tour-card {
+  background: #16181b !important; color: var(--ink); border: 1px solid #2b2e34; box-shadow: 0 30px 80px rgba(0, 0, 0, .6) !important; }
+html[data-theme="night"] .dash-input, html[data-theme="night"] .dash-x, html[data-theme="night"] .dash-chip, html[data-theme="night"] .dash-row-actions button, html[data-theme="night"] .field input,
+html[data-theme="night"] .asset-remove, html[data-theme="night"] .asset-mark.custom.crypto-logo {
+  background: rgba(255, 255, 255, .05) !important; color: var(--ink); border-color: rgba(127, 208, 255, .25) !important; }
+html[data-theme="desk"] .dash-input, html[data-theme="desk"] .dash-x, html[data-theme="desk"] .dash-chip, html[data-theme="desk"] .dash-row-actions button, html[data-theme="desk"] .field input,
+html[data-theme="desk"] .asset-remove, html[data-theme="desk"] .asset-mark.custom.crypto-logo {
+  background: #1a1c20 !important; color: var(--ink); border-color: #3a3e46 !important; }
+html[data-theme="night"] .chart-return.down, html[data-theme="desk"] .chart-return.down { background: var(--down-soft) !important; color: var(--down) !important; }
+html[data-theme="night"] .chart-return.up, html[data-theme="desk"] .chart-return.up { background: var(--up-soft) !important; color: var(--up) !important; }
+html[data-theme="night"] .dash-card .btn:not(.ghost), html[data-theme="night"] .dash-card button[type="submit"] { background: #2f7bff !important; color: #fff !important; border-color: #2f7bff !important; }
+html[data-theme="desk"] .dash-card .btn:not(.ghost), html[data-theme="desk"] .dash-card button[type="submit"] { background: #4d86ff !important; color: #fff !important; border-color: #4d86ff !important; }
+html[data-theme="night"] .dash-result:hover:not([disabled]), html[data-theme="night"] .dash-chip:hover:not([disabled]) { background: rgba(47, 123, 255, .12) !important; }
+html[data-theme="desk"] .dash-result:hover:not([disabled]), html[data-theme="desk"] .dash-chip:hover:not([disabled]) { background: #1f2126 !important; }
+html[data-theme="night"] .dash-type, html[data-theme="desk"] .dash-type { background: rgba(127, 160, 220, .14) !important; color: var(--cyan) !important; }
+html[data-theme="night"] .dash-panel-foot, html[data-theme="desk"] .dash-panel-foot { border-color: var(--border) !important; }
