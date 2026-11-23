@@ -13,7 +13,16 @@
     night: 'https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap',
     desk: 'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Instrument+Serif&display=swap'
   };
-  var root = document.documentElement;
+  var root = document.documentElement, MKEY = 'satstreet.motion.v1';
+  var themeSrc = document.currentScript && document.currentScript.src;
+  function motionOn() { try { return localStorage.getItem(MKEY) !== 'off'; } catch (e) { return true; } }
+  function applyMotion(on) { root.setAttribute('data-motion', on ? 'on' : 'off'); }
+  applyMotion(motionOn());
+  /* Cursor trail: desktop mouse only, and never when the visitor prefers reduced motion. */
+  function loadTrail() {
+    if (window.__ssTrail || !window.matchMedia || !matchMedia('(pointer:fine)').matches || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    window.__ssTrail = true; var sc = document.createElement('script'); sc.src = (themeSrc || './assets/theme.js').replace(/theme\.js.*$/, 'cursor-trail.js'); document.head.appendChild(sc);
+  }
 
   function saved() { try { var t = localStorage.getItem(KEY); return THEMES.some(function (x) { return x.id === t; }) ? t : 'classic'; } catch (e) { return 'classic'; } }
   function loadFonts(id) {
@@ -50,7 +59,7 @@
       THEMES.map(function (t) {
         return '<button type="button" class="ss-theme-opt" role="menuitemradio" data-theme="' + t.id + '"><span class="ss-theme-sw ss-sw-' + t.id + '"><i></i></span>' +
           '<span>' + t.name + '<small>' + t.note + '</small></span></button>';
-      }).join('') + '</div>';
+      }).join('') + '<div class="ss-motion"><span>Motion<small>Cursor trail and moving borders</small></span><button type="button" class="ss-switch" role="switch" aria-label="Motion effects"></button></div></div>';
     var spacer = bar.querySelector('.spacer');
     if (spacer && spacer.nextSibling) bar.insertBefore(wrap, spacer.nextSibling); else bar.appendChild(wrap);
     btn = wrap.querySelector('.ss-theme-btn'); menu = wrap.querySelector('.ss-theme-menu');
@@ -63,10 +72,14 @@
     });
     document.addEventListener('click', function (e) { if (!wrap.contains(e.target)) close(); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { close(); } });
+    var sw = wrap.querySelector('.ss-switch');
+    sw.setAttribute('aria-checked', String(motionOn()));
+    sw.addEventListener('click', function (e) { e.stopPropagation(); var on = !motionOn(); try { localStorage.setItem(MKEY, on ? 'on' : 'off'); } catch (x) {} applyMotion(on); sw.setAttribute('aria-checked', String(on)); if (on) loadTrail(); });
     sync(); return true;
   }
   /* The top bar is either in the page (Overview) or drawn by terminal.js, so wait for it. */
   function tryMount() { if (mount()) return; var n = 0, iv = setInterval(function () { if (mount() || ++n > 40) clearInterval(iv); }, 100); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', tryMount); else tryMount();
+  if (motionOn()) { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', loadTrail); else loadTrail(); }
   window.SSTheme = { list: THEMES.map(function (t) { return t.id; }), get: saved, set: choose };
 })();
