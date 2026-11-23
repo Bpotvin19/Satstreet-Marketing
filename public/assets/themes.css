@@ -235,3 +235,26 @@ html[data-theme="desk"] .transaction-row:hover, html[data-theme="desk"] .move:ho
 html[data-theme="night"] .feetier.sel { background: rgba(47, 123, 255, .14) !important; border-color: #7fd0ff !important; }
 html[data-theme="desk"] .feetier.sel { background: rgba(77, 134, 255, .12) !important; border-color: #4d86ff !important; }
 html[data-theme="night"] .tab-icon, html[data-theme="desk"] .tab-icon, html[data-theme="night"] .mv-logo.fallback, html[data-theme="desk"] .mv-logo.fallback { background: rgba(127, 208, 255, .12) !important; color: var(--cyan); }
+
+/* Overview briefing: keep the title modest and the metadata readable on dark bands. */
+html[data-theme="desk"] .brief h1 { font-size: 46px; }
+html[data-theme="night"] .brief-meta, html[data-theme="horizon"] .brief-meta, html[data-theme="desk"] .brief-meta,
+html[data-theme="night"] .brief-top, html[data-theme="horizon"] .brief-top { color: #9fb0c8; }
+html[data-theme="horizon"] .brief-top .datestamp, html[data-theme="night"] .brief-top .datestamp { color: #c3d1e8; }
+html[data-theme="night"] .brief-fresh.stale, html[data-theme="horizon"] .brief-fresh.stale, html[data-theme="desk"] .brief-fresh.stale,
+html[data-theme="night"] .stale-ink, html[data-theme="desk"] .stale-ink, html[data-theme="night"] .focus-status .stale, html[data-theme="desk"] .focus-status .stale { color: #f0c36a; }
+html[data-theme="horizon"] .retry, html[data-theme="night"] .retry { border-color: rgba(127, 208, 255, .3); color: #7fd0ff; background: transparent; }
+html[data-theme="night"] .asset-add, html[data-theme="desk"] .asset-add { border-color: rgba(127, 208, 255, .3); color: var(--cyan); }
+html[data-theme="night"] .amc-partial, html[data-theme="desk"] .amc-partial { background: rgba(240, 195, 106, .12); color: #f0c36a; }
+html[data-theme="night"] .chartbusy, html[data-theme="desk"] .chartbusy { background: var(--navy-2, #0a1426); }
+@media (max-width: 760px) { html[data-theme="desk"] .brief h1 { font-size: 34px; } }
+/* Overview on phones: the watchlist is a flat list in every theme. */
+@media (max-width: 760px) {
+  html[data-theme] .asset-grid .asset-tile { border: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; }
+  html[data-theme] .asset-grid .asset-tile[aria-pressed="true"] { box-shadow: inset 3px 0 0 var(--cyan, #7fd0ff) !important; background: rgba(47, 123, 255, .10) !important; }
+  html[data-theme] .asset-grid { border-color: var(--border) !important; }
+  html[data-theme] .asset-grid .asset-slot { border-bottom-color: var(--border-2, rgba(127, 208, 255, .12)); }
+  html[data-theme] .asset-grid .asset-remove { background: transparent !important; border-color: transparent !important; box-shadow: none !important; color: var(--muted) !important; }
+}
+html[data-theme="night"] .dash-panel-foot, html[data-theme="horizon"] .dash-panel-foot { background: rgba(127, 208, 255, .04) !important; border-color: rgba(127, 208, 255, .14) !important; }
+html[data-theme="desk"] .dash-panel-foot { background: #16181b !important; border-color: #2b2e34 !important; }

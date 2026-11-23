@@ -46,6 +46,16 @@ interface Quote {
   sessionLow?: number | null
   marketState?: string | null
   asOf?: string | null
+  /** What the change is measured against: the venue's rolling 24 hours (crypto)
+      or the prior session's close (exchange-traded instruments). */
+  changeBasis?: '24h' | 'prevClose'
+  /** Quote currency as reported by the source, when it reports one. */
+  currency?: string | null
+  /** The exchange's own regular trading window for today, as reported by the
+      feed (ISO). The page uses it to say open/closed; nothing is inferred
+      from a request merely succeeding. */
+  tradingPeriod?: { start: string; end: string } | null
+  exchangeTimezone?: string | null
   /** How to render it: a currency, a percentage yield, or an index level. */
   kind: 'usd' | 'cad' | 'pct' | 'level' | 'fx'
   source: string
@@ -91,8 +101,14 @@ function kindFor(symbol: string, currency: string | undefined, instrumentType: s
   return !currency || currency === 'USD' ? 'usd' : 'level'
 }
 
+function period(p: unknown): { start: string; end: string } | null {
+  const start = Number((p as { start?: unknown })?.start), end = Number((p as { end?: unknown })?.end)
+  if (!isFinite(start) || !isFinite(end) || end <= start) return null
+  return { start: new Date(start * 1000).toISOString(), end: new Date(end * 1000).toISOString() }
+}
+
 async function yahoo(symbol: string, label: string, kind: Quote['kind'] | null): Promise<Quote> {
-  const base: Quote = { symbol, label, price: null, changePct: null, changeAbs: null, spark: [], kind: kind || 'usd', source: 'Yahoo Finance' }
+  const base: Quote = { symbol, label, price: null, changePct: null, changeAbs: null, spark: [], kind: kind || 'usd', source: 'Yahoo Finance', changeBasis: 'prevClose' }
   try {
     const r = await fetch(`${YAHOO}${encodeURIComponent(symbol)}?interval=1d&range=1mo`, {
       headers: { 'user-agent': 'Mozilla/5.0 (compatible; SatstreetDashboard/1.0)' },
@@ -132,6 +148,9 @@ async function yahoo(symbol: string, label: string, kind: Quote['kind'] | null):
       sessionLow: isFinite(Number(meta?.regularMarketDayLow)) ? Number(meta.regularMarketDayLow) : lastFinite(quote.low ?? []),
       marketState: typeof meta?.marketState === 'string' ? meta.marketState : null,
       asOf: isFinite(Number(meta?.regularMarketTime)) ? new Date(Number(meta.regularMarketTime) * 1000).toISOString() : null,
+      currency: typeof meta?.currency === 'string' ? meta.currency : null,
+      exchangeTimezone: typeof meta?.exchangeTimezoneName === 'string' ? meta.exchangeTimezoneName : null,
+      tradingPeriod: period(meta?.currentTradingPeriod?.regular),
     }
   } catch (e) {
     return { ...base, error: e instanceof Error ? e.message : 'failed' }
@@ -141,7 +160,7 @@ async function yahoo(symbol: string, label: string, kind: Quote['kind'] | null):
 /* Crypto comes from Coinbase, which the rest of the site already quotes.
    Using the same venue keeps the strip and the focus chart aligned. */
 async function spot(pair: string, label: string, kind: Quote['kind']): Promise<Quote> {
-    const base: Quote = { symbol: pair, label, price: null, changePct: null, changeAbs: null, spark: [], kind, source: 'Digital asset venue' }
+    const base: Quote = { symbol: pair, label, price: null, changePct: null, changeAbs: null, spark: [], kind, source: 'Digital asset venue', changeBasis: '24h', currency: 'USD' }
     try {
       const [t, s, c] = await Promise.all([
         fetch(`https://api.exchange.coinbase.com/products/${pair}/ticker`, { signal: AbortSignal.timeout(6000) }),
