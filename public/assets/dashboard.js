@@ -3,10 +3,11 @@
    Three things, all remembered in this browser only (there are no accounts
    on this site, so nothing about a visitor ever leaves their device):
 
-     1. A name, asked once, so the greeting reads "Good morning, Ben."
-     2. A watchlist: which markets sit on the "Markets at a glance" board.
+     1. A watchlist: which markets sit on the "Markets at a glance" board.
         The desk's default eight stay the default until someone changes it.
-     3. A short guided tour, offered after the welcome and replayable.
+     2. An optional name for the greeting, set in the Edit watchlist panel's
+        Settings. Nothing asks for it on arrival.
+     3. A short guided tour, only when the visitor asks for it.
 
    The page's own script reads window.SSProfile for the watchlist and name,
    and exposes window.SSDash.reload() so changes here redraw the board. */
@@ -99,31 +100,39 @@
   }
   api.greet = greet;
 
-  function open(el) {
+  /* Dialogs: focus moves in on open, Tab stays inside, Escape closes, and
+     focus returns to whatever opened it. */
+  var returnTo = null;
+  function focusables(el) {
+    return Array.prototype.filter.call(el.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'), function (x) {
+      return !x.disabled && !x.hidden && x.offsetParent !== null;
+    });
+  }
+  function open(el, trigger) {
+    returnTo = trigger || (document.activeElement !== document.body ? document.activeElement : null);
     el.hidden = false;
     document.body.classList.add('dash-modal-open');
   }
   function close(el) {
     el.hidden = true;
     if (!document.querySelector('.dash-layer:not([hidden])')) document.body.classList.remove('dash-modal-open');
+    var to = returnTo; returnTo = null;
+    /* The board redraws while the panel is open, which can replace the trigger: find it again by id. */
+    if (to && !document.contains(to) && to.id) to = document.getElementById(to.id);
+    if (to && document.contains(to)) to.focus();
+    else { var b = $('customize-btn'); if (b) b.focus(); }
   }
-
-  /* ── 1. welcome ──────────────────────────────────────────────── */
-  function welcome(thenTour) {
-    var w = $('dash-welcome');
-    $('welcome-name').value = api.name();
-    open(w);
-    setTimeout(function () { $('welcome-name').focus(); }, 30);
-    var done = function (keep) {
-      if (keep) save({ name: $('welcome-name').value.trim().slice(0, 40) });
-      save({ welcomed: true });
-      greet();
-      close(w);
-      if (thenTour && !profile.toured) setTimeout(tour, 250);
-    };
-    $('welcome-form').onsubmit = function (e) { e.preventDefault(); done(true); };
-    $('welcome-skip').onclick = function () { done(false); };
-  }
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Tab') return;
+    var layer = document.querySelector('.dash-layer:not([hidden])');
+    if (!layer) return;
+    var items = focusables(layer);
+    if (!items.length) return;
+    var first = items[0], last = items[items.length - 1];
+    if (!layer.contains(document.activeElement)) { e.preventDefault(); first.focus(); return; }
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
 
   /* ── 2. customize ────────────────────────────────────────────── */
   /* Same icon as the board: assets/symbol-icons.js. */
@@ -160,9 +169,9 @@
   function add(item) {
     var list = api.watchlist();
     if (has(item.symbol)) return;
-    if (list.length >= MAX) { $('dash-msg').textContent = 'The board holds up to ' + MAX + ' markets. Remove one to add another.'; return; }
+    if (list.length >= MAX) { $('dash-msg').textContent = 'Your watchlist holds up to ' + MAX + ' markets. Remove one to add another.'; return; }
     list.push({ symbol: item.symbol, label: item.label });
-    $('dash-msg').textContent = item.label + ' added to your board.';
+    $('dash-msg').textContent = item.label + ' added to your watchlist.';
     setList(list);
     renderResults(lastResults);
   }
@@ -200,14 +209,14 @@
       .catch(function () { if (seq === searchSeq) $('dash-results').innerHTML = '<li class="dash-empty">Search is unavailable right now.</li>'; });
   }
 
-  function customize() {
+  function customize(trigger) {
     var c = $('dash-customize');
     $('dash-name-input').value = api.name();
     $('dash-search').value = '';
     $('dash-msg').textContent = '';
     renderResults([]);
     renderList();
-    open(c);
+    open(c, trigger && trigger.nodeType === 1 ? trigger : null);
     setTimeout(function () { $('dash-search').focus(); }, 30);
   }
   api.customize = customize;
@@ -223,14 +232,23 @@
         var list = api.watchlist(), i = +m.getAttribute('data-move'), j = i + (+m.getAttribute('data-dir'));
         var t = list[i]; list[i] = list[j]; list[j] = t;
         setList(list);
+        /* Keep keyboard focus on the item that moved. */
+        var d = m.getAttribute('data-dir'), nb = $('dash-list').querySelector('[data-move="' + j + '"][data-dir="' + d + '"]');
+        if (nb && nb.disabled) nb = $('dash-list').querySelector('[data-move="' + j + '"]:not([disabled])');
+        if (nb) nb.focus();
+        $('dash-msg').textContent = t.label + ' moved to position ' + (j + 1) + '.';
         return;
       }
       var r = e.target.closest('[data-remove]');
       if (r && !r.disabled) {
         var l2 = api.watchlist(), gone = l2.splice(+r.getAttribute('data-remove'), 1)[0];
         $('dash-msg').textContent = gone.label + ' removed.';
+        var at = +r.getAttribute('data-remove');
         setList(l2);
         renderResults(lastResults);
+        var rows = $('dash-list').querySelectorAll('[data-remove]');
+        var nf = rows[Math.min(at, rows.length - 1)];
+        (nf && !nf.disabled ? nf : $('dash-search')).focus();
       }
     });
     $('dash-search').addEventListener('input', function () {
@@ -244,10 +262,10 @@
     });
     $('dash-reset').addEventListener('click', function () {
       setList(DEFAULT.slice());
-      $('dash-msg').textContent = 'Back to the default board.';
+      $('dash-msg').textContent = 'Back to the default watchlist.';
       renderResults(lastResults);
     });
-    $('dash-tour').addEventListener('click', function () { close(c); setTimeout(tour, 200); });
+    $('dash-tour').addEventListener('click', function () { close(c); setTimeout(function () { tour($('tour-btn')); }, 200); });
     $('dash-done').addEventListener('click', function () { close(c); });
     $('dash-close').addEventListener('click', function () { close(c); });
   }
@@ -263,17 +281,17 @@
      out when the tour starts, so the count never promises a step it skips. */
   var STEPS = [
     { el: function () { return document.querySelector('.intro'); },
-      title: 'Your daily snapshot',
-      body: 'Today’s date, your greeting and a one-line read on where markets are this morning.' },
+      title: 'Market briefing',
+      body: 'A factual summary built only from the prices on your watchlist, with the quote currency, your time zone and when prices were last retrieved.' },
     { el: function () { return $('asset-grid'); },
-      title: 'Markets at a glance',
-      body: 'Each tile is a reference price with today’s move. Select any tile to bring it into the chart below.' },
+      title: 'Your watchlist',
+      body: 'Each tile is an indicative reference price. Crypto moves are over 24 hours; exchange-traded moves are since the prior close. Select a tile to chart it below.' },
     { el: function () { return $('customize-btn'); },
-      title: 'Make it yours',
-      body: 'Add the markets you follow (XRP, Solana, MSTR, IBIT, currencies, indices), remove the ones you don’t, and reorder them. Saved on this device.' },
+      title: 'Edit watchlist',
+      body: 'Add the markets you follow, remove or reorder them, and optionally set a name for the greeting. Saved on this device only.' },
     { el: function () { return document.querySelector('.focus-panel'); },
-      title: 'Focus chart',
-      body: 'Switch the range from one day to one year. Session open, high and low sit alongside.' },
+      title: 'Selected market',
+      body: 'Price, move and status for the market you selected, with its source and the time of the last price. Switch the timeframe from one day to all history.' },
     { el: function () { return document.querySelector('.card.macro'); },
       title: 'Macro backdrop',
       body: 'The US economy in eight numbers from the Federal Reserve’s FRED database: rates, inflation, jobs, the yield curve, money supply and the dollar. Select one to see its full history on FRED.' },
@@ -282,10 +300,10 @@
       body: 'Headlines from Decrypt. Select one to read the full article on decrypt.co in a new tab, free and with no sign-up. All news has the full feed.' },
     { el: function () { return document.querySelector('.side-stack'); },
       title: 'Catalysts and the halving',
-      body: 'Upcoming dates that tend to move markets, and a live countdown to the next Bitcoin halving.' },
+      body: 'Upcoming dates that tend to move markets, and a countdown to the next Bitcoin halving.' },
     { el: function () { return document.querySelector('.amc-table') && document.querySelector('.amc-table').closest('.card'); },
       title: 'Largest assets',
-      body: 'Where Bitcoin ranks against gold, silver and the largest listed companies by market value, computed from live prices.' },
+      body: 'Where Bitcoin ranks against gold, silver and the largest listed companies by market value, computed from returned reference prices.' },
     { el: function () { var n = $('mainnav'); return visible(n) ? n : $('navtoggle'); },
       title: 'More from the desk',
       body: 'News from Decrypt, the full Markets board with network and ETF flows, detailed charts, and a block explorer for Bitcoin, Ethereum, Solana and XRP.' }
@@ -338,11 +356,11 @@
     close($('dash-tour-layer'));
     save({ toured: true });
   }
-  function tour() {
+  function tour(trigger) {
     steps = STEPS.filter(function (s) { return visible(s.el()); });
     if (!steps.length) return;
     active = true;
-    open($('dash-tour-layer'));
+    open($('dash-tour-layer'), trigger && trigger.nodeType === 1 ? trigger : $('tour-btn'));
     show(0);
   }
   api.tour = tour;
@@ -365,9 +383,8 @@
     greet();
     wireCustomize();
     wireTour();
-    $('customize-btn').addEventListener('click', customize);
-    $('tour-btn').addEventListener('click', tour);
-    if (!profile.welcomed) setTimeout(function () { welcome(true); }, 400);
+    $('customize-btn').addEventListener('click', function () { customize($('customize-btn')); });
+    $('tour-btn').addEventListener('click', function () { tour($('tour-btn')); });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();

@@ -53,7 +53,7 @@
 
     --ink:       #16202c;
     --ink-2:     #3d4956;
-    --muted:     #667585;
+    --muted:     #5a6a7b;
     --faint:     #98a5b4;
     --on-navy-2: #9db4ce;
 
@@ -482,6 +482,145 @@
     .board-actions { margin-top:8px; }
     .dash-card { padding:24px 20px 20px; }
   }
+
+  /* ════════ Daily briefing layout (overrides above) ════════
+     Primary: briefing, watchlist, chart. Secondary: news and calendar.
+     Supporting: macro and market-cap context. */
+  main { padding-top: 26px; }
+  .intro.brief { padding-right: 0; margin-bottom: 18px; }
+  .brief-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; margin: 0 0 4px; font-size: 14px; color: var(--muted); }
+  .brief-top .datestamp { margin: 0; font-size: 14px; letter-spacing: 0; text-transform: none; font-weight: 600; color: var(--ink-2); }
+  .brief-top .greet:empty { display: none; }
+  .brief h1 { font-size: 28px; margin: 0 0 6px; }
+  .brief .summary { font-size: 17px; line-height: 1.55; color: var(--ink); max-width: 78ch; }
+  .brief-meta { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 10px 0 0; padding: 0; font-size: 13.5px; color: var(--muted); }
+  .brief-meta li { display: inline-flex; align-items: center; gap: 7px; }
+  .brief-fresh.stale { color: #8a5a10; }
+  .pip.closed { background: #8a9bb0; } .pip.warn { background: #d39a2c; }
+  .retry { font: inherit; font-size: 13px; font-weight: 600; color: var(--blue); background: none; border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; min-height: 32px; cursor: pointer; }
+  .retry:hover { background: var(--border-2); }
+
+  .marketboard > header { align-items: flex-start; }
+  .board-hint { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); max-width: 70ch; }
+  .board-hint b { font-weight: 650; color: var(--ink-2); }
+  .tile-code { font-size: 11px; letter-spacing: 0; text-transform: none; }
+  .asset-tile .tile-name { font-size: 13px; }
+  .tile-change { font-size: 12px; }
+  .tile-basis { display: block; margin-top: 1px; font-size: 11px; font-weight: 500; color: var(--muted); text-align: right; }
+  .tile-sel { display: none; font-size: 11px; font-weight: 650; color: var(--blue); }
+  .asset-tile[aria-pressed="true"] .tile-sel { display: inline-flex; align-items: center; gap: 4px; }
+  .asset-tile[aria-pressed="true"] { background: var(--card); }
+  .asset-tile.na .tile-px { color: var(--faint); }
+  .asset-remove { width: 26px; height: 26px; top: 4px; right: 4px; }
+  .asset-add { grid-column: 1 / -1; min-height: 46px; display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 8px; font: inherit; font-size: 14px; font-weight: 650; color: var(--blue); background: transparent; border: 1.5px dashed #b9c8dc; border-radius: 9px; cursor: pointer; }
+  .asset-add small { font-size: 12px; font-weight: 500; color: var(--muted); }
+  .asset-add:hover { border-color: var(--blue); background: rgba(0, 104, 255, .04); }
+  .asset-add span[aria-hidden] { font-size: 18px; line-height: 1; }
+  .board-error { grid-column: 1 / -1; padding: 18px; border: 1px solid var(--border); border-radius: 9px; font-size: 14px; color: var(--ink-2); }
+  .board-error b { display: block; color: var(--ink); }
+
+  .focus-panel { scroll-margin-top: 16px; }
+  .up-ink { color: var(--up); } .down-ink { color: var(--down); } .flat-ink { color: var(--muted); }
+  .asset-tile .up { color: var(--up); } .asset-tile .down { color: var(--down); }
+  .focus-head { min-height: 74px; padding: 12px 17px; }
+  .focus-head .coin { width: 36px; height: 36px; }
+  .focus-kicker { display: block; font-size: 11.5px; font-weight: 600; color: var(--blue); }
+  .focus-title strong { font-size: 17px; }
+  .focus-code { margin: 1px 0 0; font-size: 12.5px; color: var(--muted); }
+  .focus-price .heroPx { font-size: 30px; }
+  .focus-price .heroMove { font-size: 14px; margin-top: 3px; }
+  .heroMove .basis { color: var(--muted); }
+  .focus-status { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 0; padding: 8px 17px; border-bottom: 1px solid var(--border-2); font-size: 13px; color: var(--muted); }
+  .focus-status .sep { color: var(--faint); }
+  .focus-status .stale { color: #8a5a10; font-weight: 600; }
+  .chart-return { font-size: 12px; padding: 5px 9px; }
+  .segmented button { min-height: 34px; font-size: 13px; }
+  .chartmsg .errbox { pointer-events: auto; }
+  .chartmsg .retry { margin-top: 10px; }
+  .chartbusy { position: absolute; top: 6px; left: 8px; z-index: 2; padding: 3px 8px; border-radius: 5px; background: var(--card); border: 1px solid var(--border); font-size: 12px; color: var(--muted); }
+  .stale-ink { color: #8a5a10; }
+  .chart-foot { margin: 0; font-size: 12.5px; color: var(--muted); min-height: 1.5em; }
+  .focus-aside .stat .k { font-size: 12.5px; font-weight: 600; letter-spacing: 0; text-transform: none; }
+  .focus-aside .stat .v { font-size: 13px; }
+  .focus-aside #focus-src { font-family: var(--font); letter-spacing: 0; font-weight: 600; }
+  .disclose { margin-top: 12px; font-size: 13px; color: var(--ink-2); }
+  .disclose summary { cursor: pointer; font-weight: 650; color: var(--ink); min-height: 32px; display: flex; align-items: center; gap: 6px; list-style: none; }
+  .disclose summary::-webkit-details-marker { display: none; }
+  .disclose summary::before { content: ''; width: 7px; height: 7px; border-right: 1.6px solid currentColor; border-bottom: 1.6px solid currentColor; transform: rotate(-45deg); transition: transform .15s; flex: none; }
+  .disclose[open] summary::before { transform: rotate(45deg); }
+  .disclose p { margin: 6px 0 0; line-height: 1.55; }
+
+  /* Secondary tier: top-aligned columns; the halving card stays compact. */
+  .tier-2 { margin-top: 22px; align-items: start; }
+  .news-card > #news { flex: none; }
+  .card h2 { font-size: 20px; }
+  .card > header .eyebrow { margin-bottom: 2px; }
+  .nchip { font-size: 11px; letter-spacing: .2px; text-transform: none; }
+  .nago { font-size: 12.5px; }
+  .halving { flex: none; }
+  .halving > header { align-items: baseline; margin-bottom: 4px; }
+  .halving h2 { font-size: 18px; }
+  .halv-block { font-size: 12.5px; color: var(--muted); }
+  .halv-body { flex: none; gap: 10px; padding: 8px 0 0; }
+  .halv-row { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; }
+  .halv-row .halv-cd { text-align: left; }
+  .halv-row .halv-cd span { font-size: 24px; }
+  .halv-cd small { font-size: 12px; letter-spacing: 0; text-transform: none; font-weight: 500; }
+  .halv-when { text-align: right; font-size: 13px; color: var(--muted); }
+  .halv-when b { display: block; font-size: 14px; color: var(--ink); font-weight: 650; }
+  .halv-scale { font-size: 12px; }
+  .halving .nsrc { margin-top: 12px; font-size: 12px; }
+
+  /* Supporting tier */
+  .tier-label { margin: 34px 0 10px; font-family: var(--font); font-size: 13px; font-weight: 700; letter-spacing: .3px; color: var(--muted); }
+  .macro { margin-bottom: 16px; }
+  .macro .m-k { font-size: 13px; } .macro-tile .m-note { font-size: 12px; } .macro-tile .m-foot { font-size: 11.5px; }
+  .macro-note { font-size: 12.5px; }
+  .amc-table th { font-size: 12px; letter-spacing: 0; text-transform: none; }
+  .amc-capbtn { font: inherit; font-weight: 600; font-family: var(--font-data); color: inherit; background: none; border: 0; border-bottom: 1px dashed var(--faint); padding: 2px 0; cursor: pointer; }
+  .amc-capbtn:hover { color: var(--blue); border-bottom-color: var(--blue); }
+  .amc-basis td { padding-top: 0; white-space: normal; font-size: 12.5px; color: var(--muted); text-align: right; }
+  .amc-partial { margin: 0 0 12px; padding: 9px 12px; border-radius: 8px; background: #fbf1e0; color: #6d4a0c; font-size: 13px; }
+  .amc-method { margin-top: 14px; }
+  footer.legal { font-size: 13px; }
+  .dash-row-actions button { width: 36px; height: 36px; font-size: 15px; }
+  .dash-x { width: 40px; height: 40px; }
+  .dash-label { display: block; margin-bottom: 6px; font-size: 13.5px; font-weight: 600; color: var(--ink-2); }
+  .dash-label span { font-weight: 400; color: var(--muted); }
+  .dash-section > .k label { font: inherit; color: inherit; }
+  .dash-chip { min-height: 36px; }
+  .dash-settings .dash-note { margin-top: 8px !important; }
+
+  /* Phones: the watchlist becomes a compact list (asset, price, change). */
+  @media (max-width: 760px) {
+    .brief h1 { font-size: 24px; }
+    .brief .summary { font-size: 16px; }
+    .board-actions { margin-top: 10px; }
+    .board-actions .btn { min-height: 40px; }
+    .asset-grid { display: flex; flex-direction: column; gap: 0; overflow: visible; margin: 0; padding: 0; scroll-snap-type: none; border: 1px solid var(--border); border-radius: 9px; }
+    .asset-slot { min-width: 0; border-bottom: 1px solid var(--border-2); }
+    .asset-slot:last-of-type { border-bottom: 0; }
+    .asset-tile { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0 10px; min-height: 58px; padding: 9px 46px 9px 12px; border: 0; border-radius: 0; background: transparent; }
+    .asset-tile[aria-pressed="true"] { box-shadow: inset 3px 0 0 var(--blue); background: rgba(0, 104, 255, .05); }
+    .asset-tile .tile-top { display: contents; }
+    .asset-tile .asset-id { grid-column: 1; grid-row: 1 / span 2; }
+    .asset-tile .tile-change { grid-column: 2; grid-row: 2; text-align: right; }
+    .asset-tile .tile-px { grid-column: 2; grid-row: 1; margin: 0; font-size: 16px; text-align: right; }
+    .asset-tile .tile-foot { display: none; }
+    .asset-tile .tile-basis { display: inline; margin-left: 4px; }
+    .asset-tile[aria-pressed="true"] .tile-sel { display: none; }
+    .asset-remove { top: 50%; right: 6px; transform: translateY(-50%); width: 36px; height: 36px; opacity: 1; background: transparent; }
+    .asset-add { min-height: 52px; flex-direction: row; border: 0; border-radius: 0; border-top: 1px dashed var(--border); }
+    .asset-add small { display: none; }
+    .focus-head { padding: 12px 14px; }
+    .focus-price { margin-left: 46px; }
+    .focus-status { padding: 8px 14px; }
+    .chart-toolbar { flex-direction: column-reverse; align-items: stretch; gap: 8px; }
+    .chart-toolbar .chart-return { align-self: flex-start; }
+    #ranges { display: flex; width: 100%; overflow: visible; }
+    #ranges button { flex: 1 1 0; min-width: 0; min-height: 40px; padding: 6px 0; }
+    .halv-when { text-align: left; }
+  }
 </style>
 <link rel="stylesheet" href="./assets/themes.css" />
 <script src="./assets/theme.js"></script>
@@ -505,35 +644,46 @@
 
 <main class="shell">
 
-  <section class="intro" aria-labelledby="greeting">
-    <p class="datestamp" id="datestamp"></p>
-    <h1 id="greeting" data-personal>Good morning.</h1>
-    <p class="summary" id="summary"></p>
+  <section class="intro brief" aria-labelledby="brief-h">
+    <p class="brief-top"><span class="datestamp" id="datestamp"></span><span class="greet" id="greeting" data-personal></span></p>
+    <h1 id="brief-h">Market briefing</h1>
+    <p class="summary" id="summary" aria-live="polite"><span class="skel" style="display:inline-block;width:min(560px,90%);height:16px;vertical-align:middle"></span></p>
+    <ul class="brief-meta" aria-label="About these prices">
+      <li id="meta-ccy">Prices in USD unless marked</li>
+      <li id="meta-tz"></li>
+      <li class="brief-fresh" id="meta-fresh"><i class="pip" aria-hidden="true"></i><span>Loading prices…</span></li>
+    </ul>
   </section>
 
   <section class="marketboard" aria-labelledby="board-h">
     <header>
-      <div><p class="eyebrow">Cross-asset monitor</p><h2 id="board-h">Markets at a glance</h2></div>
+      <div>
+        <p class="eyebrow">Your watchlist</p><h2 id="board-h">Markets at a glance</h2>
+        <p class="board-hint">Select a market to show it in the chart below. Crypto moves are over the last <b>24h</b>; exchange-traded moves are for the <b>session</b>, since the prior close.</p>
+      </div>
       <div class="board-actions">
-        <button type="button" class="btn ghost small" id="tour-btn" aria-label="Take a quick tour of the dashboard">Tour</button>
-        <button type="button" class="btn ghost small" id="customize-btn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Customize</button>
+        <button type="button" class="btn ghost small" id="tour-btn" aria-label="Take an optional tour of this page">Tour</button>
+        <button type="button" class="btn ghost small" id="customize-btn" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Edit watchlist</button>
       </div>
     </header>
-    <div class="asset-grid" id="asset-grid" aria-label="Covered markets"></div>
+    <div class="asset-grid" id="asset-grid" role="group" aria-label="Watchlist markets. Selecting one updates the chart."></div>
+    <p class="sr" id="select-live" aria-live="polite"></p>
 
-    <section class="focus-panel" aria-labelledby="focus-h">
+    <section class="focus-panel" id="focus-panel" aria-labelledby="focus-h">
       <h2 id="focus-h" class="sr">Selected market panel</h2>
       <div class="focus-head">
         <div class="coin" id="focus-icon" aria-hidden="true">&#8383;</div>
         <div class="focus-title">
+          <span class="focus-kicker">In the chart</span>
           <strong id="focus-name">Bitcoin</strong>
-          <p class="eyebrow" id="focus-label">BTC / USD · Digital asset venue</p>
+          <p class="focus-code" id="focus-label">BTC / USD</p>
         </div>
         <div class="focus-price">
           <p class="heroPx" id="focus-px">—</p>
           <p class="heroMove" id="focus-move">&nbsp;</p>
         </div>
       </div>
+      <p class="focus-status" id="focus-status"><i class="pip" aria-hidden="true"></i><span>Loading…</span></p>
       <div class="focus-body">
         <div class="focus-chart">
           <div class="chart-toolbar">
@@ -546,29 +696,61 @@
               <button type="button" data-r="5Y" aria-pressed="false">5Y</button>
               <button type="button" data-r="ALL" aria-pressed="false">All</button>
             </div>
-            <span class="chart-return" id="chart-return" aria-live="polite">—</span>
+            <span class="chart-return" id="chart-return" aria-live="polite">&nbsp;</span>
           </div>
           <div class="chartbox">
             <canvas id="chart" role="img" aria-label="Selected market reference price chart"></canvas>
             <div class="chartmsg" id="chartmsg">Loading chart…</div>
             <div class="charttip" id="charttip" hidden></div>
           </div>
+          <p class="chart-foot" id="chart-foot">&nbsp;</p>
         </div>
-        <aside class="focus-aside" aria-label="Selected market statistics">
+        <div class="focus-aside" role="group" aria-label="Selected market statistics">
           <div class="stats">
-            <div class="stat"><div class="k">Open</div><div class="v" id="focus-open">—</div></div>
-            <div class="stat"><div class="k">Session high</div><div class="v" id="focus-hi">—</div></div>
-            <div class="stat"><div class="k">Session low</div><div class="v" id="focus-lo">—</div></div>
+            <div class="stat"><div class="k" id="focus-open-k">Open</div><div class="v" id="focus-open">—</div></div>
+            <div class="stat"><div class="k" id="focus-hi-k">High</div><div class="v" id="focus-hi">—</div></div>
+            <div class="stat"><div class="k" id="focus-lo-k">Low</div><div class="v" id="focus-lo">—</div></div>
             <div class="stat"><div class="k">Source</div><div class="v" id="focus-src">—</div></div>
           </div>
-          <div class="source-note"><b>Normalized market data</b>One timestamp, one currency convention and one source label for every instrument.</div>
-        </aside>
+          <details class="disclose">
+            <summary>About this data</summary>
+            <p>Crypto prices come from a digital asset venue that trades around the clock; their change is over the last 24 hours. Other markets come from Yahoo Finance, may be delayed, and their change is since the prior session&rsquo;s close. &ldquo;Market open&rdquo; and &ldquo;closed&rdquo; follow the trading hours each feed reports.</p>
+            <p>All figures are indicative references, not executable prices.</p>
+          </details>
+        </div>
       </div>
     </section>
   </section>
 
+  <!-- Secondary: what is coming up and what is being reported. -->
+  <div class="grid cols-2 news-pair tier-2">
+    <section class="card news-card" aria-labelledby="news-h">
+      <header>
+        <div><p class="eyebrow">Latest crypto news</p><h2 id="news-h">Headlines</h2></div>
+        <a class="seeall" href="./news.html">All news<span aria-hidden="true">&rsaquo;</span></a>
+      </header>
+      <div id="news"></div>
+    </section>
+
+    <div class="side-stack">
+      <section class="card" aria-labelledby="cat-h">
+        <header><div><p class="eyebrow">Calendar</p><h2 id="cat-h">Upcoming catalysts</h2></div></header>
+        <div id="cats"></div>
+      </section>
+
+      <section class="card halving" id="halving" aria-labelledby="halv-h">
+        <header><h2 id="halv-h">Next Bitcoin halving</h2><span class="halv-block">Block 1,050,000</span></header>
+        <div class="halv-body" id="halv-body">
+          <div class="halv-cd"><span class="halv-skel"></span><small>Estimated time remaining</small></div>
+        </div>
+        <div class="nsrc"><span>Source: mempool.space &middot; estimate at 10 minutes per block</span><span>Reward drops to 1.5625 BTC</span></div>
+      </section>
+    </div>
+  </div>
+
+  <h2 class="tier-label" id="context-h">Supporting context</h2>
   <!-- US macro backdrop from FRED (/api/fred). -->
-  <section class="card macro" aria-labelledby="macro-h" style="margin-top:16px">
+  <section class="card macro" aria-labelledby="macro-h" >
     <header>
       <div><p class="eyebrow">Macro backdrop</p><h2 id="macro-h">US economy at a glance</h2></div>
       <a class="seeall" href="https://fred.stlouisfed.org/" target="_blank" rel="noopener noreferrer">Source: FRED<span aria-hidden="true">&rsaquo;</span></a>
@@ -577,53 +759,25 @@
     <p class="macro-note">Data from FRED, Federal Reserve Bank of St. Louis. Each indicator shows its latest release date; series update daily, weekly or monthly. Select one to see its full history on FRED.</p>
   </section>
 
-  <!-- News on the left; the calendar and the halving countdown stacked on
-       the right. Both columns stretch to the taller one, and the halving card
-       takes up the difference (its countdown centres in the space), so the
-       two bottoms are always flush however long the headlines run. -->
-  <div class="grid cols-2 news-pair" style="margin-top:16px">
-    <section class="card news-card" aria-labelledby="news-h">
-      <header>
-        <div><p class="eyebrow">Latest crypto news</p><h2 id="news-h" class="sr">Latest crypto news</h2></div>
-        <a class="seeall" href="./news.html">All news<span aria-hidden="true">&rsaquo;</span></a>
-      </header>
-      <div id="news"></div>
-    </section>
-
-    <div class="side-stack">
-      <section class="card" aria-labelledby="cat-h">
-        <header><p class="eyebrow" id="cat-h">Upcoming catalysts</p></header>
-        <div id="cats"></div>
-      </section>
-
-      <section class="card halving" id="halving" aria-labelledby="halv-h">
-        <header><h2 id="halv-h">Next Bitcoin Halving</h2><span class="eyebrow">Block 1,050,000</span></header>
-        <div class="halv-body" id="halv-body">
-          <div class="halv-cd"><span class="halv-skel"></span><small>Estimated time remaining</small></div>
-        </div>
-        <div class="nsrc"><span>Source: mempool.space</span><span>Halving #5 &middot; reward drops to 1.5625 BTC</span></div>
-      </section>
-    </div>
-  </div>
-
-  <div style="margin-top:28px">
-    <p class="eyebrow">Market context</p>
-    <section class="card" aria-labelledby="amc-h" style="margin-top:7px">
+  <div>
+    <section class="card amc" aria-labelledby="amc-h">
       <header class="amc-head">
         <h2 id="amc-h">Largest assets by market cap</h2>
         <span class="amc-btcline" id="amc-btc"></span>
       </header>
-      <p class="amc-lede">Where Bitcoin sits against the metals and the largest listed companies. Market capitalisation is computed from a live price and a share or unit count rather than quoted, so every figure moves with the market. This is a selected list, not every listed company.</p>
-      <div class="amc-scroll">
+      <p class="amc-lede">Compare Bitcoin with selected metals and major public companies.</p>
+      <div class="amc-scroll" tabindex="0" role="region" aria-label="Largest assets by market cap, scrollable table">
         <table class="amc-table">
           <thead><tr><th>#</th><th>Asset</th><th class="num">Market cap</th><th class="num">Price</th><th class="num">Today</th><th class="spk">Price (30 days)</th><th>Country</th></tr></thead>
           <tbody id="amc-rows"></tbody>
         </table>
       </div>
-      <div class="srcnote" style="margin-top:14px">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
-        <span id="amc-note">Prices are live. Company share counts come from each company&rsquo;s own SEC filing and are refreshed quarterly; hover any market cap to see the count and filing date behind it. Metal market caps use published above-ground stock estimates. Bitcoin and Ethereum are circulating supply times price.</span>
-      </div>
+      <p class="amc-partial" id="amc-partial" role="status" hidden></p>
+      <details class="disclose amc-method">
+        <summary>How this is calculated</summary>
+        <p>Market capitalisation is computed here from a reference price and a share or unit count, rather than quoted, so each figure moves with its price. Company share counts come from each company&rsquo;s own SEC filing and are refreshed quarterly; select any market cap to see the count and filing date behind it. Metal market caps use published above-ground stock estimates. Bitcoin and Ethereum are circulating supply times price.</p>
+        <p>Prices refresh every five minutes and may be delayed. This is a selected list, not every listed company.</p>
+      </details>
     </section>
   </div>
 
@@ -636,42 +790,29 @@
 </main>
 
 <!-- Personal dashboard: welcome, customize panel and tour (assets/dashboard.js) -->
-<div class="dash-layer dash-backdrop" id="dash-welcome" role="dialog" aria-modal="true" aria-labelledby="welcome-h" hidden>
-  <form class="dash-card" id="welcome-form" autocomplete="off">
-    <p class="eyebrow">Welcome to Satstreet</p>
-    <h2 id="welcome-h">What should we call you?</h2>
-    <p>We&rsquo;ll use it to greet you each time you open your dashboard.</p>
-    <label for="welcome-name">Your name</label>
-    <input class="dash-input" id="welcome-name" maxlength="40" placeholder="First name" />
-    <div class="dash-actions">
-      <button type="button" class="linkbtn" id="welcome-skip">Skip for now</button>
-      <button type="submit" class="btn">Continue</button>
-    </div>
-    <p class="dash-note">Saved on this device only. Satstreet does not receive it.</p>
-  </form>
-</div>
-
-<div class="dash-layer dash-drawer" id="dash-customize" role="dialog" aria-modal="true" aria-labelledby="dash-h" hidden>
-  <div class="dash-panel">
+<div class="dash-layer dash-drawer" id="dash-customize" hidden>
+  <div class="dash-panel" role="dialog" aria-modal="true" aria-labelledby="dash-h">
     <div class="dash-panel-head">
-      <div><p class="eyebrow">Your dashboard</p><h2 id="dash-h">Customize</h2></div>
+      <div><p class="eyebrow">Your watchlist</p><h2 id="dash-h">Edit watchlist</h2></div>
       <button type="button" class="dash-x" id="dash-close" aria-label="Close">&times;</button>
     </div>
     <div class="dash-panel-body">
       <div class="dash-section">
-        <div class="k"><span>Your name</span></div>
-        <input class="dash-input" id="dash-name-input" maxlength="40" placeholder="First name" autocomplete="off" />
-      </div>
-      <div class="dash-section">
-        <div class="k"><span>Add a market</span></div>
+        <div class="k"><label for="dash-search">Add a market</label></div>
         <input class="dash-input" id="dash-search" type="search" placeholder="Search a coin, stock, ETF, index or currency" autocomplete="off" spellcheck="false" />
         <ul class="dash-results" id="dash-results" aria-live="polite"></ul>
         <div class="dash-chips" id="dash-popular" aria-label="Popular markets"></div>
         <p class="dash-msg" id="dash-msg" role="status"></p>
       </div>
       <div class="dash-section">
-        <div class="k"><span>On your board</span><span id="dash-count"></span></div>
-        <ul class="dash-list" id="dash-list"></ul>
+        <div class="k"><span>On your watchlist</span><span id="dash-count"></span></div>
+        <ul class="dash-list" id="dash-list" aria-label="Markets on your watchlist"></ul>
+      </div>
+      <div class="dash-section dash-settings">
+        <div class="k"><span>Settings</span></div>
+        <label class="dash-label" for="dash-name-input">Name for the greeting <span>(optional)</span></label>
+        <input class="dash-input" id="dash-name-input" maxlength="40" placeholder="First name" autocomplete="off" />
+        <p class="dash-note">Your watchlist and name are saved on this device only. Satstreet does not receive them.</p>
       </div>
     </div>
     <div class="dash-panel-foot">
@@ -683,7 +824,7 @@
 
 <div class="dash-layer" id="dash-tour-layer" hidden>
   <div class="tour-spot" id="tour-spot"></div>
-  <div class="tour-card" id="tour-card" role="dialog" aria-modal="true" aria-labelledby="tour-title">
+  <div class="tour-card" id="tour-card" role="dialog" aria-modal="true" aria-labelledby="tour-title" aria-describedby="tour-body">
     <p class="eyebrow" id="tour-step"></p>
     <h3 id="tour-title"></h3>
     <p id="tour-body"></p>
@@ -715,6 +856,32 @@
   if (window.SSProfile) window.SSProfile.greet();
   var P = window.SSProfile;
 
+  /* Every time on the page is shown in the viewer's own time zone, named once in the briefing. */
+  var TZ = (function () {
+    try {
+      var part = new Intl.DateTimeFormat('en-US', { timeZoneName: 'short' }).formatToParts(new Date()).filter(function (x) { return x.type === 'timeZoneName'; })[0];
+      var zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      return { abbr: part ? part.value : '', zone: zone || '' };
+    } catch (e) { return { abbr: '', zone: '' }; }
+  })();
+  $('meta-tz').textContent = 'Times in ' + (TZ.abbr || 'your local time') + (TZ.zone && TZ.abbr && TZ.zone.indexOf('/') > 0 ? ' (' + TZ.zone.replace(/_/g, ' ') + ')' : '');
+  function clock(t, withSeconds) {
+    if (t === null || t === undefined) return null;
+    var d = new Date(t);
+    if (!isFinite(d.getTime())) return null;
+    var sameDay = d.toDateString() === new Date().toDateString();
+    var time = d.toLocaleTimeString('en-US', withSeconds ? { hour: 'numeric', minute: '2-digit', second: '2-digit' } : { hour: 'numeric', minute: '2-digit' });
+    return sameDay ? time : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ', ' + time;
+  }
+  /* A fetch that gives up, so a slow source shows a clear state instead of an endless spinner. */
+  function getJSON(url, ms) {
+    var ctl = window.AbortController ? new AbortController() : null;
+    var timer = ctl ? setTimeout(function () { ctl.abort(); }, ms || 12000) : 0;
+    return fetch(url, { cache: 'no-store', signal: ctl ? ctl.signal : undefined })
+      .then(function (r) { clearTimeout(timer); if (!r.ok) throw new Error('the source returned an error (HTTP ' + r.status + ')'); return r.json(); },
+            function (e) { clearTimeout(timer); throw new Error(e && e.name === 'AbortError' ? 'the source took too long to respond' : 'the source could not be reached'); });
+  }
+
   function fmtPrice(q, v) {
     if (v === null || v === undefined || !isFinite(v)) return '—';
     if (q.kind === 'pct') return v.toFixed(2) + '%';
@@ -732,6 +899,27 @@
     var v = q.changePct;
     return { t: (v > 0 ? '+' : '') + v.toFixed(2) + '%', c: v > 0 ? 'up' : v < 0 ? 'down' : 'flat' };
   }
+  /* Crypto trades around the clock and its change is over a rolling 24 hours;
+     everything else moves by session, against the prior close. The feed says
+     which; older responses without the field fall back to the source label. */
+  function isCrypto(q) { return q.changeBasis ? q.changeBasis === '24h' : q.source === 'Digital asset venue'; }
+  function basisShort(q) { return isCrypto(q) ? '24h' : 'Session'; }
+  function basisLong(q) { return isCrypto(q) ? 'over 24 hours' : 'since prior close'; }
+  /* Open/closed only where the feed reports the exchange's trading hours. Never "live". */
+  function qStatus(q) {
+    if (!q || q.error || q.price === null || q.price === undefined) return { t: 'Price unavailable', c: 'bad' };
+    if (isCrypto(q)) return { t: 'Trades 24/7', c: 'ok' };
+    var tp = q.tradingPeriod, t = Date.now();
+    if (tp && tp.start && tp.end) {
+      var a = Date.parse(tp.start), b = Date.parse(tp.end);
+      if (!isFinite(a) || !isFinite(b) || b <= a) return { t: 'Trading hours not reported', c: '' };
+      if (t >= a && t < b) return { t: 'Market open', c: 'ok' };
+      return { t: 'Market closed', c: 'closed' };
+    }
+    return { t: 'Trading hours not reported', c: '' };
+  }
+  function ccyNote(q) { return q.currency && q.currency !== 'USD' && q.kind !== 'fx' && q.kind !== 'pct' ? q.currency : ''; }
+
   function spark(points, cls) {
     if (!points || points.length < 3) return '';
     var w = 58, hg = 26, lo = Math.min.apply(null, points), hi = Math.max.apply(null, points);
@@ -746,7 +934,6 @@
   var market = null;
   var selectedSymbol = 'BTC-USD';
   var range = '1W', series = [], hoverIndex = null, chartGeom = null;
-  var usePreview = new URLSearchParams(window.location.search).get('sample') === '1' || /\.chatgpt\.site$/.test(window.location.hostname);
   var ICONS = {
     'BTC-USD': '₿', 'ETH-USD': 'Ξ', 'GC=F': 'AU', 'CL=F': 'WTI',
     'CAD=X': 'FX', '^TNX': '10Y', '^IXIC': 'NDQ', '^GSPC': 'SPX'
@@ -795,7 +982,8 @@
       d.innerHTML = '<span class="nm skel" style="height:11px;width:52px">&nbsp;</span><span class="px skel" style="height:15px;width:78px;margin-top:4px">&nbsp;</span><span class="ch skel" style="height:12px;width:44px;margin-top:4px">&nbsp;</span>';
       if (t) t.appendChild(d);
     }
-    $('asset-grid').innerHTML = Array(9).join('x').split('x').map(function () {
+    var n = P ? P.watchlist().length : 8;
+    $('asset-grid').innerHTML = Array(n + 1).join('x').split('x').map(function () {
       return '<span class="asset-tile" aria-hidden="true"><span class="skel" style="display:block;width:52px;height:11px"></span><span class="skel" style="display:block;width:86px;height:20px;margin-top:8px"></span><span class="skel" style="display:block;width:100%;height:24px;margin-top:11px"></span></span>';
     }).join('');
   }
@@ -821,73 +1009,110 @@
     var stroke = cls === 'up' ? '#0f8a63' : cls === 'down' ? '#c33a49' : '#98a5b4';
     return '<svg class="tile-spark" viewBox="0 0 ' + w + ' ' + h + '" aria-hidden="true"><path d="' + d + '" fill="none" stroke="' + stroke + '" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/></svg>';
   }
+  var ADD_TILE = '<button type="button" class="asset-add" id="add-market" aria-haspopup="dialog"><span aria-hidden="true">+</span>Add market<small>coins, stocks, ETFs, indices or FX</small></button>';
   function renderAssetGrid(d) {
     $('asset-grid').innerHTML = d.quotes.map(function (q) {
-      var m = move(q), active = q.symbol === selectedSymbol;
-      var state = q.error ? 'Unavailable' : (q.marketState === 'REGULAR' ? 'Open' : (q.marketState || 'Reference'));
-      var meta = metaFor(q.symbol);
-      return '<div class="asset-slot"><button type="button" class="asset-tile" data-symbol="' + esc(q.symbol) + '" aria-pressed="' + active + '" title="' + esc(q.source + ' · ' + state) + '">' +
-        '<span class="tile-top"><span class="asset-id">' + assetIcon(q.symbol) + '<span><span class="tile-name">' + esc(q.label) + '</span><span class="tile-code">' + esc(meta.code) + '</span></span></span><span class="tile-change ' + m.c + '">' + m.t + '</span></span>' +
-        '<span class="tile-px">' + fmtPrice(q, q.price) + '</span><span class="tile-foot"><span></span>' + tileSpark(q.spark, m.c) + '</span></button>' +
-        '<button type="button" class="asset-remove" data-remove-symbol="' + esc(q.symbol) + '" aria-label="Remove ' + esc(q.label) + ' from your dashboard" title="Remove ' + esc(q.label) + '">&times;</button></div>';
-    }).join('');
+      var m = move(q), active = q.symbol === selectedSymbol, na = q.error || q.price === null;
+      var meta = metaFor(q.symbol), ccy = ccyNote(q);
+      var change = na ? '<span class="tile-change flat">Unavailable</span>'
+        : '<span class="tile-change ' + m.c + '">' + m.t + '<span class="tile-basis">' + basisShort(q) + '</span></span>';
+      var spoken = q.label + ', ' + (na ? 'price unavailable' : fmtPrice(q, q.price) + ', ' + m.t + ' ' + basisLong(q)) + (active ? ', shown in chart' : '');
+      return '<div class="asset-slot"><button type="button" class="asset-tile' + (na ? ' na' : '') + '" data-symbol="' + esc(q.symbol) + '" aria-pressed="' + active + '" aria-controls="focus-panel" aria-label="' + esc(spoken) + '">' +
+        '<span class="tile-top"><span class="asset-id">' + assetIcon(q.symbol) + '<span><span class="tile-name">' + esc(q.label) + '</span><span class="tile-code">' + esc(meta.code + (ccy ? ' · ' + ccy : '')) + '</span></span></span>' + change + '</span>' +
+        '<span class="tile-px">' + fmtPrice(q, q.price) + '</span><span class="tile-foot"><span class="tile-sel"><span aria-hidden="true">&#9662;</span>In chart</span>' + tileSpark(q.spark, m.c) + '</span></button>' +
+        '<button type="button" class="asset-remove" data-remove-symbol="' + esc(q.symbol) + '" aria-label="Remove ' + esc(q.label) + ' from your watchlist" title="Remove ' + esc(q.label) + '">&times;</button></div>';
+    }).join('') + ADD_TILE;
   }
+  function renderBoardError(msg) {
+    $('asset-grid').innerHTML = '<div class="board-error" role="alert"><b>Prices are unavailable right now</b>' + esc(msg) + '. Your watchlist is saved; prices will appear when the feed responds. ' +
+      '<button type="button" class="retry" data-retry="market">Try again</button></div>' + ADD_TILE;
+  }
+  /* A factual sentence or two built only from the prices on the watchlist:
+     levels, moves, counts and the largest move. No reasons, no outlook. */
   function summarise(d) {
-    var by = {};
-    d.quotes.forEach(function (q) { by[q.label] = q; });
-    var btc = by['Bitcoin'], ten = by['US 10Y'], cad = by['USD/CAD'];
-    /* A client may have taken Bitcoin off their board: lead with their
-       first market instead. */
-    if (!btc) btc = d.quotes.filter(function (q) { return q.price !== null && q.kind !== 'pct' && q.kind !== 'fx'; })[0];
-    if (!btc || btc.price === null) return d.quotes.length ? '' : 'Reference prices are loading.';
-    var bits = [btc.label + ' is trading at ' + fmtPrice(btc, btc.price)];
-    if (btc.changePct !== null) bits[0] += ', ' + (btc.changePct >= 0 ? 'up ' : 'down ') + Math.abs(btc.changePct).toFixed(2) + '% on the session';
-    if (ten && ten.price !== null) bits.push('the US 10-year is at ' + ten.price.toFixed(2) + '%');
-    if (cad && cad.price !== null) bits.push('USD/CAD at ' + cad.price.toFixed(4));
-    return bits.join(', ') + '.';
+    var ok = d.quotes.filter(function (q) { return !q.error && q.price !== null && q.price !== undefined; });
+    if (!d.quotes.length) return 'Your watchlist is empty. Add a market to see a briefing here.';
+    if (!ok.length) return 'Market data is unavailable right now. The briefing will fill in when prices arrive.';
+    var bits = [];
+    var crypto = ok.filter(isCrypto);
+    var lead = crypto.filter(function (q) { return q.symbol === 'BTC-USD'; })[0] || crypto[0];
+    if (lead) {
+      var lm = move(lead);
+      bits.push(lead.label + ' is at ' + fmtPrice(lead, lead.price) + (lead.changePct !== null ? ', ' + lm.t + ' over 24 hours.' : '.'));
+    }
+    var traded = ok.filter(function (q) { return !isCrypto(q) && (q.kind === 'pct' ? q.changeAbs !== null : q.changePct !== null); });
+    if (traded.length) {
+      var up = traded.filter(function (q) { return (q.kind === 'pct' ? q.changeAbs : q.changePct) > 0; }).length;
+      var down = traded.filter(function (q) { return (q.kind === 'pct' ? q.changeAbs : q.changePct) < 0; }).length;
+      var flat = traded.length - up - down;
+      var n = traded.length, noun = n + ' exchange-traded market' + (n === 1 ? '' : 's') + ' on your watchlist';
+      var line = up === n ? (n === 1 ? 'The one ' : 'All ') + noun.replace(/^\d+ /, n === 1 ? '' : n + ' ') + (n === 1 ? ' is' : ' are') + ' higher since the prior close.'
+        : down === n ? (n === 1 ? 'The one ' : 'All ') + noun.replace(/^\d+ /, n === 1 ? '' : n + ' ') + (n === 1 ? ' is' : ' are') + ' lower since the prior close.'
+        : 'Of ' + noun + ', ' + up + ' ' + (up === 1 ? 'is' : 'are') + ' higher and ' + down + ' lower since the prior close' + (flat ? '; ' + flat + ' unchanged' : '') + '.';
+      var movers = traded.filter(function (q) { return q.kind !== 'pct'; }).sort(function (a, b) { return Math.abs(b.changePct) - Math.abs(a.changePct); });
+      if (movers.length > 1 && movers[0].changePct !== 0) line += ' Largest move: ' + movers[0].label + ' ' + move(movers[0]).t + '.';
+      bits.push(line);
+    } else if (!lead) {
+      bits.push(ok[0].label + ' is at ' + fmtPrice(ok[0], ok[0].price) + '.');
+    }
+    var missing = d.quotes.length - ok.length;
+    if (missing) bits.push(missing + ' of ' + d.quotes.length + ' markets did not report a price.');
+    return bits.join(' ');
   }
 
-  function previewMarket() {
-    var now = new Date().toISOString();
-    var rows = [
-      ['BTC-USD', 'Bitcoin', 109240, 1.62, 'usd'], ['ETH-USD', 'Ethereum', 4380, 2.31, 'usd'],
-      ['GC=F', 'Gold', 3494, .42, 'usd'], ['CL=F', 'WTI Oil', 64.18, -.74, 'usd'],
-      ['CAD=X', 'USD/CAD', 1.3812, .18, 'fx'], ['^TNX', 'US 10Y', 4.22, .04, 'pct'],
-      ['^IXIC', 'Nasdaq', 21870, 1.08, 'level'], ['^GSPC', 'S&P 500', 6482, .63, 'level']
-    ];
-    var quotes = rows.map(function (r, index) {
-      var absolute = r[4] === 'pct' ? r[3] : r[2] * r[3] / 100;
-      var open = r[2] - absolute, points = [];
-      for (var i = 0; i < 22; i++) points.push(open + absolute * i / 21 + Math.sin(i * .82 + index) * Math.abs(absolute || r[2] * .002) * .32);
-      return { symbol: r[0], label: r[1], price: r[2], changePct: r[4] === 'pct' ? null : r[3], changeAbs: absolute, spark: points, open: open, sessionHigh: Math.max.apply(null, points.concat([r[2]])), sessionLow: Math.min.apply(null, points.concat([r[2]])), kind: r[4], source: 'Illustrative preview', marketState: 'SAMPLE', asOf: now };
-    });
-    return { asOf: now, quotes: quotes, degraded: [], preview: true };
+  var lastOk = 0, lastFail = 0, lastErr = '', marketBusy = false;
+  function renderFresh() {
+    var el = $('meta-fresh'), ok = !!market;
+    if (!market && !lastFail) { el.className = 'brief-fresh'; el.innerHTML = '<i class="pip" aria-hidden="true"></i><span>Loading prices…</span>'; return; }
+    var stale = lastFail > lastOk;
+    var retry = stale ? ' <button type="button" class="retry" data-retry="market">Retry</button>' : '';
+    if (!market) { el.className = 'brief-fresh stale'; el.innerHTML = '<i class="pip bad" aria-hidden="true"></i><span>Prices unavailable: ' + esc(lastErr) + '</span>' + retry; return; }
+    el.className = 'brief-fresh' + (stale ? ' stale' : '');
+    var deg = market.quotes.filter(function (q) { return q.error || q.price === null; }).length;
+    el.innerHTML = '<i class="pip ' + (stale ? 'warn' : 'ok') + '" aria-hidden="true"></i><span>' +
+      (stale ? 'Showing prices from ' + clock(lastOk) + '. The last refresh failed' : 'Prices retrieved ' + clock(lastOk) + ' · refreshed each minute') +
+      (deg ? ' · ' + deg + ' unavailable' : '') + '</span>' + retry;
+    if (ok) {
+      var other = market.quotes.map(ccyNote).filter(Boolean);
+      $('meta-ccy').textContent = other.length ? 'Prices in USD unless marked (' + other.filter(function (c, i, a) { return a.indexOf(c) === i; }).join(', ') + ' shown on the tile)' : 'Prices in USD · yields in %, FX as a rate';
+    }
   }
-
   function loadMarket() {
+    if (marketBusy) return Promise.resolve();
     if (!market) skeletonTicker();
+    marketBusy = true;
     /* The client's own watchlist, if they have changed the default board. */
     var custom = P ? P.customSymbols() : null;
     var url = '/api/market' + (custom ? '?symbols=' + encodeURIComponent(custom.join(',')) : '');
-    var request = usePreview ? Promise.resolve(previewMarket()) : fetch(url, { cache: 'no-store' })
-      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+    var request = getJSON(url, 15000);
     return request
       .then(function (d) {
+        marketBusy = false;
+        if (!d || !Array.isArray(d.quotes)) throw new Error('the price feed sent an unexpected response');
+        if (d.quotes.length && !d.quotes.some(function(q){return !q.error && typeof q.price === 'number' && isFinite(q.price);})) throw new Error('the sources did not report any prices');
         if (P) d.quotes.forEach(function (q) { var l = P.labelFor(q.symbol); if (l) q.label = l; });
         if (!d.quotes.some(function (q) { return q.symbol === selectedSymbol; }) && d.quotes.length) {
           selectedSymbol = d.quotes[0].symbol;
           setTimeout(loadChart, 0);
         }
-        market = d;
+        market = d; lastOk = Date.now();
         renderTicker(d);
         renderAssetGrid(d);
         $('summary').textContent = summarise(d);
-        renderFocus(d.quotes.filter(function (q) { return q.symbol === selectedSymbol; })[0]);
+        renderFresh();
+        renderFocus(selectedQuote());
         drawChart();
       })
       .catch(function (e) {
-        $('summary').textContent = '';
-        if ($('ticker')) $('ticker').innerHTML = '<div class="tick" style="min-width:auto"><span class="nm">Market data</span><span class="px">Unavailable</span><span class="ch flat">' + esc(e.message) + '</span></div>';
+        marketBusy = false;
+        lastFail = Date.now(); lastErr = e.message;
+        /* Keep the last good prices on screen, clearly marked, rather than blanking them. */
+        if (market) { renderFresh(); renderFocus(selectedQuote()); return; }
+        renderBoardError(e.message);
+        $('summary').textContent = 'Market data is unavailable right now. The briefing will fill in when prices arrive.';
+        renderFresh();
+        $('focus-px').textContent = '—'; $('focus-move').textContent = '\u00a0';
+        $('focus-status').innerHTML = '<i class="pip bad" aria-hidden="true"></i><span>Price unavailable</span>';
       });
   }
 
@@ -898,9 +1123,9 @@
 
   function renderFocus(q) {
     if (!q) return;
-    var meta = metaFor(q.symbol);
+    var meta = metaFor(q.symbol), crypto = isCrypto(q), ccy = ccyNote(q);
     $('focus-name').textContent = q.label;
-    $('focus-label').textContent = meta.code;
+    $('focus-label').textContent = meta.code + (ccy ? ' · priced in ' + ccy : '');
     if (meta.custom) {
       $('focus-icon').className = 'coin focus-ic';
       $('focus-icon').innerHTML = window.SSIcons ? SSIcons.html(q.symbol, { cls: 'ss-ic-fill', label: q.label }) : '';
@@ -910,24 +1135,31 @@
       $('focus-icon').className = 'coin asset-mark ' + meta.cls;
     }
     $('chart').setAttribute('aria-label', q.label + ' reference price chart');
-    if (q.price === null) {
+    $('focus-open-k').textContent = crypto ? '24h open' : 'Session open';
+    $('focus-hi-k').textContent = crypto ? '24h high' : 'Session high';
+    $('focus-lo-k').textContent = crypto ? '24h low' : 'Session low';
+    $('focus-src').textContent = q.source || '—';
+
+    var st = qStatus(q), parts = ['<span>' + esc(st.t) + '</span>'];
+    var asOf = clock(q.asOf, crypto);
+    if (asOf && st.c !== 'bad') parts.push('<span>' + (st.c === 'closed' ? 'Last price ' : 'Price as of ') + esc(asOf) + '</span>');
+    if (!crypto && st.c !== 'bad') parts.push('<span>May be delayed</span>');
+    if (lastFail > lastOk && lastOk) parts.push('<span class="stale">Not refreshed since ' + esc(clock(lastOk)) + '</span>');
+    $('focus-status').innerHTML = '<i class="pip ' + st.c + '" aria-hidden="true"></i>' + parts.join('<span class="sep" aria-hidden="true">·</span>');
+
+    if (q.price === null || q.error) {
       $('focus-px').textContent = '—';
-      $('focus-move').textContent = 'Price unavailable';
+      $('focus-move').textContent = 'Price unavailable from ' + (q.source || 'the source');
       $('focus-open').textContent = $('focus-hi').textContent = $('focus-lo').textContent = '—';
-      $('focus-src').textContent = q.source;
       return;
     }
     $('focus-px').textContent = fmtPrice(q, q.price);
     var m = move(q);
-    var col = m.c === 'up' ? 'var(--up)' : m.c === 'down' ? 'var(--down)' : 'var(--muted)';
-    var abs = q.changeAbs === null ? '' : (q.changeAbs > 0 ? '+' : '−') + fmtPrice(q, Math.abs(q.changeAbs)) + '  ';
-    $('focus-move').innerHTML = '<span style="color:' + col + '">' + esc(abs) + m.t + '</span> <span style="color:var(--muted)">session</span>';
+    var abs = q.changeAbs === null || q.kind === 'pct' ? '' : (q.changeAbs > 0 ? '+' : '−') + fmtPrice(q, Math.abs(q.changeAbs)) + ' ';
+    $('focus-move').innerHTML = '<span class="' + m.c + '-ink">' + esc(abs) + (abs && m.t !== '—' ? '(' + m.t + ')' : m.t) + '</span> <span class="basis">' + basisLong(q) + '</span>';
     $('focus-open').textContent = fmtPrice(q, q.open);
     $('focus-hi').textContent = fmtPrice(q, q.sessionHigh);
     $('focus-lo').textContent = fmtPrice(q, q.sessionLow);
-    var state = q.marketState === 'REGULAR' ? 'Open' : (q.marketState || 'Reference');
-    var asOf = q.asOf ? new Date(q.asOf).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : null;
-    $('focus-src').textContent = q.source + (asOf ? ' · ' + asOf : '');
   }
 
   function selectedQuote() {
@@ -970,7 +1202,8 @@
     ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
     for (var tick = 0; tick < tickCount; tick++) {
       var ti = Math.round(tick * (series.length - 1) / (tickCount - 1));
-      ctx.fillText(fmtChartDate(series[ti].t), x(ti), H - 2);
+      ctx.textAlign = tick === 0 ? 'left' : tick === tickCount - 1 ? 'right' : 'center';
+      ctx.fillText(fmtChartDate(series[ti].t), tick === tickCount - 1 ? Math.min(x(ti), R) : x(ti), H - 2);
     }
     var chartColors = { 'BTC-USD':['#f17b00','rgba(241,123,0,.14)'], 'ETH-USD':['#5b6ee1','rgba(91,110,225,.14)'], 'GC=F':['#b4861e','rgba(180,134,30,.14)'], 'CL=F':[tv('--chart-oil', '#294654'),'rgba(41,70,84,.13)'] };
     var palette = chartColors[selectedSymbol] || ['#0f8a78','rgba(15,138,120,.13)'];
@@ -1002,7 +1235,7 @@
     ctx.fillStyle = palette[0]; ctx.fillRect(R + 4, lastY - 10, Math.min(priceW, W - R - 4), 20);
     ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(priceText, R + 9, lastY);
     var ret = (last / pts[0] - 1) * 100, retText = (ret >= 0 ? '+' : '') + ret.toFixed(2) + '%';
-    $('chart-return').textContent = retText + ' over ' + (range === 'ALL' ? 'all time' : range.toLowerCase());
+    $('chart-return').textContent = RANGE_WORDS[range] + ': ' + retText;
     $('chart-return').className = 'chart-return ' + (ret > 0 ? 'up' : ret < 0 ? 'down' : '');
 
     if (hoverIndex !== null && series[hoverIndex]) {
@@ -1049,50 +1282,72 @@
   }
 
   function fmtAxis(q, value) {
-    if (!q) return String(value);
+    if (!q) return value.toLocaleString('en-US', { maximumFractionDigits: value < 100 ? 2 : 0 });
     if (q.kind === 'pct') return value.toFixed(2) + '%';
     if (q.kind === 'fx') return value.toFixed(3);
     if (q.kind === 'level') return Math.round(value).toLocaleString('en-US');
     return '$' + (value < 100 ? value.toFixed(1) : Math.round(value).toLocaleString('en-US'));
   }
 
+  var RANGE_WORDS = { '1D': 'Past day', '1W': 'Past week', '1M': 'Past month', '3M': 'Past 3 months', '1Y': 'Past year', '5Y': 'Past 5 years', 'ALL': 'All history' };
+  var chartKey = '', chartSeq = 0;
+  function chartBusy(on) {
+    var box = $('chart').parentElement, b = box.querySelector('.chartbusy');
+    if (on && !b) { b = document.createElement('span'); b.className = 'chartbusy'; b.textContent = 'Updating…'; box.appendChild(b); }
+    if (!on && b) b.remove();
+  }
   function loadChart() {
-    var msg = $('chartmsg'), requestSymbol = selectedSymbol;
-    series = []; $('chart-return').textContent = '—'; $('chart-return').className = 'chart-return'; msg.textContent = 'Loading chart…'; drawChart();
-    if (usePreview) {
-      var q = selectedQuote(), count = range === '1D' ? 78 : range === '1W' ? 84 : range === '1M' ? 90 : range === '3M' ? 90 : range === '1Y' ? 120 : range === '5Y' ? 180 : 240;
-      var days = range === '1D' ? 1 : range === '1W' ? 7 : range === '1M' ? 30 : range === '3M' ? 90 : range === '1Y' ? 365 : range === '5Y' ? 1825 : 3650;
-      var end = Date.now(), start = end - days * 86400000, base = q ? q.price : 100;
-      series = [];
-      for (var i = 0; i < count; i++) {
-        var progress = i / (count - 1), wave = Math.sin(i * .21 + Object.keys(ICONS).indexOf(selectedSymbol)) * .014 + Math.sin(i * .067) * .008;
-        var close = base * (.94 + progress * .06 + wave), open = close * (1 + Math.sin(i * .9) * .003);
-        series.push({ t: start + (end - start) * progress, v: close, o: open, h: Math.max(open, close) * 1.004, l: Math.min(open, close) * .996, volume: base * (40 + Math.abs(Math.sin(i * .31)) * 120) });
-      }
-      msg.textContent = ''; drawChart(); return Promise.resolve();
-    }
-    return fetch('/api/history?symbol=' + encodeURIComponent(requestSymbol) + '&range=' + encodeURIComponent(range), { cache: 'no-store' })
-      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    var msg = $('chartmsg'), requestSymbol = selectedSymbol, requestRange = range, seq = ++chartSeq;
+    var key = requestSymbol + '|' + requestRange, sameAsset = chartKey.split('|')[0] === requestSymbol && series.length > 1;
+    /* Same market, new timeframe: keep the current line visible while the next loads.
+       A different market clears it, so one asset's line never sits under another's name. */
+    if (sameAsset) { chartBusy(true); }
+    else { series = []; $('chart-return').textContent = '\u00a0'; $('chart-return').className = 'chart-return'; msg.textContent = 'Loading chart…'; drawChart(); }
+    $('chart-foot').textContent = 'Loading ' + RANGE_WORDS[requestRange].toLowerCase() + '…';
+    return getJSON('/api/history?symbol=' + encodeURIComponent(requestSymbol) + '&range=' + encodeURIComponent(requestRange), 15000)
       .then(function (d) {
-        if (requestSymbol !== selectedSymbol) return;
-        if (!d || !Array.isArray(d.points) || d.points.length < 2) throw new Error('no data returned');
-        series = d.points.filter(function (p) { return p && isFinite(p.t) && isFinite(p.v); }).map(function (p) {
+        if (seq !== chartSeq) return;
+        if (!d || !Array.isArray(d.points) || d.points.length < 2) throw new Error('no history was returned for this timeframe');
+        var next = d.points.filter(function (p) { return p && isFinite(p.t) && isFinite(p.v); }).map(function (p) {
           return { t:Number(p.t), v:Number(p.v), o:p.o == null ? null : Number(p.o), h:p.h == null ? null : Number(p.h), l:p.l == null ? null : Number(p.l), volume:p.volume == null ? null : Number(p.volume) };
         });
-        if (series.length < 2) throw new Error('not enough data');
+        if (next.length < 2) throw new Error('not enough history was returned');
+        series = next; chartKey = key; chartBusy(false);
         msg.textContent = ''; drawChart();
+        var lastPt = series[series.length - 1].t;
+        $('chart-foot').textContent = 'Chart source: ' + (d.source || 'unknown') + ' · latest point ' + clock(lastPt) + ' · retrieved ' + clock(d.asOf || Date.now());
       })
       .catch(function (e) {
-        series = []; drawChart();
-        msg.innerHTML = '<span class="errbox"><b>Chart unavailable</b>' + esc(e.message) + '</span>';
+        if (seq !== chartSeq) return;
+        chartBusy(false);
+        var prevRange = chartKey.split('|')[1];
+        if (sameAsset && series.length > 1) {
+          /* Keep the chart that is on screen and say plainly which timeframe it is. */
+          $('chart-foot').innerHTML = '<span class="stale-ink">Couldn’t load ' + esc(RANGE_WORDS[requestRange].toLowerCase()) + ' (' + esc(e.message) + '). Still showing ' + esc(RANGE_WORDS[prevRange].toLowerCase()) + '.</span> <button type="button" class="retry" data-retry="chart" data-range="' + esc(requestRange) + '">Try again</button>';
+          range = prevRange; syncRanges();
+          return;
+        }
+        series = []; drawChart(); chartKey = '';
+        $('chart-foot').innerHTML = '&nbsp;';
+        msg.innerHTML = '<span class="errbox"><b>Chart unavailable</b>The price history could not be loaded: ' + esc(e.message) + '.<br><button type="button" class="retry" data-retry="chart">Try again</button></span>';
       });
   }
+  function syncRanges() {
+    Array.prototype.forEach.call($('ranges').querySelectorAll('button'), function (o) { o.setAttribute('aria-pressed', String(o.getAttribute('data-r') === range)); });
+  }
+  document.addEventListener('click', function (e) {
+    var r = e.target.closest('[data-retry]');
+    if (!r) return;
+    var what = r.getAttribute('data-retry');
+    if (what === 'market') { r.disabled = true; r.textContent = 'Retrying…'; loadMarket(); }
+    if (what === 'chart') { var rr = r.getAttribute('data-range'); if (rr) { range = rr; syncRanges(); } loadChart(); }
+  });
 
   $('ranges').addEventListener('click', function (e) {
     var b = e.target.closest('button[data-r]');
     if (!b) return;
     range = b.getAttribute('data-r'); hoverIndex = null; $('charttip').hidden = true;
-    Array.prototype.forEach.call(this.querySelectorAll('button'), function (o) { o.setAttribute('aria-pressed', String(o === b)); });
+    syncRanges();
     loadChart();
   });
   $('chart').addEventListener('mousemove', function (e) {
@@ -1115,18 +1370,28 @@
       }
       return;
     }
+    if (e.target.closest('#add-market')) { if (P && P.customize) P.customize(e.target.closest('#add-market')); return; }
     var b = e.target.closest('button[data-symbol]');
-    if (!b || b.getAttribute('data-symbol') === selectedSymbol) return;
-    selectedSymbol = b.getAttribute('data-symbol');
-    Array.prototype.forEach.call(this.querySelectorAll('button[data-symbol]'), function (o) { o.setAttribute('aria-pressed', String(o === b)); });
-    renderFocus(selectedQuote());
-    loadChart();
+    if (!b) return;
+    if (b.getAttribute('data-symbol') !== selectedSymbol) {
+      selectedSymbol = b.getAttribute('data-symbol');
+      if (market) renderAssetGrid(market);
+      var again = this.querySelector('button[data-symbol="' + selectedSymbol.replace(/"/g, '') + '"]'); if (again) again.focus();
+      renderFocus(selectedQuote());
+      loadChart();
+      var q = selectedQuote(); $('select-live').textContent = (q ? q.label : 'Market') + ' is now shown in the chart.';
+    }
+    /* On a phone the chart sits below the list: bring it into view. */
+    if (window.matchMedia && matchMedia('(max-width: 760px)').matches) {
+      var fp = $('focus-panel'), top = fp.getBoundingClientRect().top;
+      if (top > window.innerHeight * .6) fp.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+    }
   });
   var rz;
   window.addEventListener('resize', function () { clearTimeout(rz); rz = setTimeout(drawChart, 140); });
 
   /* The customize panel calls this after the watchlist changes. */
-  window.SSDash = { reload: function () { market = null; return loadMarket(); } };
+  window.SSDash = { reload: function () { market = null; return loadMarket(); }, refresh: function () { return loadMarket(); } };
 
   /* The five most recent Decrypt headlines. The full feed, with section
      filters, is on the News page; this card is the glance version.
@@ -1164,8 +1429,7 @@
         .replace(/</g, '&lt;').replace(/>/g, '&gt;');
     };
 
-    fetch('/api/news?limit=10', { cache: 'no-store' })
-      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    getJSON('/api/news?limit=10', 15000)
       .then(function (d) {
         if (d.error || !d.items || !d.items.length) throw new Error(d.error || 'the feed returned nothing');
         $('news').innerHTML = d.items.map(function (n) {
@@ -1180,12 +1444,13 @@
             (n.summary ? '<p>' + esc(n.summary) + '</p>' : '') +
             '</article>';
         }).join('') +
-        '<div class="nsrc"><span>Not a Satstreet view</span></div>';
+        '<div class="nsrc"><span>Headlines and summaries by Decrypt; each opens on decrypt.co</span><span>Not a Satstreet view</span></div>';
         fitNews();
       })
       .catch(function (e) {
         $('news').innerHTML = '<p class="errbox"><b>News unavailable</b>The news feed could not be read (' +
-          esc(e.message) + ').</p>';
+          esc(e.message) + '). <button type="button" class="retry" id="retry-news">Try again</button></p>';
+        var rn = $('retry-news'); if (rn) rn.addEventListener('click', loadNews);
       });
   }
 
@@ -1249,7 +1514,7 @@
         if (!c || !c.events) throw new Error('unavailable');
         var today = new Date(); today.setHours(0, 0, 0, 0);
         var next = c.events.filter(function (e) { return new Date(e.date + 'T12:00:00') >= today; })
-          .sort(function (a, b) { return a.date < b.date ? -1 : 1; }).slice(0, 8);
+          .sort(function (a, b) { return a.date < b.date ? -1 : 1; }).slice(0, 5);
         if (!next.length) { $('cats').innerHTML = '<p class="emptybox">No scheduled events in the period ahead.</p>'; return; }
         $('cats').innerHTML = next.map(function (e) {
           var d = new Date(e.date + 'T12:00:00'), high = e.kind === 'central-bank';
@@ -1266,27 +1531,10 @@
      until the news card is no taller than the right-hand stack. The halving
      card's flex then absorbs the last partial row. Stacked (one column),
      five are shown. */
-  var fitRaf = 0;
+  /* Five headlines; the columns no longer stretch to match each other. */
   function fitNews() {
-    cancelAnimationFrame(fitRaf);
-    fitRaf = requestAnimationFrame(function () {
-      var pair = document.querySelector('.news-pair'), card = document.querySelector('.news-card');
-      var side = document.querySelector('.side-stack');
-      var rows = Array.prototype.slice.call(document.querySelectorAll('#news .newsrow'));
-      if (!pair || !rows.length) return;
-      rows.forEach(function (r) { r.hidden = false; });
-      var shown = rows.length;
-      var mark = function () { rows.forEach(function (r, i) { r.hidden = i >= shown; r.classList.toggle('last', i === shown - 1); }); };
-      if (getComputedStyle(pair).gridTemplateColumns.split(' ').length < 2) {
-        shown = Math.min(5, rows.length); mark();
-        return;
-      }
-      mark();
-      pair.classList.add('measuring');
-      var target = side.getBoundingClientRect().height;
-      while (shown > 3 && card.getBoundingClientRect().height > target + 1) { shown--; mark(); }
-      pair.classList.remove('measuring');
-    });
+    var rows = Array.prototype.slice.call(document.querySelectorAll('#news .newsrow'));
+    rows.forEach(function (r, i) { r.hidden = i >= 5; r.classList.toggle('last', i === Math.min(5, rows.length) - 1); });
   }
   var fitTimer = 0;
   window.addEventListener('resize', function () { clearTimeout(fitTimer); fitTimer = setTimeout(fitNews, 120); });
@@ -1310,25 +1558,21 @@
         var n = function (x) { return x.toLocaleString('en-US'); };
         var date = new Date(halvAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
         $('halv-body').innerHTML =
-          '<div class="halv-cd"><span id="halv-cd">\u2014</span><small>Estimated time remaining</small></div>' +
+          '<div class="halv-row"><div class="halv-cd"><span id="halv-cd">\u2014</span><small>Estimated time remaining</small></div>' +
+          '<div class="halv-when"><b>Around ' + esc(date) + '</b>' + n(left) + ' blocks to go · height ' + n(h) + '</div></div>' +
           '<div><div class="halv-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct.toFixed(1) + '" aria-label="Progress through the current halving epoch"><i style="width:' + pct.toFixed(1) + '%"></i></div>' +
-          '<div class="halv-scale"><span>' + n(start) + '</span><b>' + pct.toFixed(1) + '% of epoch</b><span>' + n(HALVING) + '</span></div></div>' +
-          '<div class="halv-stats">' +
-            '<div><div class="k">Blocks remaining</div><div class="v">' + n(left) + '</div><div class="s">at ~10 min / block</div></div>' +
-            '<div><div class="k">Current height</div><div class="v">' + n(h) + '</div><div class="s">chain tip</div></div>' +
-            '<div><div class="k">Predicted date</div><div class="v">' + esc(date) + '</div><div class="s">estimate only</div></div>' +
-            '<div><div class="k">Block reward</div><div class="v">3.125 &rarr; 1.5625</div><div class="s">BTC per block</div></div>' +
-          '</div>';
+          '<div class="halv-scale"><span>' + n(start) + '</span><b>' + pct.toFixed(1) + '% of epoch</b><span>' + n(HALVING) + '</span></div></div>';
+
         var pad = function (x) { return String(x).padStart(2, '0'); };
         var tick = function () {
           var ms = Math.max(0, halvAt - Date.now()), el = $('halv-cd');
           if (!el) return;
           el.textContent = Math.floor(ms / 864e5) + 'd ' + pad(Math.floor(ms % 864e5 / 36e5)) + 'h ' +
-            pad(Math.floor(ms % 36e5 / 6e4)) + 'm ' + pad(Math.floor(ms % 6e4 / 1e3)) + 's';
+            pad(Math.floor(ms % 36e5 / 6e4)) + 'm';
         };
         tick();
         if (halvTimer) clearInterval(halvTimer);
-        halvTimer = setInterval(tick, 1000);
+        halvTimer = setInterval(tick, 30000);
         card.hidden = false;
         fitNews();
       })
@@ -1395,8 +1639,7 @@
     if (!body.children.length) {
       body.innerHTML = '<tr><td colspan="7" style="color:var(--muted);padding:18px 10px">Loading…</td></tr>';
     }
-    fetch('/api/assets', { cache: 'no-store' })
-      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    getJSON('/api/assets', 15000)
       .then(function (d) {
         var list = (d && d.assets) || [];
         if (!list.length) throw new Error('no assets returned');
@@ -1408,7 +1651,7 @@
             '<td><div class="amc-asset">' + amcMark(a) +
               '<span><span class="amc-name">' + esc(a.name) + '</span>' +
               '<span class="amc-tick">' + esc(a.symbol) + '</span></span></div></td>' +
-            '<td class="num amc-cap" title="' + esc(a.basis || '').replace(/"/g, '&quot;') + '">' + fmtCompact(a.marketCapUsd) + '</td>' +
+            '<td class="num amc-cap">' + (a.basis ? '<button type="button" class="amc-capbtn" aria-expanded="false" data-basis="' + esc(a.basis).replace(/"/g, '&quot;') + '" aria-label="' + esc(a.name).replace(/"/g, '&quot;') + ' market cap ' + fmtCompact(a.marketCapUsd) + '. Show how it is calculated">' + fmtCompact(a.marketCapUsd) + '</button>' : fmtCompact(a.marketCapUsd)) + '</td>' +
             '<td class="num">' + fmtUsd(a.priceUsd, dp) + '</td>' +
             '<td class="num ' + dirOf(a.changePct) + '">' + fmtPct(a.changePct) + '</td>' +
             '<td class="spk">' + amcSpark(a.spark || [], amcTrend(a.spark)) + '</td>' +
@@ -1423,20 +1666,28 @@
 
         /* A symbol that failed to quote drops its own row, so say so rather
            than letting the ranking quietly shorten. */
-        var note = $('amc-note');
-        if (note) {
-          if (!note.dataset.base) note.dataset.base = note.textContent;
-          note.textContent = (d.expected && d.total < d.expected)
-            ? (d.expected - d.total) + ' of ' + d.expected + ' assets could not be priced just now and are omitted. ' + note.dataset.base
-            : note.dataset.base;
+        var partial = $('amc-partial');
+        if (partial) {
+          var miss = d.expected && d.total < d.expected ? d.expected - d.total : 0;
+          partial.hidden = !miss;
+          partial.textContent = miss ? miss + ' of ' + d.expected + ' assets could not be priced just now and are left out, so the ranking is partial.' : '';
         }
       })
       .catch(function (e) {
+        if (body.querySelector('.amc-rank')) { var pt = $('amc-partial'); if (pt) { pt.hidden = false; pt.textContent = 'The last refresh failed (' + e.message + '); showing the previous figures.'; } return; }
         body.innerHTML = '<tr><td colspan="7"><p class="errbox"><b>Assets unavailable</b>' + esc(e.message) +
           ' <button class="retry" id="retry-amc" type="button">Try again</button></p></td></tr>';
         var r = $('retry-amc'); if (r) r.addEventListener('click', loadAssets);
       });
   }
+
+  $('amc-rows').addEventListener('click', function (e) {
+    var b = e.target.closest('.amc-capbtn'); if (!b) return;
+    var row = b.closest('tr'), next = row.nextElementSibling, open = b.getAttribute('aria-expanded') === 'true';
+    if (open && next && next.classList.contains('amc-basis')) next.remove();
+    else { var tr = document.createElement('tr'); tr.className = 'amc-basis'; tr.innerHTML = '<td colspan="7">' + esc(b.getAttribute('data-basis')) + '</td>'; row.parentNode.insertBefore(tr, row.nextSibling); }
+    b.setAttribute('aria-expanded', String(!open));
+  });
 
   loadMarket();
   loadChart(); loadNews(); loadCats(); loadHalving(); loadAssets(); loadMacro();
